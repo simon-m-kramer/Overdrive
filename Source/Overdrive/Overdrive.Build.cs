@@ -17,16 +17,12 @@ public class Overdrive : ModuleRules
 			"ChaosVehicles",
 			"PhysicsCore",
 			"UMG",
-			"Slate"
+			"Slate",
+			"Bifrost"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Overdrive",
-			"Overdrive/SportsCar",
-			"Overdrive/OffroadCar",
-			"Overdrive/Variant_Offroad",
-			"Overdrive/Variant_TimeTrial",
-			"Overdrive/Variant_TimeTrial/UI"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
