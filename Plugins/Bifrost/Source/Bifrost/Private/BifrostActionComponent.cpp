@@ -1,23 +1,23 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
 
-#include "BifrostComponent.h"
+#include "BifrostActionComponent.h"
 #include "BifrostActionStack.h"
 #include "BifrostAction.h"
 
-UBifrostComponent::UBifrostComponent()
+UBifrostActionComponent::UBifrostActionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UBifrostComponent::BeginPlay()
+void UBifrostActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	ActionStack = NewObject<UBifrostActionStack>(this);
 }
 
-void UBifrostComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UBifrostActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -27,7 +27,7 @@ void UBifrostComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 	}
 }
 
-void UBifrostComponent::PushAction(UBifrostAction* NewAction)
+void UBifrostActionComponent::PushAction(UBifrostAction* NewAction)
 {
 	if (ActionStack)
 	{
@@ -35,7 +35,7 @@ void UBifrostComponent::PushAction(UBifrostAction* NewAction)
 	}
 }
 
-void UBifrostComponent::RemoveAction(UBifrostAction* InAction)
+void UBifrostActionComponent::RemoveAction(UBifrostAction* InAction)
 {
 	if (ActionStack)
 	{
@@ -43,17 +43,17 @@ void UBifrostComponent::RemoveAction(UBifrostAction* InAction)
 	}
 }
 
-bool UBifrostComponent::Contains(UBifrostAction* InAction)
+bool UBifrostActionComponent::Contains(UBifrostAction* InAction)
 {
 	return ActionStack && ActionStack->Contains(InAction);
 }
 
-bool UBifrostComponent::IsEmpty() const
+bool UBifrostActionComponent::IsEmpty() const
 {
 	return ActionStack && ActionStack->IsEmpty();
 }
 
-UBifrostAction* UBifrostComponent::GetCurrentAction() const
+UBifrostAction* UBifrostActionComponent::GetCurrentAction() const
 {
 	if (ActionStack)
 	{

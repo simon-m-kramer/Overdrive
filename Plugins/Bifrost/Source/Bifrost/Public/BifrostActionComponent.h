@@ -3,21 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "BifrostCharacter.generated.h"
+#include "Components/ActorComponent.h"
+#include "BifrostActionComponent.generated.h"
 
 class UBifrostActionStack;
 class UBifrostAction;
 
-UCLASS()
-class BIFROST_API ABifrostCharacter : public ACharacter
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class BIFROST_API UBifrostActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:
-	ABifrostCharacter();
+public:	
+	UBifrostActionComponent();
 
-	virtual void Tick(float DeltaTime) override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
 	void PushAction(UBifrostAction* NewAction);
@@ -39,7 +40,4 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
 	UBifrostActionStack* ActionStack;
-
-
-
 };

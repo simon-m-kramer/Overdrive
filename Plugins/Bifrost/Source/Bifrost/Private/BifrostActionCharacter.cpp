@@ -1,24 +1,24 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
 
-#include "BifrostCharacter.h"
+#include "BifrostActionCharacter.h"
 #include "BifrostActionStack.h"
 #include "BifrostAction.h"
 
 
-ABifrostCharacter::ABifrostCharacter()
+ABifrostActionCharacter::ABifrostActionCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void ABifrostCharacter::BeginPlay()
+void ABifrostActionCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	ActionStack = NewObject<UBifrostActionStack>(this);
 }
 
-void ABifrostCharacter::Tick(float DeltaTime)
+void ABifrostActionCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -28,7 +28,7 @@ void ABifrostCharacter::Tick(float DeltaTime)
 	}
 }
 
-void ABifrostCharacter::PushAction(UBifrostAction* NewAction)
+void ABifrostActionCharacter::PushAction(UBifrostAction* NewAction)
 {
 	if (ActionStack)
 	{
@@ -36,7 +36,7 @@ void ABifrostCharacter::PushAction(UBifrostAction* NewAction)
 	}
 }
 
-void ABifrostCharacter::RemoveAction(UBifrostAction* InAction)
+void ABifrostActionCharacter::RemoveAction(UBifrostAction* InAction)
 {
 	if (ActionStack)
 	{
@@ -44,17 +44,17 @@ void ABifrostCharacter::RemoveAction(UBifrostAction* InAction)
 	}
 }
 
-bool ABifrostCharacter::Contains(UBifrostAction* InAction)
+bool ABifrostActionCharacter::Contains(UBifrostAction* InAction)
 {
 	return ActionStack && ActionStack->Contains(InAction);
 }
 
-bool ABifrostCharacter::IsEmpty() const
+bool ABifrostActionCharacter::IsEmpty() const
 {
 	return ActionStack && ActionStack->IsEmpty();
 }
 
-UBifrostAction* ABifrostCharacter::GetCurrentAction() const
+UBifrostAction* ABifrostActionCharacter::GetCurrentAction() const
 {
 	if (ActionStack)
 	{
