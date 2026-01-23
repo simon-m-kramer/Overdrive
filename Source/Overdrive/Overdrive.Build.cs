@@ -18,7 +18,8 @@ public class Overdrive : ModuleRules
 			"PhysicsCore",
 			"UMG",
 			"Slate",
-			"Bifrost"
+			"Bifrost",
+			"Landscape"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {
