@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "WheeledVehiclePawn.h"
+#include "Framework/BifrostActionVehicle.h"
 #include "TurboVehicle.generated.h"
 
 
@@ -13,7 +14,7 @@ class UChaosWheeledVehicleMovementComponent;
  * 
  */
 UCLASS()
-class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
+class OVERDRIVE_API ATurboVehicle : public ABifrostActionVehicle
 {
 	GENERATED_BODY()
 	
