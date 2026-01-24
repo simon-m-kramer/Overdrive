@@ -233,9 +233,29 @@ float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
     // Find the next corner
     FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead);
 
-    // No corner ahead
+    // No corner ahead - check further for positioning
     if (!NextCorner.bIsValid)
     {
+        // Look even further ahead for a distant corner to position for
+        FCornerInfo DistantCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead * 2.0f);
+        if (DistantCorner.bIsValid)
+        {
+            // Gradually position toward the outside for the distant corner entry
+            float DistanceToDistant = DistantCorner.ApexDistance - CurrentSplineDistance;
+            if (DistanceToDistant < 0.0f)
+            {
+                DistanceToDistant += SplineLength;
+            }
+
+            // Smooth blend - start positioning when within 2x lookahead
+            float BlendFactor = 1.0f - FMath::Clamp(DistanceToDistant / (RacingLineLookahead * 2.0f), 0.0f, 1.0f);
+            float OffsetMagnitude = DistantCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage * 0.5f;
+            OffsetMagnitude = FMath::Min(OffsetMagnitude, MaxRacingLineOffset);
+
+            // Position on outside for entry (positive phase = outside)
+            return -DistantCorner.TurnSign * BlendFactor * OffsetMagnitude;
+        }
+
         return 0.0f;
     }
 
@@ -246,8 +266,8 @@ float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
         DistanceToApex += SplineLength;
     }
 
-    // Check if there's another corner coming soon after this one
-    FCornerInfo FollowingCorner = FindCornerAfterStraight(NextCorner.ApexDistance, RacingLineLookahead);
+    // Check if there's another corner coming after this one
+    FCornerInfo FollowingCorner = FindCornerAfterStraight(NextCorner.ApexDistance, RacingLineLookahead * 1.5f);
 
     // Calculate distance between corners (the "straight" length)
     float StraightLength = 0.0f;
@@ -260,38 +280,53 @@ float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
         }
     }
 
-    // Determine which corner to prioritize for exit positioning
-    bool bShortStraightAhead = FollowingCorner.bIsValid && (StraightLength < MinStraightForCenterline);
-
     // Normalize distance to apex (1 = far, 0 = at apex)
     float NormalizedDist = FMath::Clamp(DistanceToApex / RacingLineLookahead, 0.0f, 1.0f);
 
-    // Base phase calculation
+    // Base phase calculation: cos curve from outside (1) to inside (-1)
     float Phase = FMath::Cos(NormalizedDist * PI);
-
-    // If there's a short straight followed by another corner, modify the exit behavior
-    if (bShortStraightAhead&& NormalizedDist < 0.3f)
-    {
-        // We're exiting the current corner - check if next corner is same direction
-        bool bSameDirection = (NextCorner.TurnSign * FollowingCorner.TurnSign) > 0.0f;
-
-        if (bSameDirection)
-        {
-            // Same direction turn coming - stay on the inside
-            Phase = FMath::Min(Phase, -0.5f);
-        }
-        else
-        {
-            // Opposite direction turn (chicane) - blend toward the outside for the next corner
-            float BlendToNext = 1.0f - (NormalizedDist / 0.3f);
-            float NextEntryPhase = 1.0f; // Outside for next corner entry
-            Phase = FMath::Lerp(Phase, NextEntryPhase * -FollowingCorner.TurnSign / NextCorner.TurnSign, BlendToNext);
-        }
-    }
 
     // Scale offset by curvature and track width usage
     float OffsetMagnitude = NextCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage;
-    OffsetMagnitude = FMath::Min(OffsetMagnitude, MaxRacingLineOffset); // Clamp to max
+    OffsetMagnitude = FMath::Min(OffsetMagnitude, MaxRacingLineOffset);
+
+    // Handle corner exit behavior based on what's coming next
+    if (FollowingCorner.bIsValid&& NormalizedDist < 0.4f)
+    {
+        bool bSameDirection = (NextCorner.TurnSign * FollowingCorner.TurnSign) > 0.0f;
+        bool bShortStraight = StraightLength < MinStraightForCenterline;
+
+        // How far through the exit are we (0 = at apex, 1 = fully exited)
+        float ExitProgress = 1.0f - (NormalizedDist / 0.4f);
+
+        if (bSameDirection)
+        {
+            // Same direction turn coming - stay on the inside throughout
+            // Don't track out, just hold the inside line
+            float HoldInsidePhase = -0.7f; // Stay mostly inside
+            Phase = FMath::Lerp(Phase, HoldInsidePhase, ExitProgress * 0.8f);
+        }
+        else if (bShortStraight)
+        {
+            // Chicane - opposite direction, short straight
+            // Blend toward outside for next corner entry
+            float NextEntryPhase = 0.8f; // Outside position for next corner
+            Phase = FMath::Lerp(Phase, NextEntryPhase, ExitProgress);
+        }
+        else
+        {
+            // Long straight before opposite direction corner
+            // Smooth transition toward center, then position for next corner
+            float TransitionPhase = FMath::Lerp(0.0f, 0.5f * -FollowingCorner.TurnSign / NextCorner.TurnSign, ExitProgress);
+            Phase = FMath::Lerp(Phase, TransitionPhase, ExitProgress * 0.6f);
+        }
+    }
+    else if (!FollowingCorner.bIsValid && NormalizedDist < 0.3f)
+    {
+        // No corner detected after this one - smooth return to center on exit
+        float ExitProgress = 1.0f - (NormalizedDist / 0.3f);
+        Phase = FMath::Lerp(Phase, 0.0f, ExitProgress * 0.5f);
+    }
 
     return -NextCorner.TurnSign * Phase * OffsetMagnitude;
 }
