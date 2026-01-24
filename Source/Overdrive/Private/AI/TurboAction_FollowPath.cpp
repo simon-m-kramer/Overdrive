@@ -57,37 +57,28 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         FVector CurrentSplinePoint = Spline->GetLocationAtDistanceAlongSpline(CurrentSplineDistance, ESplineCoordinateSpace::World);
         DrawDebugSphere(World, CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
 
-        // Visualize curvature detection range
-        if (bUseCurvatureSpeedControl)
+        // Centerline target for comparison (cyan) - shows where we'd aim without racing line
+        if (bUseRacingLineOffset)
         {
+            float LookaheadDist = GetLookaheadDistance();
             float SplineLength = Spline->GetSplineLength();
-            float MaxCurvature = 0.0f;
-            float MaxCurvatureDistance = CurrentSplineDistance;
-
-            // Draw curvature samples and find max
-            for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 100.0f)
+            float TargetDistance = CurrentSplineDistance + LookaheadDist;
+            if (Spline->IsClosedLoop())
             {
-                float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
-                float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
-
-                FVector SamplePoint = Spline->GetLocationAtDistanceAlongSpline(WrappedDist, ESplineCoordinateSpace::World);
-
-                // Color based on curvature: green (straight) -> red (sharp turn)
-                FColor CurvatureColor = FColor::MakeRedToGreenColorFromScalar(1.0f - Curvature);
-                DrawDebugPoint(World, SamplePoint + FVector(0, 0, 50), 10.0f, CurvatureColor, false, 0.0f);
-
-                if (Curvature > MaxCurvature)
-                {
-                    MaxCurvature = Curvature;
-                    MaxCurvatureDistance = WrappedDist;
-                }
+                TargetDistance = FMath::Fmod(TargetDistance, SplineLength);
             }
+            FVector CenterlinePoint = Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+            DrawDebugSphere(World, CenterlinePoint, 30.0f, 8, FColor::Cyan, false, 0.0f);
 
-            // Mark the sharpest corner ahead (orange sphere)
-            if (MaxCurvature > 0.05f)
+            // Draw racing line offset as a line from centerline to actual target
+            DrawDebugLine(World, CenterlinePoint, TargetPoint, FColor::Magenta, false, 0.0f, 0, 2.0f);
+
+            // Find and mark the apex
+            float ApexDist = FindApexDistance(CurrentSplineDistance, RacingLineLookahead);
+            if (ApexDist > 0.0f)
             {
-                FVector MaxCurvaturePoint = Spline->GetLocationAtDistanceAlongSpline(MaxCurvatureDistance, ESplineCoordinateSpace::World);
-                DrawDebugSphere(World, MaxCurvaturePoint + FVector(0, 0, 100), 40.0f, 8, FColor::Orange, false, 0.0f);
+                FVector ApexPoint = Spline->GetLocationAtDistanceAlongSpline(ApexDist, ESplineCoordinateSpace::World);
+                DrawDebugSphere(World, ApexPoint + FVector(0, 0, 100), 60.0f, 8, FColor::Orange, false, 0.0f);
             }
         }
 
@@ -95,41 +86,22 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         float CurrentSpeed = Vehicle->GetSpeedKmh();
         float CurrentTargetSpeed = CalculateTargetSpeed();
         float MaxCurvature = FindMaxCurvatureAhead();
+        float CurrentOffset = CalculateRacingLineOffset(CurrentSplineDistance + GetLookaheadDistance());
 
         GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White,
             FString::Printf(TEXT("Speed: %.1f / %.1f km/h"), CurrentSpeed, CurrentTargetSpeed));
         GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::White,
             FString::Printf(TEXT("Lookahead: %.0f cm"), GetLookaheadDistance()));
         GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::White,
-            FString::Printf(TEXT("Max Curvature Ahead: %.3f"), MaxCurvature));
+            FString::Printf(TEXT("Max Curvature: %.3f"), MaxCurvature));
+        GEngine->AddOnScreenDebugMessage(4, 0.0f, FColor::White,
+            FString::Printf(TEXT("Racing Line Offset: %.1f cm"), CurrentOffset));
     }
 
     float SteeringInput = CalculateSteering(TargetPoint);
     Vehicle->SetSteeringInput(SteeringInput);
 
     ApplySpeedControl();
-
-    /*
-    if (bDrawDebug && bUseCurvatureSpeedControl)
-    {
-        USplineComponent* Spline = GetSpline();
-        float SplineLength = Spline->GetSplineLength();
-
-        UE_LOG(LogTemp, Warning, TEXT("=== Curvature Debug ==="));
-        UE_LOG(LogTemp, Warning, TEXT("Current Distance: %.0f, Spline Length: %.0f"), CurrentSplineDistance, SplineLength);
-
-        // Sample a few points and log their curvature
-        for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 500.0f)
-        {
-            float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
-            float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
-
-            UE_LOG(LogTemp, Warning, TEXT("  Dist: %.0f -> Curvature: %.6f"), WrappedDist, Curvature);
-        }
-
-        UE_LOG(LogTemp, Warning, TEXT("Max Curvature Found: %.6f"), FindMaxCurvatureAhead());
-    }
-    */
 }
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
@@ -167,6 +139,89 @@ float UTurboAction_FollowPath::GetLookaheadDistance() const
     return FMath::Clamp(Lookahead, MinLookaheadDistance, MaxLookaheadDistance);
 }
 
+float UTurboAction_FollowPath::FindApexDistance(float StartDistance, float SearchRange) const
+{
+    USplineComponent* Spline = GetSpline();
+    if (!Spline || !RacingSplineActor.IsValid())
+    {
+        return -1.0f;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+    float MaxCurvature = 0.0f;
+    float ApexDistance = -1.0f;
+
+    for (float Dist = StartDistance; Dist < StartDistance + SearchRange; Dist += 100.0f)
+    {
+        float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
+
+        if (Curvature > MaxCurvature && Curvature > RacingLineMinCurvature)
+        {
+            MaxCurvature = Curvature;
+            ApexDistance = WrappedDist;
+        }
+    }
+
+    return ApexDistance;
+}
+
+float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
+{
+    if (!bUseRacingLineOffset)
+    {
+        return 0.0f;
+    }
+
+    USplineComponent* Spline = GetSpline();
+    if (!Spline || !RacingSplineActor.IsValid())
+    {
+        return 0.0f;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+
+    // Find the apex (sharpest point) ahead
+    float ApexDistance = FindApexDistance(CurrentSplineDistance, RacingLineLookahead);
+
+    // No significant corner ahead
+    if (ApexDistance < 0.0f)
+    {
+        return 0.0f;
+    }
+
+    // Get curvature at apex to scale the offset
+    float ApexCurvature = RacingSplineActor->GetCurvatureAtDistance(ApexDistance, CurvatureSampleRange);
+
+    // Get turn direction at apex
+    float TurnSign = RacingSplineActor->GetTurnSign(ApexDistance);
+
+    // Calculate distance to apex
+    float DistanceToApex = ApexDistance - CurrentSplineDistance;
+    if (DistanceToApex < 0.0f)
+    {
+        DistanceToApex += SplineLength;
+    }
+
+    // Normalize distance to 0-1 range (1 = far from apex, 0 = at apex)
+    float NormalizedDist = FMath::Clamp(DistanceToApex / RacingLineLookahead, 0.0f, 1.0f);
+
+    // Racing line phase using cosine:
+    // NormalizedDist = 1.0 (far): cos(0) = 1.0 -> outside of turn (wide entry)
+    // NormalizedDist = 0.5 (mid): cos(PI/2) = 0.0 -> on centerline
+    // NormalizedDist = 0.0 (apex): cos(PI) = -1.0 -> inside of turn (clip apex)
+    float Phase = FMath::Cos(NormalizedDist * PI);
+
+    // Scale offset by curvature (sharper corner = more offset)
+    float OffsetMagnitude = ApexCurvature * MaxRacingLineOffset;
+
+    // TurnSign: positive = right turn, negative = left turn
+    // For a right turn: we want to be LEFT (negative) on entry, RIGHT (positive) at apex
+    // Phase goes from 1 (entry) to -1 (apex)
+    // So: Offset = -TurnSign * Phase * Magnitude
+    return -TurnSign * Phase * OffsetMagnitude;
+}
+
 FVector UTurboAction_FollowPath::GetTargetPoint() const
 {
     USplineComponent* Spline = GetSpline();
@@ -188,7 +243,23 @@ FVector UTurboAction_FollowPath::GetTargetPoint() const
         TargetDistance = FMath::Min(TargetDistance, SplineLength);
     }
 
-    return Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+    // Get centerline point
+    FVector CenterlinePoint = Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+
+    // Calculate racing line offset
+    float Offset = CalculateRacingLineOffset(TargetDistance);
+
+    if (FMath::Abs(Offset) < 1.0f)
+    {
+        return CenterlinePoint;
+    }
+
+    // Get the right vector at this spline point
+    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
+
+    return CenterlinePoint + (Right * Offset);
 }
 
 float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)
@@ -221,7 +292,6 @@ float UTurboAction_FollowPath::FindMaxCurvatureAhead() const
     float SplineLength = Spline->GetSplineLength();
     float MaxCurvature = 0.0f;
 
-    // Sample curvature at regular intervals ahead
     for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 100.0f)
     {
         float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
@@ -241,8 +311,6 @@ float UTurboAction_FollowPath::CalculateTargetSpeed() const
 
     float MaxCurvature = FindMaxCurvatureAhead();
 
-    // Curvature 0 = straight = MaxSpeed
-    // Curvature 1 = hairpin = MinCornerSpeed
     float SpeedReduction = MaxCurvature * CurvatureBrakingSensitivity;
     float DesiredSpeed = MaxSpeedKmh - SpeedReduction;
 
@@ -262,13 +330,11 @@ void UTurboAction_FollowPath::ApplySpeedControl()
 
     if (SpeedError > 0.0f)
     {
-        // Accelerate
         Vehicle->SetThrottleInput(FMath::Clamp(SpeedError / 20.0f, 0.0f, 1.0f));
         Vehicle->SetBrakeInput(0.0f);
     }
     else
     {
-        // Brake - more aggressive braking for larger errors
         Vehicle->SetThrottleInput(0.0f);
         Vehicle->SetBrakeInput(FMath::Clamp(-SpeedError / 30.0f, 0.0f, 1.0f));
     }

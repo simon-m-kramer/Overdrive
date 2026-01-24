@@ -38,6 +38,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "Features")
     bool bUseCurvatureSpeedControl = true;
 
+    UPROPERTY(EditAnywhere, Category = "Features")
+    bool bUseRacingLineOffset = true;
+
     // =========================================================================
     // LOOKAHEAD CONFIGURATION
     // =========================================================================
@@ -58,29 +61,39 @@ public:
     // SPEED CONFIGURATION
     // =========================================================================
 
-    // Base target speed when driving straight (used when curvature control is off)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "!bUseCurvatureSpeedControl"))
     float TargetSpeedKmh = 80.0f;
 
-    // Maximum speed on straights
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float MaxSpeedKmh = 220.0f;
 
-    // Minimum speed in tightest corners
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float MinCornerSpeedKmh = 60.0f;
 
-    // How far ahead to scan for corners (cm)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CornerDetectionDistance = 1500.0f;
 
-    // How sensitive braking is to curvature (higher = more braking)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CurvatureBrakingSensitivity = 120.0f;
 
-    // Sample range for curvature calculation (passed to GetCurvatureAtDistance)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CurvatureSampleRange = 4000.0f;
+
+    // =========================================================================
+    // RACING LINE CONFIGURATION
+    // =========================================================================
+
+    // Maximum lateral offset from centerline (cm)
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float MaxRacingLineOffset = 400.0f;
+
+    // How far ahead to look for upcoming corners (cm)
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float RacingLineLookahead = 6000.0f;
+
+    // Minimum curvature to trigger racing line behavior
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float RacingLineMinCurvature = 0.1f;
 
 private:
     // =========================================================================
@@ -116,4 +129,8 @@ private:
     float CalculateTargetSpeed() const;
     float FindMaxCurvatureAhead() const;
     void ApplySpeedControl();
+
+    // Racing line
+    float CalculateRacingLineOffset(float AtDistance) const;
+    float FindApexDistance(float StartDistance, float SearchRange) const;
 };
