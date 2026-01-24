@@ -8,6 +8,7 @@
 
 
 class UChaosWheeledVehicleMovementComponent;
+class UStaticMeshComponent;
 
 /**
  * 
@@ -20,6 +21,10 @@ class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
 
 public:
 	ATurboVehicle();
+
+
+
+
 
 	// Input methods
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
@@ -45,6 +50,9 @@ public:
 	FVector GetLookAheadPoint() const;
 
 protected:
+	virtual void PostInitializeComponents() override;
+
+
 	UPROPERTY()
 	TObjectPtr<UChaosWheeledVehicleMovementComponent> VehicleMovement;
 
@@ -52,5 +60,30 @@ protected:
 	void SetupEngine();
 	void SetupTransmission();
 	void SetupSteering();
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> ChassisMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> GlassMesh;
+
+	// Wheel Meshes
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> WheelFL;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> WheelFR;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> WheelRL;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> WheelRR;
+
+
+private:
+	void AttachWheelMeshes();
+
 
 };

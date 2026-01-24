@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
+#include "Framework/TurboVehicle.h"
+#include "AI/TurboAction_FollowPath.h"
 
 
 ATurboAIController::ATurboAIController()
@@ -18,13 +20,12 @@ void ATurboAIController::FindRacingSpline()
 {
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATurboRacingSpline::StaticClass(), FoundActors);
-
 	for (AActor* Actor : FoundActors)
 	{
 		ATurboRacingSpline* SplineActor = Cast<ATurboRacingSpline>(Actor);
 		if (SplineActor && SplineActor->GetGameplayTags().HasTag(TurboGameplayTags::Track_MainSpline))
 		{
-			RacingSpline = SplineActor->GetSplineComponent();
+			RacingSplineActor = SplineActor;
 			break;
 		}
 	}
@@ -39,10 +40,13 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// Initialize Action Stack, Racing Spline, Controlled Vehicle and Default Action
 	ActionStack = NewObject<UBifrostActionStack>(this);
 	FindRacingSpline();
 	ControlledVehicle = Cast<ATurboVehicle>(InPawn);
+
+	// Push the default follow path action
+	UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(this);
+	PushAction(DefaultAction);
 }
 
 void ATurboAIController::Tick(float DeltaTime)

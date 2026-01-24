@@ -8,7 +8,7 @@
 
 class UBifrostActionStack;
 class UBifrostAction;
-class USplineComponent;
+class ATurboRacingSpline;
 class ATurboVehicle;
 
 /**
@@ -51,6 +51,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Spline")
 	void FindRacingSpline();
 
+	UFUNCTION(BlueprintPure, Category = "Spline")
+	ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
 
 
 protected:
@@ -62,7 +64,7 @@ protected:
 	TObjectPtr<UBifrostActionStack> ActionStack;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-	TObjectPtr<USplineComponent> RacingSpline;
+	TObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
 	TObjectPtr<ATurboVehicle> ControlledVehicle;

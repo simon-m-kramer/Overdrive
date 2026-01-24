@@ -12,7 +12,8 @@
 				"Engine",
 				"UMG",
 				"ChaosVehicles",
-				"AIModule"
+				"AIModule",
+				"Bifrost"
 			]
 		}
 	],

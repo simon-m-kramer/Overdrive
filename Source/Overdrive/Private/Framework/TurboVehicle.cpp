@@ -9,20 +9,45 @@
 
 ATurboVehicle::ATurboVehicle()
 {
-	VehicleMovement = CastChecked<UChaosWheeledVehicleMovementComponent>(GetVehicleMovement());
+    VehicleMovement = CastChecked<UChaosWheeledVehicleMovementComponent>(GetVehicleMovement());
 
-    // Mesh and physics
     GetMesh()->SetSimulatePhysics(true);
     GetMesh()->SetCollisionProfileName(FName("Vehicle"));
 
-    // Chassis
     VehicleMovement->ChassisHeight = 144.0f;
     VehicleMovement->DragCoefficient = 0.31f;
+
+    // Create components but attach to mesh root for now
+    ChassisMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ChassisMesh"));
+    ChassisMesh->SetupAttachment(GetMesh());
+    ChassisMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+    ChassisMesh->SetCanEverAffectNavigation(false);
+
+    GlassMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GlassMesh"));
+    GlassMesh->SetupAttachment(GetMesh());
+    GlassMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+
+    WheelFL = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelFL"));
+    WheelFL->SetupAttachment(GetMesh());
+    WheelFL->SetCollisionProfileName(TEXT("NoCollision"));
+
+    WheelFR = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelFR"));
+    WheelFR->SetupAttachment(GetMesh());
+    WheelFR->SetCollisionProfileName(TEXT("NoCollision"));
+
+    WheelRL = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelRL"));
+    WheelRL->SetupAttachment(GetMesh());
+    WheelRL->SetCollisionProfileName(TEXT("NoCollision"));
+
+    WheelRR = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelRR"));
+    WheelRR->SetupAttachment(GetMesh());
+    WheelRR->SetCollisionProfileName(TEXT("NoCollision"));
 
     SetupWheels();
     SetupEngine();
     SetupTransmission();
     SetupSteering();
+
 }
 
 void ATurboVehicle::SetSteeringInput(float Value)
@@ -59,6 +84,8 @@ FVector ATurboVehicle::GetLookAheadPoint() const
 {
     return FVector();
 }
+
+
 
 void ATurboVehicle::SetupWheels()
 {
@@ -137,4 +164,57 @@ void ATurboVehicle::SetupSteering()
     SteeringCurve->AddKey(0.0f, 1.0f);      // 0 km/h -> full steering
     SteeringCurve->AddKey(100.0f, 0.5f);    // 100 km/h -> 50% steering
     SteeringCurve->AddKey(200.0f, 0.25f);   // 200 km/h -> 25% steering
+}
+
+
+
+
+
+void ATurboVehicle::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+    AttachWheelMeshes();
+}
+
+void ATurboVehicle::AttachWheelMeshes()
+{
+    USkeletalMeshComponent* SkelMesh = GetMesh();
+    if (!SkelMesh)
+    {
+        return;
+    }
+
+    FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, true);
+
+    FRotator LeftWheelRotation(0.0f, -90.0f, 0.0f);
+    FRotator RightWheelRotation(0.0f, 90.0f, 0.0f);
+
+    if (WheelFL && SkelMesh->GetBoneIndex(FName("Phys_Wheel_FL")) != INDEX_NONE)
+    {
+        WheelFL->AttachToComponent(SkelMesh, AttachRules, FName("Phys_Wheel_FL"));
+        WheelFL->SetRelativeRotation(LeftWheelRotation);
+    }
+
+    if (WheelFR && SkelMesh->GetBoneIndex(FName("Phys_Wheel_FR")) != INDEX_NONE)
+    {
+        WheelFR->AttachToComponent(SkelMesh, AttachRules, FName("Phys_Wheel_FR"));
+        WheelFR->SetRelativeRotation(RightWheelRotation);
+    }
+
+    if (WheelRL && SkelMesh->GetBoneIndex(FName("Phys_Wheel_BL")) != INDEX_NONE)
+    {
+        WheelRL->AttachToComponent(SkelMesh, AttachRules, FName("Phys_Wheel_BL"));
+        WheelRL->SetRelativeRotation(LeftWheelRotation);
+    }
+
+    if (WheelRR && SkelMesh->GetBoneIndex(FName("Phys_Wheel_BR")) != INDEX_NONE)
+    {
+        WheelRR->AttachToComponent(SkelMesh, AttachRules, FName("Phys_Wheel_BR"));
+        WheelRR->SetRelativeRotation(RightWheelRotation);
+    }
+
+    if (GlassMesh && SkelMesh->GetBoneIndex(FName("Root")) != INDEX_NONE)
+    {
+        GlassMesh->AttachToComponent(SkelMesh, AttachRules, FName("Root"));
+    }
 }
