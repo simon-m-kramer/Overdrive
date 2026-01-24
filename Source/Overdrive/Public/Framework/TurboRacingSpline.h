@@ -24,6 +24,17 @@ public:
 	// Returns the tags associated with this track segment
 	const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
+	// =====================================================================
+	// CURVATURE ANALYSIS
+	// =====================================================================
+
+	UFUNCTION()
+	float GetCurvatureAtDistance(float Distance, float SampleRange = 100.0f) const;
+
+	UFUNCTION()
+	float GetTurnSign(float Distance) const;
+
+
 protected:
 	virtual void BeginPlay() override;
 
