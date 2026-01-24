@@ -19,19 +19,10 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
         RacingSplineActor = AIController->GetRacingSplineActor();
     }
 
-    // Log what we have
-    UE_LOG(LogTemp, Warning, TEXT("FollowPath Started - Vehicle: %s, Spline: %s"),
-        Vehicle.IsValid() ? TEXT("Valid") : TEXT("INVALID"),
-        RacingSplineActor.IsValid() ? TEXT("Valid") : TEXT("INVALID"));
-
     if (bFirstTime && Vehicle.IsValid() && GetSpline())
     {
-        // Initialize spline distance to closest point
         FVector VehicleLocation = Vehicle->GetActorLocation();
-        float ClosestDist = GetSpline()->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
-        CurrentSplineDistance = ClosestDist;
-
-        UE_LOG(LogTemp, Warning, TEXT("Initial spline distance: %f"), CurrentSplineDistance);
+        CurrentSplineDistance = GetSpline()->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
     }
 }
 
@@ -39,7 +30,6 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 {
     if (!Vehicle.IsValid() || !RacingSplineActor.IsValid())
     {
-        UE_LOG(LogTemp, Error, TEXT("FollowPath Update - Missing references!"));
         return;
     }
 
@@ -47,30 +37,99 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 
     FVector TargetPoint = GetTargetPoint();
 
-    // Debug visualization
     if (bDrawDebug)
     {
+        UWorld* World = Vehicle->GetWorld();
         FVector VehicleLocation = Vehicle->GetActorLocation();
+        USplineComponent* Spline = GetSpline();
 
-        // Draw target point (green sphere)
-        DrawDebugSphere(Vehicle->GetWorld(), TargetPoint, 50.0f, 12, FColor::Green, false, 0.0f);
+        // Target point (green)
+        DrawDebugSphere(World, TargetPoint, 50.0f, 12, FColor::Green, false, 0.0f);
 
-        // Draw line from vehicle to target (yellow)
-        DrawDebugLine(Vehicle->GetWorld(), VehicleLocation, TargetPoint, FColor::Yellow, false, 0.0f, 0, 3.0f);
+        // Line to target (yellow)
+        DrawDebugLine(World, VehicleLocation, TargetPoint, FColor::Yellow, false, 0.0f, 0, 3.0f);
 
-        // Draw vehicle forward vector (red)
+        // Vehicle forward (red)
         FVector ForwardEnd = VehicleLocation + Vehicle->GetActorForwardVector() * 500.0f;
-        DrawDebugLine(Vehicle->GetWorld(), VehicleLocation, ForwardEnd, FColor::Red, false, 0.0f, 0, 3.0f);
+        DrawDebugLine(World, VehicleLocation, ForwardEnd, FColor::Red, false, 0.0f, 0, 3.0f);
 
-        // Draw current spline position (blue sphere)
-        FVector CurrentSplinePoint = GetSpline()->GetLocationAtDistanceAlongSpline(CurrentSplineDistance, ESplineCoordinateSpace::World);
-        DrawDebugSphere(Vehicle->GetWorld(), CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
+        // Current spline position (blue)
+        FVector CurrentSplinePoint = Spline->GetLocationAtDistanceAlongSpline(CurrentSplineDistance, ESplineCoordinateSpace::World);
+        DrawDebugSphere(World, CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
+
+        // Visualize curvature detection range
+        if (bUseCurvatureSpeedControl)
+        {
+            float SplineLength = Spline->GetSplineLength();
+            float MaxCurvature = 0.0f;
+            float MaxCurvatureDistance = CurrentSplineDistance;
+
+            // Draw curvature samples and find max
+            for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 100.0f)
+            {
+                float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
+                float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
+
+                FVector SamplePoint = Spline->GetLocationAtDistanceAlongSpline(WrappedDist, ESplineCoordinateSpace::World);
+
+                // Color based on curvature: green (straight) -> red (sharp turn)
+                FColor CurvatureColor = FColor::MakeRedToGreenColorFromScalar(1.0f - Curvature);
+                DrawDebugPoint(World, SamplePoint + FVector(0, 0, 50), 10.0f, CurvatureColor, false, 0.0f);
+
+                if (Curvature > MaxCurvature)
+                {
+                    MaxCurvature = Curvature;
+                    MaxCurvatureDistance = WrappedDist;
+                }
+            }
+
+            // Mark the sharpest corner ahead (orange sphere)
+            if (MaxCurvature > 0.05f)
+            {
+                FVector MaxCurvaturePoint = Spline->GetLocationAtDistanceAlongSpline(MaxCurvatureDistance, ESplineCoordinateSpace::World);
+                DrawDebugSphere(World, MaxCurvaturePoint + FVector(0, 0, 100), 40.0f, 8, FColor::Orange, false, 0.0f);
+            }
+        }
+
+        // On-screen debug info
+        float CurrentSpeed = Vehicle->GetSpeedKmh();
+        float CurrentTargetSpeed = CalculateTargetSpeed();
+        float MaxCurvature = FindMaxCurvatureAhead();
+
+        GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White,
+            FString::Printf(TEXT("Speed: %.1f / %.1f km/h"), CurrentSpeed, CurrentTargetSpeed));
+        GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::White,
+            FString::Printf(TEXT("Lookahead: %.0f cm"), GetLookaheadDistance()));
+        GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::White,
+            FString::Printf(TEXT("Max Curvature Ahead: %.3f"), MaxCurvature));
     }
 
     float SteeringInput = CalculateSteering(TargetPoint);
     Vehicle->SetSteeringInput(SteeringInput);
 
-    ApplySimpleSpeedControl();
+    ApplySpeedControl();
+
+    /*
+    if (bDrawDebug && bUseCurvatureSpeedControl)
+    {
+        USplineComponent* Spline = GetSpline();
+        float SplineLength = Spline->GetSplineLength();
+
+        UE_LOG(LogTemp, Warning, TEXT("=== Curvature Debug ==="));
+        UE_LOG(LogTemp, Warning, TEXT("Current Distance: %.0f, Spline Length: %.0f"), CurrentSplineDistance, SplineLength);
+
+        // Sample a few points and log their curvature
+        for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 500.0f)
+        {
+            float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
+            float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
+
+            UE_LOG(LogTemp, Warning, TEXT("  Dist: %.0f -> Curvature: %.6f"), WrappedDist, Curvature);
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("Max Curvature Found: %.6f"), FindMaxCurvatureAhead());
+    }
+    */
 }
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
@@ -86,9 +145,26 @@ void UTurboAction_FollowPath::UpdateSplineDistance()
         return;
     }
 
-    // Simple approach: find closest point on spline
     FVector VehicleLocation = Vehicle->GetActorLocation();
     CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
+}
+
+float UTurboAction_FollowPath::GetLookaheadDistance() const
+{
+    if (!bUseSpeedDependentLookahead)
+    {
+        return FixedLookaheadDistance;
+    }
+
+    if (!Vehicle.IsValid())
+    {
+        return MinLookaheadDistance;
+    }
+
+    float SpeedCmPerSec = FMath::Abs(Vehicle->GetForwardSpeed());
+    float Lookahead = SpeedCmPerSec * LookaheadSpeedFactor;
+
+    return FMath::Clamp(Lookahead, MinLookaheadDistance, MaxLookaheadDistance);
 }
 
 FVector UTurboAction_FollowPath::GetTargetPoint() const
@@ -100,9 +176,9 @@ FVector UTurboAction_FollowPath::GetTargetPoint() const
     }
 
     float SplineLength = Spline->GetSplineLength();
-    float TargetDistance = CurrentSplineDistance + LookaheadDistance;
+    float LookaheadDist = GetLookaheadDistance();
+    float TargetDistance = CurrentSplineDistance + LookaheadDist;
 
-    // Handle wrap-around for closed splines
     if (Spline->IsClosedLoop() && TargetDistance >= SplineLength)
     {
         TargetDistance = FMath::Fmod(TargetDistance, SplineLength);
@@ -125,24 +201,55 @@ float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)
     FVector VehicleLocation = Vehicle->GetActorLocation();
     FVector VehicleRight = Vehicle->GetActorRightVector();
 
-    // Direction to target
     FVector ToTarget = (TargetPoint - VehicleLocation).GetSafeNormal();
 
-    // How far right is the target? Positive = turn right, negative = turn left
     float DotRight = FVector::DotProduct(ToTarget, VehicleRight);
 
-    // Simple proportional steering
     float SteeringInput = FMath::Clamp(DotRight * 2.0f, -1.0f, 1.0f);
-
-    if (bDrawDebug)
-    {
-        UE_LOG(LogTemp, Log, TEXT("Steering: DotRight=%.3f, Input=%.3f"), DotRight, SteeringInput);
-    }
 
     return SteeringInput;
 }
 
-void UTurboAction_FollowPath::ApplySimpleSpeedControl()
+float UTurboAction_FollowPath::FindMaxCurvatureAhead() const
+{
+    USplineComponent* Spline = GetSpline();
+    if (!Spline || !RacingSplineActor.IsValid())
+    {
+        return 0.0f;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+    float MaxCurvature = 0.0f;
+
+    // Sample curvature at regular intervals ahead
+    for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 100.0f)
+    {
+        float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
+        MaxCurvature = FMath::Max(MaxCurvature, Curvature);
+    }
+
+    return MaxCurvature;
+}
+
+float UTurboAction_FollowPath::CalculateTargetSpeed() const
+{
+    if (!bUseCurvatureSpeedControl)
+    {
+        return TargetSpeedKmh;
+    }
+
+    float MaxCurvature = FindMaxCurvatureAhead();
+
+    // Curvature 0 = straight = MaxSpeed
+    // Curvature 1 = hairpin = MinCornerSpeed
+    float SpeedReduction = MaxCurvature * CurvatureBrakingSensitivity;
+    float DesiredSpeed = MaxSpeedKmh - SpeedReduction;
+
+    return FMath::Clamp(DesiredSpeed, MinCornerSpeedKmh, MaxSpeedKmh);
+}
+
+void UTurboAction_FollowPath::ApplySpeedControl()
 {
     if (!Vehicle.IsValid())
     {
@@ -150,19 +257,20 @@ void UTurboAction_FollowPath::ApplySimpleSpeedControl()
     }
 
     float CurrentSpeed = Vehicle->GetSpeedKmh();
-    float SpeedError = TargetSpeedKmh - CurrentSpeed;
+    float DesiredSpeed = CalculateTargetSpeed();
+    float SpeedError = DesiredSpeed - CurrentSpeed;
 
     if (SpeedError > 0.0f)
     {
-        // Need to go faster
+        // Accelerate
         Vehicle->SetThrottleInput(FMath::Clamp(SpeedError / 20.0f, 0.0f, 1.0f));
         Vehicle->SetBrakeInput(0.0f);
     }
     else
     {
-        // Need to slow down
+        // Brake - more aggressive braking for larger errors
         Vehicle->SetThrottleInput(0.0f);
-        Vehicle->SetBrakeInput(FMath::Clamp(-SpeedError / 20.0f, 0.0f, 1.0f));
+        Vehicle->SetBrakeInput(FMath::Clamp(-SpeedError / 30.0f, 0.0f, 1.0f));
     }
 
     Vehicle->SetHandbrakeInput(false);

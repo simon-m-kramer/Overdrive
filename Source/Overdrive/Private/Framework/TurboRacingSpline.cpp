@@ -20,6 +20,25 @@ ATurboRacingSpline::ATurboRacingSpline()
 
 float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRange) const
 {
+    if (!Spline)
+    {
+        return 0.0f;
+    }
+
+    FVector DirA = Spline->GetDirectionAtDistanceAlongSpline(Distance - SampleRange, ESplineCoordinateSpace::World);
+    FVector DirB = Spline->GetDirectionAtDistanceAlongSpline(Distance + SampleRange, ESplineCoordinateSpace::World);
+
+    float Dot = FVector::DotProduct(DirA, DirB);
+    float Curvature = FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
+
+    // Debug: Show actual angle in degrees
+    float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(Dot));
+    UE_LOG(LogTemp, Warning, TEXT("Curvature at %.0f: Angle=%.1f°, Curvature=%.4f (SampleRange=%.0f)"),
+        Distance, AngleDegrees, Curvature, SampleRange);
+
+    return Curvature;
+
+    /*
     if (!Spline) return 0.0f;
 
     // Get directions at two points around the target distance
@@ -32,6 +51,7 @@ float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRan
 
     // Normalize to a 0-1 scale where 1 is a 90-degree difference
     return FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
+    */
 }
 
 float ATurboRacingSpline::GetTurnSign(float Distance) const
