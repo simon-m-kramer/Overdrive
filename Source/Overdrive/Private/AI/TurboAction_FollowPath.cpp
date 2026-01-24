@@ -23,6 +23,10 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
     {
         FVector VehicleLocation = Vehicle->GetActorLocation();
         CurrentSplineDistance = GetSpline()->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
+
+        // Initialize smoothing state
+        SmoothedRacingLineOffset = 0.0f;
+        PreviousTargetOffset = 0.0f;
     }
 }
 
@@ -35,7 +39,7 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 
     UpdateSplineDistance();
 
-    FVector TargetPoint = GetTargetPoint();
+    FVector TargetPoint = GetTargetPoint(DeltaTime);
 
     if (bDrawDebug)
     {
@@ -91,7 +95,8 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         float CurrentSpeed = Vehicle->GetSpeedKmh();
         float CurrentTargetSpeed = CalculateTargetSpeed();
         float MaxCurvature = FindMaxCurvatureAhead();
-        float CurrentOffset = CalculateRacingLineOffset(CurrentSplineDistance + GetLookaheadDistance());
+        float RawOffset = CalculateRacingLineOffset(CurrentSplineDistance + GetLookaheadDistance());
+
 
         GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White,
             FString::Printf(TEXT("Speed: %.1f / %.1f km/h"), CurrentSpeed, CurrentTargetSpeed));
@@ -100,7 +105,7 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::White,
             FString::Printf(TEXT("Max Curvature: %.3f"), MaxCurvature));
         GEngine->AddOnScreenDebugMessage(4, 0.0f, FColor::White,
-            FString::Printf(TEXT("Racing Line Offset: %.1f cm"), CurrentOffset));
+            FString::Printf(TEXT("Offset: %.1f (raw: %.1f)"), SmoothedRacingLineOffset, RawOffset));
     }
 
     float SteeringInput = CalculateSteering(TargetPoint);
@@ -331,7 +336,7 @@ float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
     return -NextCorner.TurnSign * Phase * OffsetMagnitude;
 }
 
-FVector UTurboAction_FollowPath::GetTargetPoint() const
+FVector UTurboAction_FollowPath::GetTargetPoint(float DeltaTime)
 {
     USplineComponent* Spline = GetSpline();
     if (!Spline)
@@ -354,9 +359,37 @@ FVector UTurboAction_FollowPath::GetTargetPoint() const
 
     FVector CenterlinePoint = Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 
-    float Offset = CalculateRacingLineOffset(TargetDistance);
+    // Calculate raw offset
+    float RawOffset = CalculateRacingLineOffset(TargetDistance);
 
-    if (FMath::Abs(Offset) < 1.0f)
+    // Apply smoothing
+    if (bUseRacingLineOffset && DeltaTime > 0.0f)
+    {
+        // Interpolate toward target offset
+        SmoothedRacingLineOffset = FMath::FInterpTo(
+            SmoothedRacingLineOffset,
+            RawOffset,
+            DeltaTime,
+            RacingLineSmoothing
+        );
+
+        // Clamp rate of change to prevent sudden jumps
+        float MaxChange = MaxOffsetChangeRate * DeltaTime;
+        float OffsetDelta = SmoothedRacingLineOffset - PreviousTargetOffset;
+        if (FMath::Abs(OffsetDelta) > MaxChange)
+        {
+            SmoothedRacingLineOffset = PreviousTargetOffset + FMath::Sign(OffsetDelta) * MaxChange;
+        }
+
+        PreviousTargetOffset = SmoothedRacingLineOffset;
+    }
+    else
+    {
+        SmoothedRacingLineOffset = RawOffset;
+        PreviousTargetOffset = RawOffset;
+    }
+
+    if (FMath::Abs(SmoothedRacingLineOffset) < 1.0f)
     {
         return CenterlinePoint;
     }
@@ -365,7 +398,7 @@ FVector UTurboAction_FollowPath::GetTargetPoint() const
     FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
     FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
 
-    return CenterlinePoint + (Right * Offset);
+    return CenterlinePoint + (Right * SmoothedRacingLineOffset);
 }
 
 float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)

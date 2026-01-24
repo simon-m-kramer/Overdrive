@@ -26,7 +26,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
+    bool bDrawDebug = false;
 
     // =========================================================================
     // FEATURE FLAGS
@@ -104,6 +104,14 @@ public:
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
     float MinStraightForCenterline = 8000.0f;
 
+    // How quickly the racing line offset changes (higher = more responsive, lower = smoother)
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float RacingLineSmoothing = 5.0f;
+
+    // Maximum rate of offset change per second (cm/s) - prevents sudden jumps
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float MaxOffsetChangeRate = 400.0f;
+
 private:
     // =========================================================================
     // REFERENCES
@@ -124,6 +132,10 @@ private:
 
     float CurrentSplineDistance = 0.0f;
 
+    // Smoothing state
+    float SmoothedRacingLineOffset = 0.0f;
+    float PreviousTargetOffset = 0.0f;
+
     // =========================================================================
     // METHODS
     // =========================================================================
@@ -131,7 +143,7 @@ private:
     USplineComponent* GetSpline() const;
     void UpdateSplineDistance();
     float GetLookaheadDistance() const;
-    FVector GetTargetPoint() const;
+    FVector GetTargetPoint(float DeltaTime);
     float CalculateSteering(const FVector& TargetPoint);
 
     // Speed control
