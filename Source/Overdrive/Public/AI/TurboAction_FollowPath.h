@@ -79,6 +79,18 @@ public:
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CurvatureSampleRange = 4000.0f;
 
+    // Braking aggression - higher = brake later and harder (1.0 = normal, 2.0 = very aggressive)
+    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
+    float BrakingAggression = 1.5f;
+
+    // Throttle aggression - how quickly to get back on power after apex (1.0 = normal, 2.0 = very aggressive)
+    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
+    float ThrottleAggression = 1.5f;
+
+    // Maximum braking force (0.0 to 1.0)
+    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
+    float MaxBrakingForce = 1.0f;
+
     // =========================================================================
     // RACING LINE CONFIGURATION
     // =========================================================================

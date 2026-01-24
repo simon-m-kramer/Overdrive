@@ -235,105 +235,71 @@ float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
 
     float SplineLength = Spline->GetSplineLength();
 
-    // Find the next corner
-    FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead);
+    FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead * 2.0f);
 
-    // No corner ahead - check further for positioning
     if (!NextCorner.bIsValid)
     {
-        // Look even further ahead for a distant corner to position for
-        FCornerInfo DistantCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead * 2.0f);
-        if (DistantCorner.bIsValid)
-        {
-            // Gradually position toward the outside for the distant corner entry
-            float DistanceToDistant = DistantCorner.ApexDistance - CurrentSplineDistance;
-            if (DistanceToDistant < 0.0f)
-            {
-                DistanceToDistant += SplineLength;
-            }
-
-            // Smooth blend - start positioning when within 2x lookahead
-            float BlendFactor = 1.0f - FMath::Clamp(DistanceToDistant / (RacingLineLookahead * 2.0f), 0.0f, 1.0f);
-            float OffsetMagnitude = DistantCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage * 0.5f;
-            OffsetMagnitude = FMath::Min(OffsetMagnitude, MaxRacingLineOffset);
-
-            // Position on outside for entry (positive phase = outside)
-            return -DistantCorner.TurnSign * BlendFactor * OffsetMagnitude;
-        }
-
         return 0.0f;
     }
 
-    // Calculate distance to this corner's apex
     float DistanceToApex = NextCorner.ApexDistance - CurrentSplineDistance;
     if (DistanceToApex < 0.0f)
     {
         DistanceToApex += SplineLength;
     }
 
-    // Check if there's another corner coming after this one
-    FCornerInfo FollowingCorner = FindCornerAfterStraight(NextCorner.ApexDistance, RacingLineLookahead * 1.5f);
+    float OffsetMagnitude = FMath::Min(NextCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage, MaxRacingLineOffset);
 
-    // Calculate distance between corners (the "straight" length)
-    float StraightLength = 0.0f;
-    if (FollowingCorner.bIsValid)
+    float ApproachZoneStart = RacingLineLookahead;
+    float ApexZoneStart = RacingLineLookahead * 0.25f;
+
+    float Offset = 0.0f;
+    FString Zone = TEXT("Unknown");
+
+    if (DistanceToApex > ApproachZoneStart)
     {
-        StraightLength = FollowingCorner.ApexDistance - NextCorner.ApexDistance;
-        if (StraightLength < 0.0f)
-        {
-            StraightLength += SplineLength;
-        }
+        Zone = TEXT("FAR - Outside");
+        Offset = -NextCorner.TurnSign * OffsetMagnitude;
     }
-
-    // Normalize distance to apex (1 = far, 0 = at apex)
-    float NormalizedDist = FMath::Clamp(DistanceToApex / RacingLineLookahead, 0.0f, 1.0f);
-
-    // Base phase calculation: cos curve from outside (1) to inside (-1)
-    float Phase = FMath::Cos(NormalizedDist * PI);
-
-    // Scale offset by curvature and track width usage
-    float OffsetMagnitude = NextCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage;
-    OffsetMagnitude = FMath::Min(OffsetMagnitude, MaxRacingLineOffset);
-
-    // Handle corner exit behavior based on what's coming next
-    if (FollowingCorner.bIsValid&& NormalizedDist < 0.4f)
+    else if (DistanceToApex > ApexZoneStart)
     {
-        bool bSameDirection = (NextCorner.TurnSign * FollowingCorner.TurnSign) > 0.0f;
-        bool bShortStraight = StraightLength < MinStraightForCenterline;
+        Zone = TEXT("APPROACH - Transitioning");
+        float TransitionProgress = 1.0f - ((DistanceToApex - ApexZoneStart) / (ApproachZoneStart - ApexZoneStart));
+        float SmoothProgress = FMath::Sin(TransitionProgress * PI * 0.5f);
 
-        // How far through the exit are we (0 = at apex, 1 = fully exited)
-        float ExitProgress = 1.0f - (NormalizedDist / 0.4f);
+        float OutsideOffset = -NextCorner.TurnSign * OffsetMagnitude;
+        float InsideOffset = NextCorner.TurnSign * OffsetMagnitude;
 
-        if (bSameDirection)
+        Offset = FMath::Lerp(OutsideOffset, InsideOffset, SmoothProgress);
+    }
+    else
+    {
+        Zone = TEXT("APEX - Inside");
+        FCornerInfo FollowingCorner = FindCornerAfterStraight(NextCorner.ApexDistance, RacingLineLookahead);
+
+        if (FollowingCorner.bIsValid)
         {
-            // Same direction turn coming - stay on the inside throughout
-            // Don't track out, just hold the inside line
-            float HoldInsidePhase = -0.7f; // Stay mostly inside
-            Phase = FMath::Lerp(Phase, HoldInsidePhase, ExitProgress * 0.8f);
-        }
-        else if (bShortStraight)
-        {
-            // Chicane - opposite direction, short straight
-            // Blend toward outside for next corner entry
-            float NextEntryPhase = 0.8f; // Outside position for next corner
-            Phase = FMath::Lerp(Phase, NextEntryPhase, ExitProgress);
+            float PastApexDistance = ApexZoneStart - DistanceToApex;
+            float ExitProgress = FMath::Clamp(PastApexDistance / ApexZoneStart, 0.0f, 1.0f);
+            float SmoothExit = FMath::Sin(ExitProgress * PI * 0.5f);
+
+            float InsideOffset = NextCorner.TurnSign * OffsetMagnitude;
+            float NextOffsetMagnitude = FMath::Min(FollowingCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage, MaxRacingLineOffset);
+            float NextOutsideOffset = -FollowingCorner.TurnSign * NextOffsetMagnitude;
+
+            Offset = FMath::Lerp(InsideOffset, NextOutsideOffset, SmoothExit);
         }
         else
         {
-            // Long straight before opposite direction corner
-            // Smooth transition toward center, then position for next corner
-            float TransitionPhase = FMath::Lerp(0.0f, 0.5f * -FollowingCorner.TurnSign / NextCorner.TurnSign, ExitProgress);
-            Phase = FMath::Lerp(Phase, TransitionPhase, ExitProgress * 0.6f);
+            float PastApexDistance = ApexZoneStart - DistanceToApex;
+            float ExitProgress = FMath::Clamp(PastApexDistance / ApexZoneStart, 0.0f, 1.0f);
+
+            float InsideOffset = NextCorner.TurnSign * OffsetMagnitude;
+            Offset = FMath::Lerp(InsideOffset, 0.0f, ExitProgress * 0.5f);
         }
     }
-    else if (!FollowingCorner.bIsValid && NormalizedDist < 0.3f)
-    {
-        // No corner detected after this one - smooth return to center on exit
-        float ExitProgress = 1.0f - (NormalizedDist / 0.3f);
-        Phase = FMath::Lerp(Phase, 0.0f, ExitProgress * 0.5f);
-    }
 
-    return -NextCorner.TurnSign * Phase * OffsetMagnitude;
+    return Offset;
 }
 
 FVector UTurboAction_FollowPath::GetTargetPoint(float DeltaTime)
@@ -359,13 +325,10 @@ FVector UTurboAction_FollowPath::GetTargetPoint(float DeltaTime)
 
     FVector CenterlinePoint = Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 
-    // Calculate raw offset
     float RawOffset = CalculateRacingLineOffset(TargetDistance);
 
-    // Apply smoothing
     if (bUseRacingLineOffset && DeltaTime > 0.0f)
     {
-        // Interpolate toward target offset
         SmoothedRacingLineOffset = FMath::FInterpTo(
             SmoothedRacingLineOffset,
             RawOffset,
@@ -373,7 +336,6 @@ FVector UTurboAction_FollowPath::GetTargetPoint(float DeltaTime)
             RacingLineSmoothing
         );
 
-        // Clamp rate of change to prevent sudden jumps
         float MaxChange = MaxOffsetChangeRate * DeltaTime;
         float OffsetDelta = SmoothedRacingLineOffset - PreviousTargetOffset;
         if (FMath::Abs(OffsetDelta) > MaxChange)
@@ -398,7 +360,7 @@ FVector UTurboAction_FollowPath::GetTargetPoint(float DeltaTime)
     FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
     FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
 
-    return CenterlinePoint + (Right * SmoothedRacingLineOffset);
+    return CenterlinePoint + (Right * -SmoothedRacingLineOffset);
 }
 
 float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)

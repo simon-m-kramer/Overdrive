@@ -31,10 +31,12 @@ float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRan
     float Dot = FVector::DotProduct(DirA, DirB);
     float Curvature = FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
 
+    /*
     // Debug: Show actual angle in degrees
     float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(Dot));
     UE_LOG(LogTemp, Warning, TEXT("Curvature at %.0f: Angle=%.1f°, Curvature=%.4f (SampleRange=%.0f)"),
         Distance, AngleDegrees, Curvature, SampleRange);
+    */
 
     return Curvature;
 
