@@ -68,24 +68,24 @@ public:
     float MaxSpeedKmh = 220.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MinCornerSpeedKmh = 60.0f;
+    float MinCornerSpeedKmh = 50.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CornerDetectionDistance = 1500.0f;
+    float CornerDetectionDistance = 3000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureBrakingSensitivity = 120.0f;
+    float CurvatureBrakingSensitivity = 140.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CurvatureSampleRange = 4000.0f;
 
     // Braking aggression - higher = brake later and harder (1.0 = normal, 2.0 = very aggressive)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float BrakingAggression = 1.5f;
+    float BrakingAggression = 2.0f;
 
     // Throttle aggression - how quickly to get back on power after apex (1.0 = normal, 2.0 = very aggressive)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float ThrottleAggression = 1.5f;
+    float ThrottleAggression = 1.3f;
 
     // Maximum braking force (0.0 to 1.0)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
