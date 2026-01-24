@@ -10,9 +10,7 @@
 
 ATurboRaceTrackGenerator::ATurboRaceTrackGenerator()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("Spline"));
-	RootComponent = Spline;
+
 }
 
 void ATurboRaceTrackGenerator::BeginPlay()
