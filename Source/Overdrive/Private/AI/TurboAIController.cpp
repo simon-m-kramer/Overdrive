@@ -22,7 +22,6 @@ void ATurboAIController::FindRacingSpline()
 	for (AActor* Actor : FoundActors)
 	{
 		ATurboRacingSpline* SplineActor = Cast<ATurboRacingSpline>(Actor);
-		// Check if this specific actor has the MainSpline tag
 		if (SplineActor && SplineActor->GetGameplayTags().HasTag(TurboGameplayTags::Track_MainSpline))
 		{
 			RacingSpline = SplineActor->GetSplineComponent();
@@ -34,8 +33,16 @@ void ATurboAIController::FindRacingSpline()
 void ATurboAIController::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
+void ATurboAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	// Initialize Action Stack, Racing Spline, Controlled Vehicle and Default Action
 	ActionStack = NewObject<UBifrostActionStack>(this);
+	FindRacingSpline();
+	ControlledVehicle = Cast<ATurboVehicle>(InPawn);
 }
 
 void ATurboAIController::Tick(float DeltaTime)
@@ -78,7 +85,7 @@ UBifrostAction* ATurboAIController::GetCurrentAction() const
 {
 	if (ActionStack)
 	{
-		ActionStack->GetCurrentAction();
+		return ActionStack->GetCurrentAction();
 	}
 	return nullptr;
 }

@@ -9,7 +9,7 @@
 class UBifrostActionStack;
 class UBifrostAction;
 class USplineComponent;
-
+class ATurboVehicle;
 
 /**
  * 
@@ -51,14 +51,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Spline")
 	void FindRacingSpline();
 
+
+
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void OnPossess(APawn* InPawn) override;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
-	UBifrostActionStack* ActionStack;
+	TObjectPtr<UBifrostActionStack> ActionStack;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-	USplineComponent* RacingSpline;
+	TObjectPtr<USplineComponent> RacingSpline;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
+	TObjectPtr<ATurboVehicle> ControlledVehicle;
 
 };
