@@ -410,68 +410,12 @@ float UTurboAction_FollowPath::CalculateTargetSpeed() const
         return TargetSpeedKmh;
     }
 
-    USplineComponent* Spline = GetSpline();
-    if (!Spline || !RacingSplineActor.IsValid())
-    {
-        return MaxSpeedKmh;
-    }
+    float MaxCurvature = FindMaxCurvatureAhead();
 
-    float SplineLength = Spline->GetSplineLength();
+    float SpeedReduction = MaxCurvature * CurvatureBrakingSensitivity;
+    float DesiredSpeed = MaxSpeedKmh - SpeedReduction;
 
-    FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, CornerDetectionDistance);
-
-    if (!NextCorner.bIsValid)
-    {
-        return MaxSpeedKmh;
-    }
-
-    float DistanceToApex = NextCorner.ApexDistance - CurrentSplineDistance;
-    if (DistanceToApex < 0.0f)
-    {
-        DistanceToApex += SplineLength;
-    }
-
-    // Calculate required apex speed based on curvature
-    float ApexTargetSpeed = MaxSpeedKmh - (NextCorner.Curvature * CurvatureBrakingSensitivity);
-    ApexTargetSpeed = FMath::Clamp(ApexTargetSpeed, MinCornerSpeedKmh, MaxSpeedKmh);
-
-    float CurrentSpeed = Vehicle.IsValid() ? Vehicle->GetSpeedKmh() : 0.0f;
-
-    // Very small apex zone - commit only when very close
-    float ApexZone = 800.0f;
-    if (DistanceToApex < ApexZone)
-    {
-        return ApexTargetSpeed;
-    }
-
-    // Calculate braking distance needed
-    float BrakingDecel = 1000.0f * BrakingAggression;
-    float CurrentSpeedCms = CurrentSpeed / 0.036f;
-    float ApexSpeedCms = ApexTargetSpeed / 0.036f;
-
-    if (CurrentSpeedCms > ApexSpeedCms)
-    {
-        float BrakingDistanceNeeded = (CurrentSpeedCms * CurrentSpeedCms - ApexSpeedCms * ApexSpeedCms) / (2.0f * BrakingDecel);
-
-        // Minimal safety margin - live on the edge
-        float SharpCornerMultiplier = 1.0f + (NextCorner.Curvature * 0.2f);
-        BrakingDistanceNeeded *= SharpCornerMultiplier;
-
-        UE_LOG(LogTemp, Warning, TEXT("Curv=%.2f | Apex=%.0f | Speed=%.0f | BrakeDist=%.0f | Dist=%.0f | %s"),
-            NextCorner.Curvature,
-            ApexTargetSpeed,
-            CurrentSpeed,
-            BrakingDistanceNeeded,
-            DistanceToApex,
-            DistanceToApex > BrakingDistanceNeeded ? TEXT("HOLD") : TEXT("BRAKE"));
-
-        if (DistanceToApex <= BrakingDistanceNeeded)
-        {
-            return ApexTargetSpeed;
-        }
-    }
-
-    return MaxSpeedKmh;
+    return FMath::Clamp(DesiredSpeed, MinCornerSpeedKmh, MaxSpeedKmh);
 }
 
 void UTurboAction_FollowPath::ApplySpeedControl()
@@ -485,42 +429,15 @@ void UTurboAction_FollowPath::ApplySpeedControl()
     float DesiredSpeed = CalculateTargetSpeed();
     float SpeedError = DesiredSpeed - CurrentSpeed;
 
-    // Check if we're past the apex (for earlier throttle application)
-    USplineComponent* Spline = GetSpline();
-    bool bPastApex = false;
-
-    if (Spline && RacingSplineActor.IsValid())
-    {
-        FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead);
-        if (NextCorner.bIsValid)
-        {
-            float DistanceToApex = NextCorner.ApexDistance - CurrentSplineDistance;
-            if (DistanceToApex < 0.0f)
-            {
-                DistanceToApex += Spline->GetSplineLength();
-            }
-
-            // Consider "past apex" when within 25% of the approach zone
-            bPastApex = DistanceToApex < (RacingLineLookahead * 0.25f);
-        }
-    }
-
     if (SpeedError > 0.0f)
     {
-        // Need to accelerate
-        float ThrottleMultiplier = bPastApex ? ThrottleAggression : 1.0f;
-        float ThrottleInput = FMath::Clamp((SpeedError / 20.0f) * ThrottleMultiplier, 0.0f, 1.0f);
-
-        Vehicle->SetThrottleInput(ThrottleInput);
+        Vehicle->SetThrottleInput(FMath::Clamp(SpeedError / 20.0f, 0.0f, 1.0f));
         Vehicle->SetBrakeInput(0.0f);
     }
     else
     {
-        // Need to brake
-        float BrakeInput = FMath::Clamp((-SpeedError / 30.0f) * BrakingAggression, 0.0f, MaxBrakingForce);
-
         Vehicle->SetThrottleInput(0.0f);
-        Vehicle->SetBrakeInput(BrakeInput);
+        Vehicle->SetBrakeInput(FMath::Clamp(-SpeedError / 30.0f, 0.0f, 1.0f));
     }
 
     Vehicle->SetHandbrakeInput(false);
