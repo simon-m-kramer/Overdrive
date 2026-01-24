@@ -95,6 +95,15 @@ public:
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
     float RacingLineMinCurvature = 0.1f;
 
+    // How aggressively to use track width (1.0 = normal, 2.0 = very aggressive)
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float TrackWidthUsage = 1.5f;
+
+    // Minimum straight length to return to centerline (cm)
+    // If the next corner is closer than this, stay on the racing line
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float MinStraightForCenterline = 8000.0f;
+
 private:
     // =========================================================================
     // REFERENCES
@@ -132,5 +141,16 @@ private:
 
     // Racing line
     float CalculateRacingLineOffset(float AtDistance) const;
-    float FindApexDistance(float StartDistance, float SearchRange) const;
+
+    // Corner detection helpers
+    struct FCornerInfo
+    {
+        float ApexDistance = -1.0f;
+        float Curvature = 0.0f;
+        float TurnSign = 0.0f;
+        bool bIsValid = false;
+    };
+
+    FCornerInfo FindNextCorner(float StartDistance, float SearchRange) const;
+    FCornerInfo FindCornerAfterStraight(float StartDistance, float MaxSearchRange) const;
 };

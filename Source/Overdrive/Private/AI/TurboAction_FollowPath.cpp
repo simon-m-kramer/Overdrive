@@ -57,7 +57,6 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         FVector CurrentSplinePoint = Spline->GetLocationAtDistanceAlongSpline(CurrentSplineDistance, ESplineCoordinateSpace::World);
         DrawDebugSphere(World, CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
 
-        // Centerline target for comparison (cyan) - shows where we'd aim without racing line
         if (bUseRacingLineOffset)
         {
             float LookaheadDist = GetLookaheadDistance();
@@ -70,19 +69,25 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
             FVector CenterlinePoint = Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
             DrawDebugSphere(World, CenterlinePoint, 30.0f, 8, FColor::Cyan, false, 0.0f);
 
-            // Draw racing line offset as a line from centerline to actual target
             DrawDebugLine(World, CenterlinePoint, TargetPoint, FColor::Magenta, false, 0.0f, 0, 2.0f);
 
-            // Find and mark the apex
-            float ApexDist = FindApexDistance(CurrentSplineDistance, RacingLineLookahead);
-            if (ApexDist > 0.0f)
+            // Find and mark corners
+            FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead);
+            if (NextCorner.bIsValid)
             {
-                FVector ApexPoint = Spline->GetLocationAtDistanceAlongSpline(ApexDist, ESplineCoordinateSpace::World);
+                FVector ApexPoint = Spline->GetLocationAtDistanceAlongSpline(NextCorner.ApexDistance, ESplineCoordinateSpace::World);
                 DrawDebugSphere(World, ApexPoint + FVector(0, 0, 100), 60.0f, 8, FColor::Orange, false, 0.0f);
+
+                // Also check for corner after this one
+                FCornerInfo FollowingCorner = FindCornerAfterStraight(NextCorner.ApexDistance, RacingLineLookahead);
+                if (FollowingCorner.bIsValid)
+                {
+                    FVector FollowingApexPoint = Spline->GetLocationAtDistanceAlongSpline(FollowingCorner.ApexDistance, ESplineCoordinateSpace::World);
+                    DrawDebugSphere(World, FollowingApexPoint + FVector(0, 0, 150), 40.0f, 8, FColor::Purple, false, 0.0f);
+                }
             }
         }
 
-        // On-screen debug info
         float CurrentSpeed = Vehicle->GetSpeedKmh();
         float CurrentTargetSpeed = CalculateTargetSpeed();
         float MaxCurvature = FindMaxCurvatureAhead();
@@ -139,17 +144,18 @@ float UTurboAction_FollowPath::GetLookaheadDistance() const
     return FMath::Clamp(Lookahead, MinLookaheadDistance, MaxLookaheadDistance);
 }
 
-float UTurboAction_FollowPath::FindApexDistance(float StartDistance, float SearchRange) const
+UTurboAction_FollowPath::FCornerInfo UTurboAction_FollowPath::FindNextCorner(float StartDistance, float SearchRange) const
 {
+    FCornerInfo Result;
+
     USplineComponent* Spline = GetSpline();
     if (!Spline || !RacingSplineActor.IsValid())
     {
-        return -1.0f;
+        return Result;
     }
 
     float SplineLength = Spline->GetSplineLength();
     float MaxCurvature = 0.0f;
-    float ApexDistance = -1.0f;
 
     for (float Dist = StartDistance; Dist < StartDistance + SearchRange; Dist += 100.0f)
     {
@@ -159,11 +165,54 @@ float UTurboAction_FollowPath::FindApexDistance(float StartDistance, float Searc
         if (Curvature > MaxCurvature && Curvature > RacingLineMinCurvature)
         {
             MaxCurvature = Curvature;
-            ApexDistance = WrappedDist;
+            Result.ApexDistance = WrappedDist;
+            Result.Curvature = Curvature;
+            Result.bIsValid = true;
         }
     }
 
-    return ApexDistance;
+    if (Result.bIsValid)
+    {
+        Result.TurnSign = RacingSplineActor->GetTurnSign(Result.ApexDistance);
+    }
+
+    return Result;
+}
+
+UTurboAction_FollowPath::FCornerInfo UTurboAction_FollowPath::FindCornerAfterStraight(float StartDistance, float MaxSearchRange) const
+{
+    FCornerInfo Result;
+
+    USplineComponent* Spline = GetSpline();
+    if (!Spline || !RacingSplineActor.IsValid())
+    {
+        return Result;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+
+    // First, find where the current corner ends (curvature drops below threshold)
+    float StraightStartDistance = StartDistance;
+    for (float Dist = StartDistance; Dist < StartDistance + MaxSearchRange; Dist += 100.0f)
+    {
+        float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
+
+        if (Curvature < RacingLineMinCurvature)
+        {
+            StraightStartDistance = WrappedDist;
+            break;
+        }
+    }
+
+    // Now find the next corner after this straight
+    float RemainingRange = MaxSearchRange - (StraightStartDistance - StartDistance);
+    if (RemainingRange > 0.0f)
+    {
+        Result = FindNextCorner(StraightStartDistance, RemainingRange);
+    }
+
+    return Result;
 }
 
 float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
@@ -181,45 +230,70 @@ float UTurboAction_FollowPath::CalculateRacingLineOffset(float AtDistance) const
 
     float SplineLength = Spline->GetSplineLength();
 
-    // Find the apex (sharpest point) ahead
-    float ApexDistance = FindApexDistance(CurrentSplineDistance, RacingLineLookahead);
+    // Find the next corner
+    FCornerInfo NextCorner = FindNextCorner(CurrentSplineDistance, RacingLineLookahead);
 
-    // No significant corner ahead
-    if (ApexDistance < 0.0f)
+    // No corner ahead
+    if (!NextCorner.bIsValid)
     {
         return 0.0f;
     }
 
-    // Get curvature at apex to scale the offset
-    float ApexCurvature = RacingSplineActor->GetCurvatureAtDistance(ApexDistance, CurvatureSampleRange);
-
-    // Get turn direction at apex
-    float TurnSign = RacingSplineActor->GetTurnSign(ApexDistance);
-
-    // Calculate distance to apex
-    float DistanceToApex = ApexDistance - CurrentSplineDistance;
+    // Calculate distance to this corner's apex
+    float DistanceToApex = NextCorner.ApexDistance - CurrentSplineDistance;
     if (DistanceToApex < 0.0f)
     {
         DistanceToApex += SplineLength;
     }
 
-    // Normalize distance to 0-1 range (1 = far from apex, 0 = at apex)
+    // Check if there's another corner coming soon after this one
+    FCornerInfo FollowingCorner = FindCornerAfterStraight(NextCorner.ApexDistance, RacingLineLookahead);
+
+    // Calculate distance between corners (the "straight" length)
+    float StraightLength = 0.0f;
+    if (FollowingCorner.bIsValid)
+    {
+        StraightLength = FollowingCorner.ApexDistance - NextCorner.ApexDistance;
+        if (StraightLength < 0.0f)
+        {
+            StraightLength += SplineLength;
+        }
+    }
+
+    // Determine which corner to prioritize for exit positioning
+    bool bShortStraightAhead = FollowingCorner.bIsValid && (StraightLength < MinStraightForCenterline);
+
+    // Normalize distance to apex (1 = far, 0 = at apex)
     float NormalizedDist = FMath::Clamp(DistanceToApex / RacingLineLookahead, 0.0f, 1.0f);
 
-    // Racing line phase using cosine:
-    // NormalizedDist = 1.0 (far): cos(0) = 1.0 -> outside of turn (wide entry)
-    // NormalizedDist = 0.5 (mid): cos(PI/2) = 0.0 -> on centerline
-    // NormalizedDist = 0.0 (apex): cos(PI) = -1.0 -> inside of turn (clip apex)
+    // Base phase calculation
     float Phase = FMath::Cos(NormalizedDist * PI);
 
-    // Scale offset by curvature (sharper corner = more offset)
-    float OffsetMagnitude = ApexCurvature * MaxRacingLineOffset;
+    // If there's a short straight followed by another corner, modify the exit behavior
+    if (bShortStraightAhead&& NormalizedDist < 0.3f)
+    {
+        // We're exiting the current corner - check if next corner is same direction
+        bool bSameDirection = (NextCorner.TurnSign * FollowingCorner.TurnSign) > 0.0f;
 
-    // TurnSign: positive = right turn, negative = left turn
-    // For a right turn: we want to be LEFT (negative) on entry, RIGHT (positive) at apex
-    // Phase goes from 1 (entry) to -1 (apex)
-    // So: Offset = -TurnSign * Phase * Magnitude
-    return -TurnSign * Phase * OffsetMagnitude;
+        if (bSameDirection)
+        {
+            // Same direction turn coming - stay on the inside
+            Phase = FMath::Min(Phase, -0.5f);
+        }
+        else
+        {
+            // Opposite direction turn (chicane) - blend toward the outside for the next corner
+            float BlendToNext = 1.0f - (NormalizedDist / 0.3f);
+            float NextEntryPhase = 1.0f; // Outside for next corner entry
+            Phase = FMath::Lerp(Phase, NextEntryPhase * -FollowingCorner.TurnSign / NextCorner.TurnSign, BlendToNext);
+        }
+    }
+
+    // Scale offset by curvature and track width usage
+    float OffsetMagnitude = NextCorner.Curvature * MaxRacingLineOffset * TrackWidthUsage;
+    OffsetMagnitude = FMath::Min(OffsetMagnitude, MaxRacingLineOffset); // Clamp to max
+
+    return -NextCorner.TurnSign * Phase * OffsetMagnitude;
 }
 
 FVector UTurboAction_FollowPath::GetTargetPoint() const
@@ -243,10 +317,8 @@ FVector UTurboAction_FollowPath::GetTargetPoint() const
         TargetDistance = FMath::Min(TargetDistance, SplineLength);
     }
 
-    // Get centerline point
     FVector CenterlinePoint = Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 
-    // Calculate racing line offset
     float Offset = CalculateRacingLineOffset(TargetDistance);
 
     if (FMath::Abs(Offset) < 1.0f)
@@ -254,7 +326,6 @@ FVector UTurboAction_FollowPath::GetTargetPoint() const
         return CenterlinePoint;
     }
 
-    // Get the right vector at this spline point
     FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
     FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
     FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
