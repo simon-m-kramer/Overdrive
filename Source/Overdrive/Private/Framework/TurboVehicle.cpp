@@ -55,6 +55,11 @@ float ATurboVehicle::GetForwardSpeed() const
     return VehicleMovement->GetForwardSpeed();
 }
 
+FVector ATurboVehicle::GetLookAheadPoint() const
+{
+    return FVector();
+}
+
 void ATurboVehicle::SetupWheels()
 {
     VehicleMovement->bLegacyWheelFrictionPosition = true;

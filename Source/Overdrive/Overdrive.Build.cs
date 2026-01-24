@@ -19,7 +19,8 @@ public class Overdrive : ModuleRules
 			"UMG",
 			"Slate",
 			"Bifrost",
-			"Landscape"
+			"Landscape",
+			"GameplayTags"
 		});
 
 		PublicIncludePaths.AddRange(new string[] {

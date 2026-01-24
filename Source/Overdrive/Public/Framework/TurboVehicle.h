@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "WheeledVehiclePawn.h"
-#include "Framework/BifrostActionVehicle.h"
 #include "TurboVehicle.generated.h"
 
 
@@ -14,7 +13,7 @@ class UChaosWheeledVehicleMovementComponent;
  * 
  */
 UCLASS()
-class OVERDRIVE_API ATurboVehicle : public ABifrostActionVehicle
+class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
 {
 	GENERATED_BODY()
 	
@@ -22,7 +21,7 @@ class OVERDRIVE_API ATurboVehicle : public ABifrostActionVehicle
 public:
 	ATurboVehicle();
 
-	// Input methods - used by both player and AI
+	// Input methods
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	void SetSteeringInput(float Value);
 
@@ -41,6 +40,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetForwardSpeed() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	FVector GetLookAheadPoint() const;
 
 protected:
 	UPROPERTY()

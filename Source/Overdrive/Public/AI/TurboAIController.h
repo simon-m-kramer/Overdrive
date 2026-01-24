@@ -3,24 +3,31 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WheeledVehiclePawn.h"
-#include "BifrostActionVehicle.generated.h"
+#include "AIController.h"
+#include "TurboAIController.generated.h"
 
 class UBifrostActionStack;
 class UBifrostAction;
+class USplineComponent;
+
+
 /**
  * 
  */
 UCLASS()
-class OVERDRIVE_API ABifrostActionVehicle : public AWheeledVehiclePawn
+class OVERDRIVE_API ATurboAIController : public AAIController
 {
 	GENERATED_BODY()
 	
 
 public:
-	ABifrostActionVehicle();
+	ATurboAIController();
 
 	virtual void Tick(float DeltaTime) override;
+
+	// =====================================================================
+	// ACTION STACK
+	// =====================================================================
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
 	void PushAction(UBifrostAction* NewAction);
@@ -37,13 +44,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Action")
 	UBifrostAction* GetCurrentAction() const;
 
+	// =====================================================================
+	// OTHER
+	// =====================================================================
+
+	UFUNCTION(BlueprintCallable, Category = "Spline")
+	void FindRacingSpline();
+
 protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
 	UBifrostActionStack* ActionStack;
 
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
+	USplineComponent* RacingSpline;
 
 
 };
