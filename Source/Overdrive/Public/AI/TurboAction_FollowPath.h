@@ -26,7 +26,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
     // =========================================================================
     // FEATURE FLAGS
@@ -65,31 +65,47 @@ public:
     float TargetSpeedKmh = 80.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MaxSpeedKmh = 220.0f;
+    float MaxSpeedKmh = 200.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MinCornerSpeedKmh = 60.0f;
+    float MinCornerSpeedKmh = 55.0f;
+
+    // Minimum speed for very sharp corners (curvature > 0.8)
+    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
+    float HairpinSpeedKmh = 40.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CornerDetectionDistance = 1500.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureBrakingSensitivity = 120.0f;
+    float CurvatureBrakingSensitivity = 130.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
     float CurvatureSampleRange = 4000.0f;
 
-    // Braking aggression - higher = brake later and harder (1.0 = normal, 2.0 = very aggressive)
+    // Speed threshold below which we coast instead of braking (km/h difference)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float BrakingAggression = 1.5f;
+    float CoastingThreshold = 20.0f;
 
-    // Throttle aggression - how quickly to get back on power after apex (1.0 = normal, 2.0 = very aggressive)
+    // Speed threshold below which we coast instead of accelerating (km/h difference)
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float ThrottleAggression = 1.5f;
+    float ThrottleDeadzone = 15.0f;
 
-    // Maximum braking force (0.0 to 1.0)
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MaxBrakingForce = 1.0f;
+    // =========================================================================
+    // STEERING CONFIGURATION
+    // =========================================================================
+
+    // Base steering multiplier
+    UPROPERTY(EditAnywhere, Category = "Steering")
+    float SteeringMultiplier = 2.0f;
+
+    // Additional steering aggression at high speed when approaching corners
+    UPROPERTY(EditAnywhere, Category = "Steering")
+    float AggressiveSteeringMultiplier = 1.6f;
+
+    // Curvature threshold to trigger aggressive steering
+    UPROPERTY(EditAnywhere, Category = "Steering")
+    float AggressiveSteeringCurvatureThreshold = 0.3f;
 
     // =========================================================================
     // RACING LINE CONFIGURATION
@@ -97,7 +113,7 @@ public:
 
     // Maximum lateral offset from centerline (cm)
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float MaxRacingLineOffset = 400.0f;
+    float MaxRacingLineOffset = 500.0f;
 
     // How far ahead to look for upcoming corners (cm)
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
@@ -109,7 +125,7 @@ public:
 
     // How aggressively to use track width (1.0 = normal, 2.0 = very aggressive)
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float TrackWidthUsage = 1.5f;
+    float TrackWidthUsage = 1.8f;
 
     // Minimum straight length to return to centerline (cm)
     // If the next corner is closer than this, stay on the racing line
@@ -118,11 +134,11 @@ public:
 
     // How quickly the racing line offset changes (higher = more responsive, lower = smoother)
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float RacingLineSmoothing = 5.0f;
+    float RacingLineSmoothing = 12.0f;
 
     // Maximum rate of offset change per second (cm/s) - prevents sudden jumps
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float MaxOffsetChangeRate = 400.0f;
+    float MaxOffsetChangeRate = 1200.0f;
 
 private:
     // =========================================================================
@@ -147,6 +163,10 @@ private:
     // Smoothing state
     float SmoothedRacingLineOffset = 0.0f;
     float PreviousTargetOffset = 0.0f;
+
+    float LockedApexDistance = -1.0f;
+    float LockedTurnSign = 0.0f;
+    bool bCornerLocked = false;
 
     // =========================================================================
     // METHODS
@@ -177,4 +197,16 @@ private:
 
     FCornerInfo FindNextCorner(float StartDistance, float SearchRange) const;
     FCornerInfo FindCornerAfterStraight(float StartDistance, float MaxSearchRange) const;
+
+    // Pre-calculated racing line
+    TArray<float> PreCalculatedOffsets;
+    float RacingLineSampleInterval = 200.0f;
+    bool bRacingLineCalculated = false;
+
+    void PreCalculateRacingLine();
+    float CalculateIdealOffset(float Distance) const;
+    float GetPreCalculatedOffset(float Distance) const;
+    void DrawDebugRacingLine() const;
+
+
 };
