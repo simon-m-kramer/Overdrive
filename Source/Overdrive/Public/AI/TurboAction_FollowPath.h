@@ -26,7 +26,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
+    bool bDrawDebug = false;
 
     // =========================================================================
     // FEATURE FLAGS
@@ -65,28 +65,31 @@ public:
     float TargetSpeedKmh = 80.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MaxSpeedKmh = 200.0f;
+    float MaxSpeedKmh = 280.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MinCornerSpeedKmh = 55.0f;
+    float MinCornerSpeedKmh = 120.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float HairpinSpeedKmh = 40.0f;
+    float HairpinSpeedKmh = 110.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CornerDetectionDistance = 1500.0f;
+    float CornerDetectionDistance = 2800.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureBrakingSensitivity = 130.0f;
+    float CurvatureBrakingSensitivity = 120.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureSampleRange = 4000.0f;
+    float CurvatureSampleRange = 1800.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CoastingThreshold = 15.0f;
+    float CoastingThreshold = 3.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float ThrottleDeadzone = 10.0f;
+    float ThrottleDeadzone = 2.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
+    float CurvatureDeadzone = 0.25f;
 
     // =========================================================================
     // RACING LINE CONFIGURATION

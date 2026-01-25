@@ -218,11 +218,24 @@ float UTurboAction_FollowPath::FindMaxCurvatureAhead() const
     float SplineLength = Spline->GetSplineLength();
     float MaxCurvature = 0.0f;
 
-    for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + CornerDetectionDistance; Dist += 100.0f)
+    // Look further ahead to find sharp corners early
+    float ExtendedDetectionDistance = CornerDetectionDistance * 1.5f;
+
+    for (float Dist = CurrentSplineDistance; Dist < CurrentSplineDistance + ExtendedDetectionDistance; Dist += 100.0f)
     {
         float WrappedDist = Spline->IsClosedLoop() ? FMath::Fmod(Dist, SplineLength) : FMath::Min(Dist, SplineLength);
         float Curvature = RacingSplineActor->GetCurvatureAtDistance(WrappedDist, CurvatureSampleRange);
-        MaxCurvature = FMath::Max(MaxCurvature, Curvature);
+
+        // If we find a very sharp corner, weight it more heavily
+        if (Curvature > 0.8f)
+        {
+            MaxCurvature = FMath::Max(MaxCurvature, Curvature);
+        }
+        else if (Dist < CurrentSplineDistance + CornerDetectionDistance)
+        {
+            // Normal corners only within normal detection distance
+            MaxCurvature = FMath::Max(MaxCurvature, Curvature);
+        }
     }
 
     return MaxCurvature;
@@ -235,20 +248,50 @@ float UTurboAction_FollowPath::CalculateTargetSpeed() const
         return TargetSpeedKmh;
     }
 
-    float MaxCurvature = FindMaxCurvatureAhead();
-
-    // Dynamic minimum speed for hairpins
-    float DynamicMinSpeed = MinCornerSpeedKmh;
-    if (MaxCurvature > 0.8f)
+    USplineComponent* Spline = GetSpline();
+    if (!Spline || !RacingSplineActor.IsValid())
     {
-        float HairpinFactor = (MaxCurvature - 0.8f) / 0.2f;
-        DynamicMinSpeed = FMath::Lerp(MinCornerSpeedKmh, HairpinSpeedKmh, HairpinFactor);
+        return MaxSpeedKmh;
     }
 
-    float SpeedReduction = MaxCurvature * CurvatureBrakingSensitivity;
-    float DesiredSpeed = MaxSpeedKmh - SpeedReduction;
+    float MaxCurvature = FindMaxCurvatureAhead();
+    float CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, CurvatureSampleRange);
+    float RawCurvature = FMath::Max(CurrentCurvature, MaxCurvature);
 
-    return FMath::Clamp(DesiredSpeed, DynamicMinSpeed, MaxSpeedKmh);
+    // Apply deadzone
+    float EffectiveCurvature = FMath::Max(0.0f, RawCurvature - CurvatureDeadzone);
+
+    // Debug to help tune
+    GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::Cyan,
+        FString::Printf(TEXT("Curvature: Raw=%.3f Effective=%.3f"), RawCurvature, EffectiveCurvature));
+
+    float MaxAllowedSpeed;
+    if (EffectiveCurvature > 0.45f)
+    {
+        MaxAllowedSpeed = HairpinSpeedKmh * 0.6f;
+    }
+    else if (EffectiveCurvature > 0.3f)
+    {
+        MaxAllowedSpeed = HairpinSpeedKmh * 0.8f;
+    }
+    else if (EffectiveCurvature > 0.2f)
+    {
+        MaxAllowedSpeed = HairpinSpeedKmh;
+    }
+    else if (EffectiveCurvature > 0.1f)
+    {
+        MaxAllowedSpeed = MinCornerSpeedKmh;
+    }
+    else
+    {
+        MaxAllowedSpeed = MaxSpeedKmh;
+    }
+
+    float SpeedReduction = EffectiveCurvature * CurvatureBrakingSensitivity;
+    float GradualSpeed = MaxSpeedKmh - SpeedReduction;
+    float FinalSpeed = FMath::Min(GradualSpeed, MaxAllowedSpeed);
+
+    return FMath::Max(FinalSpeed, 15.0f);
 }
 
 void UTurboAction_FollowPath::ApplySpeedControl()
@@ -264,20 +307,23 @@ void UTurboAction_FollowPath::ApplySpeedControl()
 
     if (SpeedError > ThrottleDeadzone)
     {
-        float ThrottleInput = FMath::Clamp((SpeedError - ThrottleDeadzone) / 20.0f, 0.0f, 1.0f);
+        // More aggressive acceleration
+        float ThrottleInput = FMath::Clamp(SpeedError / 10.0f, 0.3f, 1.0f);
         Vehicle->SetThrottleInput(ThrottleInput);
         Vehicle->SetBrakeInput(0.0f);
     }
     else if (SpeedError < -CoastingThreshold)
     {
-        float BrakeInput = FMath::Clamp((-SpeedError - CoastingThreshold) / 30.0f, 0.0f, 1.0f);
+        // Gentler, progressive braking
+        float OverSpeed = -SpeedError;
+        float BrakeInput = FMath::Clamp(OverSpeed / 20.0f, 0.1f, 0.8f);
         Vehicle->SetThrottleInput(0.0f);
         Vehicle->SetBrakeInput(BrakeInput);
     }
     else
     {
-        // Coast
-        Vehicle->SetThrottleInput(0.0f);
+        // Coasting - maintain slight throttle
+        Vehicle->SetThrottleInput(0.1f);
         Vehicle->SetBrakeInput(0.0f);
     }
 
