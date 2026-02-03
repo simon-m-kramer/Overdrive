@@ -249,10 +249,10 @@ float UTurboAction_FollowPath::CalculateIdealOffset(float Distance) const
     float DistBehind = WrapDistance(Distance - ApproachSampleDistance);
     float DistAhead = WrapDistance(Distance + ApproachSampleDistance);
 
-    // Use normalized curvature (0-1 range) for racing line calculations
-    float CurvatureBehind = RacingSplineActor->GetCurvatureNormalized(DistBehind, RacingLineCurvatureSampleRange);
-    float CurvatureCurrent = RacingSplineActor->GetCurvatureNormalized(Distance, RacingLineCurvatureSampleRange);
-    float CurvatureAhead = RacingSplineActor->GetCurvatureNormalized(DistAhead, RacingLineCurvatureSampleRange);
+    // Use true curvature (radians/distance)
+    float CurvatureBehind = RacingSplineActor->GetCurvatureAtDistance(DistBehind, CurvatureSampleRange);
+    float CurvatureCurrent = RacingSplineActor->GetCurvatureAtDistance(Distance, CurvatureSampleRange);
+    float CurvatureAhead = RacingSplineActor->GetCurvatureAtDistance(DistAhead, CurvatureSampleRange);
 
     // Not in or near a corner - look ahead for upcoming turns
     if (CurvatureCurrent < RacingLineMinCurvature && CurvatureAhead < RacingLineMinCurvature)
@@ -260,12 +260,12 @@ float UTurboAction_FollowPath::CalculateIdealOffset(float Distance) const
         for (float LookAhead = ApproachSampleDistance; LookAhead < RacingLineLookahead; LookAhead += LookaheadStepSize)
         {
             float LookDist = WrapDistance(Distance + LookAhead);
-            float LookCurvature = RacingSplineActor->GetCurvatureNormalized(LookDist, RacingLineCurvatureSampleRange);
+            float LookCurvature = RacingSplineActor->GetCurvatureAtDistance(LookDist, CurvatureSampleRange);
 
             if (LookCurvature > RacingLineMinCurvature)
             {
                 float TurnSign = RacingSplineActor->GetTurnSign(LookDist, TurnSignLookahead);
-                float OffsetMagnitude = FMath::Min(LookCurvature * MaxOffset, MaxOffset);
+                float OffsetMagnitude = FMath::Min(LookCurvature * CurvatureToOffsetScale * TrackWidthUsage, MaxOffset);
                 return -TurnSign * OffsetMagnitude;
             }
         }
@@ -273,7 +273,7 @@ float UTurboAction_FollowPath::CalculateIdealOffset(float Distance) const
     }
 
     float TurnSign = RacingSplineActor->GetTurnSign(Distance, TurnSignLookahead);
-    float OffsetMagnitude = FMath::Min(CurvatureCurrent * MaxOffset, MaxOffset);
+    float OffsetMagnitude = FMath::Min(CurvatureCurrent * CurvatureToOffsetScale * TrackWidthUsage, MaxOffset);
 
     // Use relative threshold for curvature change detection
     float CurvatureChangeThreshold = FMath::Max(CurvatureCurrent * CurvatureChangePercent, RacingLineMinCurvature * 0.5f);

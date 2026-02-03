@@ -65,17 +65,19 @@ public:
     float TrackWidthUsage = 0.85f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float RacingLineLookahead = 6000.0f;
+    float RacingLineLookahead = 10000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float RacingLineMinCurvature = 0.1f;
+    float RacingLineMinCurvature = 0.0001f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
     float RacingLineSampleInterval = 100.0f;
 
-    // Large range for normalized curvature (racing line)
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float RacingLineCurvatureSampleRange = 2500.0f;
+    float CurvatureSampleRange = 400.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
+    float CurvatureToOffsetScale = 2000000.0f;  // 1200000.0f
 
     // =========================================================================
     // RACING LINE ADVANCED
@@ -97,7 +99,7 @@ public:
     int32 SmoothingPasses = 5;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
-    int32 SmoothingWindow = 15;
+    int32 SmoothingWindow = 20;
 
 private:
     // =========================================================================
