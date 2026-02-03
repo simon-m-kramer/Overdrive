@@ -50,20 +50,63 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         FVector CurrentSplinePoint = Spline->GetLocationAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
         DrawDebugSphere(World, CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
 
+        // DEBUG: Visualize corner scanning
+        float WorstCurvature = 0.0f;
+        float WorstDistance = 0.0f;
+        float WorstRequiredSpeed = MaxSpeedKmh;
+
+        for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += CornerScanInterval)
+        {
+            float ScanDist = CurrentDistance + Ahead;
+            float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, SpeedCurvatureSampleRange);
+            FVector ScanPoint = Spline->GetLocationAtDistanceAlongSpline(ScanDist, ESplineCoordinateSpace::World) + FVector(0, 0, 50);
+
+            // Color based on curvature: green = straight, red = sharp
+            float CurvatureNormalized = FMath::Clamp(Curvature * 50000.0f, 0.0f, 1.0f);
+            FColor ScanColor = FColor::MakeRedToGreenColorFromScalar(1.0f - CurvatureNormalized);
+            DrawDebugPoint(World, ScanPoint, 10.0f, ScanColor, false, 0.0f);
+
+            if (Curvature > WorstCurvature)
+            {
+                WorstCurvature = Curvature;
+                WorstDistance = Ahead;
+                if (Curvature > KINDA_SMALL_NUMBER)
+                {
+                    float SpeedCmPerSec = FMath::Sqrt(GripFactor / Curvature);
+                    WorstRequiredSpeed = SpeedCmPerSec * 0.036f;
+                }
+            }
+        }
+
+        // Mark the sharpest corner found
+        if (WorstCurvature > KINDA_SMALL_NUMBER)
+        {
+            FVector WorstPoint = Spline->GetLocationAtDistanceAlongSpline(CurrentDistance + WorstDistance, ESplineCoordinateSpace::World) + FVector(0, 0, 100);
+            DrawDebugSphere(World, WorstPoint, 80.0f, 8, FColor::Magenta, false, 0.0f);
+        }
+
         // On-screen info
+        float CurrentSpeed = Vehicle->GetSpeedKmh();
+        float TargetSpeed = FindTargetSpeedAhead();
+        float SpeedError = TargetSpeed - CurrentSpeed;
+
+        FString State = SpeedError > CoastingThresholdKmh ? TEXT("THROTTLE") :
+            SpeedError < -CoastingThresholdKmh ? TEXT("BRAKE") : TEXT("COAST");
+
         GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White,
-            FString::Printf(TEXT("Speed: %.1f km/h"), Vehicle->GetSpeedKmh()));
-        GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::White,
-            FString::Printf(TEXT("Lookahead: %.0f cm"), GetLookaheadDistance()));
+            FString::Printf(TEXT("Speed: %.1f / %.1f km/h [%s]"), CurrentSpeed, TargetSpeed, *State));
+        GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::Yellow,
+            FString::Printf(TEXT("Worst corner in %.0f cm, curvature: %.6f"), WorstDistance, WorstCurvature));
+        GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::Cyan,
+            FString::Printf(TEXT("Required speed at corner: %.1f km/h"), WorstRequiredSpeed));
+        GEngine->AddOnScreenDebugMessage(4, 0.0f, FColor::Green,
+            FString::Printf(TEXT("Speed error: %.1f km/h"), SpeedError));
     }
 
     float SteeringInput = CalculateSteering(TargetPoint);
     Vehicle->SetSteeringInput(SteeringInput);
 
-    // TODO: Add speed control
-    Vehicle->SetThrottleInput(0.5f);
-    Vehicle->SetBrakeInput(0.0f);
-    Vehicle->SetHandbrakeInput(false);
+    ApplySpeedControl();
 }
 
 // =============================================================================
@@ -140,4 +183,76 @@ float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)
     float DotRight = FVector::DotProduct(ToTarget, VehicleRight);
 
     return FMath::Clamp(DotRight * 2.0f, -1.0f, 1.0f);
+}
+
+// =============================================================================
+// SPEED CONTROL
+// =============================================================================
+
+float UTurboAction_FollowPath::FindTargetSpeedAhead() const
+{
+    if (!RacingSplineActor.IsValid() || !AIController.IsValid())
+    {
+        return MaxSpeedKmh;
+    }
+
+    float LowestRequiredSpeed = MaxSpeedKmh;
+    float CurrentDistance = AIController->GetCurrentSplineDistance();
+
+    for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += CornerScanInterval)
+    {
+        float ScanDist = CurrentDistance + Ahead;
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, SpeedCurvatureSampleRange);
+
+        if (Curvature > KINDA_SMALL_NUMBER)
+        {
+            // Physics-based speed: v = sqrt(grip / curvature)
+            // Result is in cm/s, convert to km/h
+            float RequiredSpeedCmPerSec = FMath::Sqrt(GripFactor / Curvature);
+            float RequiredSpeedKmh = RequiredSpeedCmPerSec * 0.036f; // cm/s to km/h
+
+            // Adjust for distance - can carry more speed if corner is far
+            float DistanceFactor = Ahead / CornerScanDistance;
+            float AdjustedSpeed = RequiredSpeedKmh + (DistanceFactor * DistanceSpeedBuffer);
+
+            LowestRequiredSpeed = FMath::Min(LowestRequiredSpeed, AdjustedSpeed);
+        }
+    }
+
+    return FMath::Clamp(LowestRequiredSpeed, MinCornerSpeedKmh, MaxSpeedKmh);
+}
+
+void UTurboAction_FollowPath::ApplySpeedControl()
+{
+    if (!Vehicle.IsValid())
+    {
+        return;
+    }
+
+    float CurrentSpeed = Vehicle->GetSpeedKmh();
+    float TargetSpeed = FindTargetSpeedAhead();
+    float SpeedError = TargetSpeed - CurrentSpeed;
+
+    if (SpeedError > CoastingThresholdKmh)
+    {
+        // Too slow - accelerate
+        float ThrottleInput = FMath::Clamp(SpeedError * ThrottleProportionalGain, MinThrottleInput, 1.0f);
+        Vehicle->SetThrottleInput(ThrottleInput);
+        Vehicle->SetBrakeInput(0.0f);
+    }
+    else if (SpeedError < -CoastingThresholdKmh)
+    {
+        // Too fast - brake
+        float BrakeInput = FMath::Clamp(-SpeedError * BrakeProportionalGain, MinBrakeInput, MaxBrakeInput);
+        Vehicle->SetThrottleInput(0.0f);
+        Vehicle->SetBrakeInput(BrakeInput);
+    }
+    else
+    {
+        // Coast - maintain speed
+        Vehicle->SetThrottleInput(CoastThrottleInput);
+        Vehicle->SetBrakeInput(0.0f);
+    }
+
+    Vehicle->SetHandbrakeInput(false);
 }

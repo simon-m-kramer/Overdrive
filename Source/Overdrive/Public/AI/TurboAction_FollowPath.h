@@ -54,7 +54,65 @@ public:
     UPROPERTY(EditAnywhere, Category = "Lookahead", meta = (EditCondition = "bUseSpeedDependentLookahead"))
     float LookaheadSpeedFactor = 0.5f;
 
-private:
+    // =========================================================================
+    // SPEED CONTROL - LIMITS
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float MaxSpeedKmh = 280.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float MinCornerSpeedKmh = 60.0f;
+
+    // =========================================================================
+    // SPEED CONTROL - PHYSICS
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float GripFactor = 3000.0f;  // from 40000.0f
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float SpeedCurvatureSampleRange = 1000.0f;  // from 300.0f
+
+    // =========================================================================
+    // SPEED CONTROL - CORNER SCANNING
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float CornerScanDistance = 5000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float CornerScanInterval = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    float DistanceSpeedBuffer = 50.0f;
+
+    // =========================================================================
+    // SPEED CONTROL - INPUT TUNING
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float CoastingThresholdKmh = 5.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float BrakeProportionalGain = 0.05f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float ThrottleProportionalGain = 0.03f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float MinThrottleInput = 0.2f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float MinBrakeInput = 0.1f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float MaxBrakeInput = 1.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float CoastThrottleInput = 0.15f;
+
+protected:
     // =========================================================================
     // REFERENCES
     // =========================================================================
@@ -74,6 +132,13 @@ private:
 
     USplineComponent* GetSpline() const;
     float GetLookaheadDistance() const;
-    FVector GetTargetPoint();
+    virtual FVector GetTargetPoint();
     float CalculateSteering(const FVector& TargetPoint);
+
+    // =========================================================================
+    // SPEED CONTROL
+    // =========================================================================
+
+    virtual float FindTargetSpeedAhead() const;
+    virtual void ApplySpeedControl();
 };
