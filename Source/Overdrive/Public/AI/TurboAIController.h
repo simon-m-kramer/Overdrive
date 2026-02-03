@@ -64,11 +64,33 @@ public:
     ATurboVehicle* GetControlledVehicle() const { return ControlledVehicle; }
 
     // =========================================================================
+    // LAP TIMING
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Lap Timing")
+    float GetCurrentLapTime() const { return CurrentLapTime; }
+
+    UFUNCTION(BlueprintPure, Category = "Lap Timing")
+    float GetLastLapTime() const { return LastLapTime; }
+
+    UFUNCTION(BlueprintPure, Category = "Lap Timing")
+    float GetBestLapTime() const { return BestLapTime; }
+
+    UFUNCTION(BlueprintPure, Category = "Lap Timing")
+    int32 GetLapCount() const { return LapCount; }
+
+    UFUNCTION(BlueprintCallable, Category = "Lap Timing")
+    void ResetLapTiming();
+
+    // =========================================================================
     // DEBUG
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bDrawDebug = false;
+
+    UPROPERTY(EditAnywhere, Category = "Debug")
+    bool bShowLapTiming = true;
 
 protected:
     virtual void BeginPlay() override;
@@ -84,5 +106,16 @@ protected:
     TObjectPtr<ATurboVehicle> ControlledVehicle;
 
 private:
+    void UpdateLapTiming(float DeltaTime);
+    FString FormatLapTime(float TimeSeconds) const;
+
     float CurrentSplineDistance = 0.0f;
+    float PreviousSplineDistance = 0.0f;
+
+    // Lap timing
+    float CurrentLapTime = 0.0f;
+    float LastLapTime = 0.0f;
+    float BestLapTime = 0.0f;
+    int32 LapCount = 0;
+    bool bLapTimingStarted = false;
 };
