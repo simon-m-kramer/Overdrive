@@ -7,50 +7,114 @@
 #include "GameplayTagContainer.h"
 #include "TurboRacingSpline.generated.h"
 
-
 class USplineComponent;
 
 UCLASS()
 class OVERDRIVE_API ATurboRacingSpline : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	ATurboRacingSpline();
+    GENERATED_BODY()
 
-	// Getter for AI Controllers to easily grab the spline
-	USplineComponent* GetSplineComponent() const { return Spline; }
+public:
+    ATurboRacingSpline();
 
-	// Returns the tags associated with this track segment
-	const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
+    USplineComponent* GetSplineComponent() const { return Spline; }
+    const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
-	// =====================================================================
-	// CURVATURE ANALYSIS
-	// =====================================================================
+    // =========================================================================
+    // RACING LINE
+    // =========================================================================
 
-	UFUNCTION()
-	float GetCurvatureAtDistance(float Distance, float SampleRange = 100.0f) const;
+    UFUNCTION(BlueprintCallable, Category = "Racing Line")
+    void CalculateRacingLine();
 
-	UFUNCTION()
-	float GetCurvatureNormalized(float Distance, float SampleRange) const;
+    UFUNCTION(BlueprintPure, Category = "Racing Line")
+    float GetRacingLineOffset(float Distance) const;
 
-	UFUNCTION()
-	float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
+    UFUNCTION(BlueprintPure, Category = "Racing Line")
+    FVector GetPointOnRacingLine(float Distance) const;
 
-	UFUNCTION()
-	float GetTargetSpeedAtDistance(float Distance, float MaxSpeed, float GripFactor) const;
+    UFUNCTION(BlueprintPure, Category = "Racing Line")
+    bool IsRacingLineReady() const { return bRacingLineCalculated; }
 
+    void DrawDebugRacingLine(UWorld* World) const;
+
+    // =========================================================================
+    // CURVATURE ANALYSIS
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Curvature")
+    float GetCurvatureAtDistance(float Distance, float SampleRange = 300.0f) const;
+
+    UFUNCTION(BlueprintPure, Category = "Curvature")
+    float GetCurvatureNormalized(float Distance, float SampleRange = 300.0f) const;
+
+    UFUNCTION(BlueprintPure, Category = "Curvature")
+    float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
+
+    // =========================================================================
+    // TRACK CONFIGURATION
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
+    float TrackWidth = 1200.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float TrackWidthUsage = 0.85f;
+
+    // =========================================================================
+    // RACING LINE CONFIGURATION
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    float RacingLineSampleInterval = 100.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    float RacingLineLookahead = 10000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    float RacingLineMinCurvature = 0.0001f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    float CurvatureSampleRange = 400.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    float CurvatureToOffsetScale = 2000000.0f;
+
+    // =========================================================================
+    // RACING LINE ADVANCED
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    float ApproachSampleDistance = 800.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    float LookaheadStepSize = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    float TurnSignLookahead = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    float CurvatureChangePercent = 0.15f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    int32 SmoothingPasses = 5;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    int32 SmoothingWindow = 15;
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-	TObjectPtr<USplineComponent> Spline;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
+    TObjectPtr<USplineComponent> Spline;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
-	FGameplayTagContainer GameplayTags;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
+    FGameplayTagContainer GameplayTags;
 
-	UPROPERTY()
-	float LookaheadDistance = 200.0f;
+private:
+    float CalculateIdealOffset(float Distance) const;
+    float WrapDistance(float Distance) const;
 
+    TArray<float> PreCalculatedOffsets;
+    bool bRacingLineCalculated = false;
 };

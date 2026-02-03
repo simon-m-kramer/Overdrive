@@ -11,62 +11,78 @@ class UBifrostAction;
 class ATurboRacingSpline;
 class ATurboVehicle;
 
-/**
- * 
- */
 UCLASS()
 class OVERDRIVE_API ATurboAIController : public AAIController
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
 
 public:
-	ATurboAIController();
+    ATurboAIController();
 
-	virtual void Tick(float DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
 
-	// =====================================================================
-	// ACTION STACK
-	// =====================================================================
+    // =========================================================================
+    // ACTION STACK
+    // =========================================================================
 
-	UFUNCTION(BlueprintCallable, Category = "Action")
-	void PushAction(UBifrostAction* NewAction);
+    UFUNCTION(BlueprintCallable, Category = "Action")
+    void PushAction(UBifrostAction* NewAction);
 
-	UFUNCTION(BlueprintCallable, Category = "Action")
-	void RemoveAction(UBifrostAction* InAction);
+    UFUNCTION(BlueprintCallable, Category = "Action")
+    void RemoveAction(UBifrostAction* InAction);
 
-	UFUNCTION(BlueprintPure, Category = "Action")
-	bool Contains(UBifrostAction* InAction);
+    UFUNCTION(BlueprintPure, Category = "Action")
+    bool Contains(UBifrostAction* InAction);
 
-	UFUNCTION(BlueprintPure, Category = "Action")
-	bool IsEmpty() const;
+    UFUNCTION(BlueprintPure, Category = "Action")
+    bool IsEmpty() const;
 
-	UFUNCTION(BlueprintPure, Category = "Action")
-	UBifrostAction* GetCurrentAction() const;
+    UFUNCTION(BlueprintPure, Category = "Action")
+    UBifrostAction* GetCurrentAction() const;
 
-	// =====================================================================
-	// OTHER
-	// =====================================================================
+    // =========================================================================
+    // SPLINE & POSITION
+    // =========================================================================
 
-	UFUNCTION(BlueprintCallable, Category = "Spline")
-	void FindRacingSpline();
+    UFUNCTION(BlueprintCallable, Category = "Spline")
+    void FindRacingSpline();
 
-	UFUNCTION(BlueprintPure, Category = "Spline")
-	ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
+    UFUNCTION(BlueprintPure, Category = "Spline")
+    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
 
+    UFUNCTION(BlueprintPure, Category = "Spline")
+    float GetCurrentSplineDistance() const { return CurrentSplineDistance; }
+
+    UFUNCTION(BlueprintCallable, Category = "Spline")
+    void UpdateSplineDistance();
+
+    // =========================================================================
+    // VEHICLE
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Vehicle")
+    ATurboVehicle* GetControlledVehicle() const { return ControlledVehicle; }
+
+    // =========================================================================
+    // DEBUG
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Debug")
+    bool bDrawDebug = true;
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
+    virtual void OnPossess(APawn* InPawn) override;
 
-	virtual void OnPossess(APawn* InPawn) override;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
+    TObjectPtr<UBifrostActionStack> ActionStack;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
-	TObjectPtr<UBifrostActionStack> ActionStack;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
+    TObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-	TObjectPtr<ATurboRacingSpline> RacingSplineActor;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
+    TObjectPtr<ATurboVehicle> ControlledVehicle;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
-	TObjectPtr<ATurboVehicle> ControlledVehicle;
-
+private:
+    float CurrentSplineDistance = 0.0f;
 };
