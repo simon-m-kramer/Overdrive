@@ -26,7 +26,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
     // =========================================================================
     // FEATURE FLAGS
@@ -34,9 +34,6 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Features")
     bool bUseSpeedDependentLookahead = true;
-
-    UPROPERTY(EditAnywhere, Category = "Features")
-    bool bUseCurvatureSpeedControl = true;
 
     UPROPERTY(EditAnywhere, Category = "Features")
     bool bUseRacingLineOffset = true;
@@ -58,45 +55,14 @@ public:
     float LookaheadSpeedFactor = 0.5f;
 
     // =========================================================================
-    // SPEED CONFIGURATION
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "!bUseCurvatureSpeedControl"))
-    float TargetSpeedKmh = 80.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MaxSpeedKmh = 280.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float MinCornerSpeedKmh = 120.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float HairpinSpeedKmh = 110.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CornerDetectionDistance = 2800.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureBrakingSensitivity = 120.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureSampleRange = 1800.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CoastingThreshold = 3.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float ThrottleDeadzone = 2.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed", meta = (EditCondition = "bUseCurvatureSpeedControl"))
-    float CurvatureDeadzone = 0.25f;
-
-    // =========================================================================
     // RACING LINE CONFIGURATION
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float MaxRacingLineOffset = 600.0f;
+    float TrackWidth = 1200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset", ClampMin = "0.0", ClampMax = "1.0"))
+    float TrackWidthUsage = 0.85f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
     float RacingLineLookahead = 6000.0f;
@@ -105,13 +71,33 @@ public:
     float RacingLineMinCurvature = 0.1f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float TrackWidthUsage = 1.5f;
+    float RacingLineSampleInterval = 100.0f;
 
+    // Large range for normalized curvature (racing line)
     UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float RacingLineSmoothing = 5.0f;
+    float RacingLineCurvatureSampleRange = 2500.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Racing Line", meta = (EditCondition = "bUseRacingLineOffset"))
-    float MaxOffsetChangeRate = 400.0f;
+    // =========================================================================
+    // RACING LINE ADVANCED
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
+    float ApproachSampleDistance = 800.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
+    float LookaheadStepSize = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
+    float TurnSignLookahead = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
+    float CurvatureChangePercent = 0.15f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
+    int32 SmoothingPasses = 5;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced", meta = (EditCondition = "bUseRacingLineOffset"))
+    int32 SmoothingWindow = 15;
 
 private:
     // =========================================================================
@@ -132,12 +118,9 @@ private:
     // =========================================================================
 
     float CurrentSplineDistance = 0.0f;
-    float SmoothedRacingLineOffset = 0.0f;
-    float PreviousTargetOffset = 0.0f;
 
     // Pre-calculated racing line
     TArray<float> PreCalculatedOffsets;
-    float RacingLineSampleInterval = 200.0f;
     bool bRacingLineCalculated = false;
 
     // =========================================================================
@@ -147,16 +130,8 @@ private:
     USplineComponent* GetSpline() const;
     void UpdateSplineDistance();
     float GetLookaheadDistance() const;
-    FVector GetTargetPoint(float DeltaTime);
+    FVector GetTargetPoint();
     float CalculateSteering(const FVector& TargetPoint);
-
-    // =========================================================================
-    // SPEED CONTROL
-    // =========================================================================
-
-    float CalculateTargetSpeed() const;
-    float FindMaxCurvatureAhead() const;
-    void ApplySpeedControl();
 
     // =========================================================================
     // RACING LINE

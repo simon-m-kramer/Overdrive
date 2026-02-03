@@ -25,49 +25,60 @@ float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRan
         return 0.0f;
     }
 
-    FVector DirA = Spline->GetDirectionAtDistanceAlongSpline(Distance - SampleRange, ESplineCoordinateSpace::World);
-    FVector DirB = Spline->GetDirectionAtDistanceAlongSpline(Distance + SampleRange, ESplineCoordinateSpace::World);
+    float HalfRange = SampleRange * 0.5f;
+    FVector TangentA = Spline->GetDirectionAtDistanceAlongSpline(Distance - HalfRange, ESplineCoordinateSpace::World);
+    FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(Distance + HalfRange, ESplineCoordinateSpace::World);
 
-    float Dot = FVector::DotProduct(DirA, DirB);
-    float Curvature = FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
+    float Dot = FVector::DotProduct(TangentA, TangentB);
+    float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));
 
-    /*
-    // Debug: Show actual angle in degrees
-    float AngleDegrees = FMath::RadiansToDegrees(FMath::Acos(Dot));
-    UE_LOG(LogTemp, Warning, TEXT("Curvature at %.0f: Angle=%.1f°, Curvature=%.4f (SampleRange=%.0f)"),
-        Distance, AngleDegrees, Curvature, SampleRange);
-    */
-
-    return Curvature;
-
-    /*
-    if (!Spline) return 0.0f;
-
-    // Get directions at two points around the target distance
-    FVector DirA = Spline->GetDirectionAtDistanceAlongSpline(Distance - SampleRange, ESplineCoordinateSpace::World);
-    FVector DirB = Spline->GetDirectionAtDistanceAlongSpline(Distance + SampleRange, ESplineCoordinateSpace::World);
-
-    // The Dot Product tells us how parallel they are. 
-    // 1.0 = Same direction. < 1.0 = the path is turning.
-    float Dot = FVector::DotProduct(DirA, DirB);
-
-    // Normalize to a 0-1 scale where 1 is a 90-degree difference
-    return FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
-    */
+    return Angle / SampleRange;
 }
 
-float ATurboRacingSpline::GetTurnSign(float Distance) const
+float ATurboRacingSpline::GetCurvatureNormalized(float Distance, float SampleRange) const
 {
-    FVector Tangent = Spline->GetTangentAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-    FVector Up = FVector::UpVector;
-    FVector Right = FVector::CrossProduct(Up, Tangent);
+    if (!Spline)
+    {
+        return 0.0f;
+    }
 
-    // Sample a point slightly ahead
-    FVector FuturePos = Spline->GetLocationAtDistanceAlongSpline(Distance + 200.f, ESplineCoordinateSpace::World);
+    FVector DirA = Spline->GetDirectionAtDistanceAlongSpline(Distance - SampleRange, ESplineCoordinateSpace::World);
+    FVector DirB = Spline->GetDirectionAtDistanceAlongSpline(Distance + SampleRange, ESplineCoordinateSpace::World);
+    float Dot = FVector::DotProduct(DirA, DirB);
+
+    return FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
+}
+
+float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance) const
+{
+    if (!Spline)
+    {
+        return 0.0f;
+    }
+
+    FVector RightVec = Spline->GetRightVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
     FVector CurrentPos = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector FuturePos = Spline->GetLocationAtDistanceAlongSpline(Distance + InLookaheadDistance, ESplineCoordinateSpace::World);
     FVector Delta = (FuturePos - CurrentPos).GetSafeNormal();
 
-    return (FVector::DotProduct(Delta, Right) > 0) ? 1.0f : -1.0f;
+    float DotResult = FVector::DotProduct(Delta, RightVec);
+
+    if (FMath::Abs(DotResult) < 0.01f)
+    {
+        return 0.0f;
+    }
+
+    return (DotResult > 0.0f) ? 1.0f : -1.0f;
+}
+
+// Helper for speed calculations
+float ATurboRacingSpline::GetTargetSpeedAtDistance(float Distance, float MaxSpeed, float GripFactor) const
+{
+    float Curvature = GetCurvatureAtDistance(Distance, 200.0f); // tune sample range
+    if (Curvature < KINDA_SMALL_NUMBER) return MaxSpeed;
+
+    // v = sqrt(grip / curvature) - classic circular motion
+    return FMath::Min(MaxSpeed, FMath::Sqrt(GripFactor / Curvature));
 }
 
 void ATurboRacingSpline::BeginPlay()

@@ -32,7 +32,13 @@ public:
 	float GetCurvatureAtDistance(float Distance, float SampleRange = 100.0f) const;
 
 	UFUNCTION()
-	float GetTurnSign(float Distance) const;
+	float GetCurvatureNormalized(float Distance, float SampleRange) const;
+
+	UFUNCTION()
+	float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
+
+	UFUNCTION()
+	float GetTargetSpeedAtDistance(float Distance, float MaxSpeed, float GripFactor) const;
 
 
 protected:
@@ -43,5 +49,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
 	FGameplayTagContainer GameplayTags;
+
+	UPROPERTY()
+	float LookaheadDistance = 200.0f;
 
 };
