@@ -69,10 +69,10 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float GripFactor = 3000.0f;  // from 40000.0f
+    float GripFactor = 3000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float SpeedCurvatureSampleRange = 1000.0f;  // from 300.0f
+    float SpeedCurvatureSampleRange = 1000.0f;
 
     // =========================================================================
     // SPEED CONTROL - CORNER SCANNING

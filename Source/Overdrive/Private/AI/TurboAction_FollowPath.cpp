@@ -18,6 +18,15 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
         Vehicle = AIController->GetControlledVehicle();
         RacingSplineActor = AIController->GetRacingSplineActor();
     }
+
+    // Performance
+    if (bFirstTime && AIController.IsValid())
+    {
+        float Multiplier = AIController->PerformanceMultiplier;
+        MaxSpeedKmh *= Multiplier;
+        GripFactor *= Multiplier;
+        ThrottleProportionalGain *= Multiplier;
+    }
 }
 
 void UTurboAction_FollowPath::Update(float DeltaTime)

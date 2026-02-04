@@ -92,6 +92,13 @@ public:
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bShowLapTiming = true;
 
+    // =========================================================================
+    // Performance
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Performance")
+    float PerformanceMultiplier = 1.0f;
+
 protected:
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
