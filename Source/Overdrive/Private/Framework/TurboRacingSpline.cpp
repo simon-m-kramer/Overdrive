@@ -24,6 +24,129 @@ void ATurboRacingSpline::BeginPlay()
 }
 
 // =============================================================================
+// TRACK BOUNDARIES
+// =============================================================================
+
+bool ATurboRacingSpline::IsOffTrack(FVector WorldLocation) const
+{
+    float Distance = GetDistanceFromCenter(WorldLocation);
+    float HalfWidth = TrackWidth * 0.5f;
+
+    return Distance > HalfWidth;
+}
+
+float ATurboRacingSpline::GetDistanceFromCenter(FVector WorldLocation) const
+{
+    return FMath::Abs(GetSignedDistanceFromCenter(WorldLocation));
+}
+
+float ATurboRacingSpline::GetSignedDistanceFromCenter(FVector WorldLocation) const
+{
+    if (!Spline)
+    {
+        return 0.0f;
+    }
+
+    // Find closest point on spline
+    float SplineDistance = Spline->GetDistanceAlongSplineAtLocation(WorldLocation, ESplineCoordinateSpace::World);
+    FVector CenterPoint = Spline->GetLocationAtDistanceAlongSpline(SplineDistance, ESplineCoordinateSpace::World);
+
+    // Get right vector at this point
+    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(SplineDistance, ESplineCoordinateSpace::World);
+    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(SplineDistance, ESplineCoordinateSpace::World);
+    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
+
+    // Project offset onto right vector (positive = right of center, negative = left)
+    FVector ToLocation = WorldLocation - CenterPoint;
+    float SignedDistance = FVector::DotProduct(ToLocation, Right);
+
+    return SignedDistance;
+}
+
+FVector ATurboRacingSpline::GetLeftEdgeAtDistance(float Distance) const
+{
+    if (!Spline)
+    {
+        return FVector::ZeroVector;
+    }
+
+    Distance = WrapDistance(Distance);
+
+    FVector CenterPoint = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
+
+    float HalfWidth = TrackWidth * 0.5f;
+
+    return CenterPoint - (Right * HalfWidth);
+}
+
+FVector ATurboRacingSpline::GetRightEdgeAtDistance(float Distance) const
+{
+    if (!Spline)
+    {
+        return FVector::ZeroVector;
+    }
+
+    Distance = WrapDistance(Distance);
+
+    FVector CenterPoint = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
+
+    float HalfWidth = TrackWidth * 0.5f;
+
+    return CenterPoint + (Right * HalfWidth);
+}
+
+void ATurboRacingSpline::DrawDebugTrackBoundaries(UWorld* World) const
+{
+    if (!Spline || !World)
+    {
+        return;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+    float SampleInterval = RacingLineSampleInterval;
+    float DebugHeight = 30.0f;
+
+    FVector PrevLeftPoint = FVector::ZeroVector;
+    FVector PrevRightPoint = FVector::ZeroVector;
+    bool bFirstPoint = true;
+
+    for (float Dist = 0.0f; Dist < SplineLength; Dist += SampleInterval)
+    {
+        FVector LeftPoint = GetLeftEdgeAtDistance(Dist) + FVector(0.0f, 0.0f, DebugHeight);
+        FVector RightPoint = GetRightEdgeAtDistance(Dist) + FVector(0.0f, 0.0f, DebugHeight);
+
+        DrawDebugPoint(World, LeftPoint, 6.0f, FColor::White, false, 0.0f);
+        DrawDebugPoint(World, RightPoint, 6.0f, FColor::White, false, 0.0f);
+
+        if (!bFirstPoint)
+        {
+            DrawDebugLine(World, PrevLeftPoint, LeftPoint, FColor::White, false, 0.0f, 0, 1.5f);
+            DrawDebugLine(World, PrevRightPoint, RightPoint, FColor::White, false, 0.0f, 0, 1.5f);
+        }
+
+        PrevLeftPoint = LeftPoint;
+        PrevRightPoint = RightPoint;
+        bFirstPoint = false;
+    }
+
+    // Close the loop
+    if (Spline->IsClosedLoop() && !bFirstPoint)
+    {
+        FVector FirstLeftPoint = GetLeftEdgeAtDistance(0.0f) + FVector(0.0f, 0.0f, DebugHeight);
+        FVector FirstRightPoint = GetRightEdgeAtDistance(0.0f) + FVector(0.0f, 0.0f, DebugHeight);
+
+        DrawDebugLine(World, PrevLeftPoint, FirstLeftPoint, FColor::White, false, 0.0f, 0, 1.5f);
+        DrawDebugLine(World, PrevRightPoint, FirstRightPoint, FColor::White, false, 0.0f, 0, 1.5f);
+    }
+}
+
+// =============================================================================
 // RACING LINE
 // =============================================================================
 
@@ -320,6 +443,3 @@ float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance)
 
     return (DotResult > 0.0f) ? 1.0f : -1.0f;
 }
-
-
-

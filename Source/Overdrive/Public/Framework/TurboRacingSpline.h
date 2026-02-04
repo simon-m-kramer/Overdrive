@@ -21,6 +21,27 @@ public:
     const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
     // =========================================================================
+    // TRACK BOUNDARIES
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
+    bool IsOffTrack(FVector WorldLocation) const;
+
+    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
+    float GetDistanceFromCenter(FVector WorldLocation) const;
+
+    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
+    float GetSignedDistanceFromCenter(FVector WorldLocation) const;
+
+    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
+    FVector GetLeftEdgeAtDistance(float Distance) const;
+
+    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
+    FVector GetRightEdgeAtDistance(float Distance) const;
+
+    void DrawDebugTrackBoundaries(UWorld* World) const;
+
+    // =========================================================================
     // RACING LINE
     // =========================================================================
 
@@ -56,7 +77,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
-    float TrackWidth = 1200.0f;
+    float TrackWidth = 1400.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float TrackWidthUsage = 0.85f;
