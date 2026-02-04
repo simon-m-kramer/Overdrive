@@ -9,9 +9,10 @@
 #include "Framework/TurboGameplayTags.h"
 #include "Framework/TurboVehicle.h"
 #include "AI/TurboAction_FollowPath.h"
+#include "AI/TurboAction_Overtake.h"
+#include "AI/TurboAction_Yield.h"
 #include "Components/SplineComponent.h"
 #include "Components/TurboVehicleDetectionComponent.h"
-#include "AI/TurboAction_Overtake.h"
 
 ATurboAIController::ATurboAIController()
 {
@@ -119,29 +120,25 @@ void ATurboAIController::Tick(float DeltaTime)
                 DecisionContext.bLeftClear ? TEXT("YES") : TEXT("NO"),
                 DecisionContext.bRightClear ? TEXT("YES") : TEXT("NO"),
                 DecisionContext.SignedDistanceFromCenter));
-    }
 
-    // Action stack debug
-    if (bShowDecisionContext && ActionStack)
-    {
-        const TArray<UBifrostAction*>& Actions = ActionStack->GetActions();
-        UBifrostAction* Active = ActionStack->GetCurrentAction();
-
-        // Show current action first
+        // Action stack
+        UBifrostAction* Active = GetCurrentAction();
         if (Active)
         {
             GEngine->AddOnScreenDebugMessage(60, 0.0f, FColor::White,
-                FString::Printf(TEXT("- %s"), *Active->ActionName));
+                FString::Printf(TEXT("* %s"), *Active->ActionName));
         }
 
-        // Show stack
+        const TArray<UBifrostAction*>& Actions = GetActions();
         for (int32 i = 0; i < Actions.Num(); i++)
         {
-            GEngine->AddOnScreenDebugMessage(61 + i, 0.0f, FColor::Silver,
-                FString::Printf(TEXT("  [%d] %s"), i, *Actions[i]->ActionName));
+            if (Actions[i])
+            {
+                GEngine->AddOnScreenDebugMessage(61 + i, 0.0f, FColor::Silver,
+                    FString::Printf(TEXT("  [%d] %s"), i, *Actions[i]->ActionName));
+            }
         }
     }
-
 }
 
 // =============================================================================
@@ -319,14 +316,62 @@ float ATurboAIController::FindDistanceToNextCorner() const
 
 void ATurboAIController::EvaluateActions()
 {
-    // Don't push another overtake while already overtaking
     UBifrostAction* CurrentAction = GetCurrentAction();
+
+    // Don't stack yields
+    if (Cast<UTurboAction_Yield>(CurrentAction))
+    {
+        return;
+    }
+
+    if (TryPushYieldAction()) return;
+
+    // Overtake only from FollowPath
     if (Cast<UTurboAction_Overtake>(CurrentAction))
     {
         return;
     }
 
     if (TryPushOvertakeAction()) return;
+}
+
+bool ATurboAIController::TryPushYieldAction()
+{
+    if (!ControlledVehicle)
+    {
+        return false;
+    }
+
+    // Don't yield if we're the one overtaking (even if overtake is paused in stack)
+    const TArray<UBifrostAction*>& Actions = GetActions();
+    for (UBifrostAction* Action : Actions)
+    {
+        if (Cast<UTurboAction_Overtake>(Action))
+        {
+            return false;
+        }
+    }
+
+    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
+    if (!Detection)
+    {
+        return false;
+    }
+
+    if (!Detection->IsCarOnLeft() && !Detection->IsCarOnRight())
+    {
+        return false;
+    }
+
+    UTurboAction_Yield* YieldAction = NewObject<UTurboAction_Yield>(this);
+    PushAction(YieldAction);
+
+    if (bShowDecisionContext)
+    {
+        GEngine->AddOnScreenDebugMessage(41, 2.0f, FColor::Yellow, TEXT("YIELD PUSHED"));
+    }
+
+    return true;
 }
 
 bool ATurboAIController::TryPushOvertakeAction()

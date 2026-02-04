@@ -176,6 +176,7 @@ private:
     // Decision making
     void UpdateDecisionContext();
     void EvaluateActions();
+    bool TryPushYieldAction();
     bool TryPushOvertakeAction();
     EOvertakeSide ChooseOvertakeSide() const;
     float FindDistanceToNextCorner() const;
