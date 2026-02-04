@@ -9,6 +9,8 @@
 
 class UChaosWheeledVehicleMovementComponent;
 class UStaticMeshComponent;
+class UBoxComponent;
+class UTurboVehicleDetectionComponent;
 
 /**
  * 
@@ -46,8 +48,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetForwardSpeed() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Vehicle")
-	FVector GetLookAheadPoint() const;
+	UFUNCTION(BlueprintPure, Category = "Vehicle")
+	UTurboVehicleDetectionComponent* GetDetectionComponent() const { return DetectionComponent; }
+
 
 protected:
 	virtual void PostInitializeComponents() override;
@@ -61,7 +64,14 @@ protected:
 	void SetupTransmission();
 	void SetupSteering();
 
+	// Detection
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<UBoxComponent> DetectionBox;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<UTurboVehicleDetectionComponent> DetectionComponent;
+
+	// Meshes
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> ChassisMesh;
 

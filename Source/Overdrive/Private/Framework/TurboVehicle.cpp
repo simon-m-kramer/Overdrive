@@ -5,7 +5,8 @@
 #include "ChaosWheeledVehicleMovementComponent.h"
 #include "Starter/OverdriveSportsWheelFront.h"
 #include "Starter/OverdriveSportsWheelRear.h"
-
+#include "Components/BoxComponent.h"
+#include "Components/TurboVehicleDetectionComponent.h"
 
 ATurboVehicle::ATurboVehicle()
 {
@@ -48,6 +49,19 @@ ATurboVehicle::ATurboVehicle()
     SetupTransmission();
     SetupSteering();
 
+    // Detection Box
+    DetectionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("DetectionBox"));
+    DetectionBox->SetupAttachment(RootComponent);
+    DetectionBox->SetBoxExtent(FVector(250.0f, 100.0f, 50.0f)); // Tune to car size
+    DetectionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    DetectionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+    DetectionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+    DetectionBox->SetGenerateOverlapEvents(false);
+    DetectionBox->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f)); // Adjust Z as needed
+
+    // Detection Component
+    DetectionComponent = CreateDefaultSubobject<UTurboVehicleDetectionComponent>(TEXT("DetectionComponent"));
+
 }
 
 void ATurboVehicle::SetSteeringInput(float Value)
@@ -80,10 +94,7 @@ float ATurboVehicle::GetForwardSpeed() const
     return VehicleMovement->GetForwardSpeed();
 }
 
-FVector ATurboVehicle::GetLookAheadPoint() const
-{
-    return FVector();
-}
+
 
 
 

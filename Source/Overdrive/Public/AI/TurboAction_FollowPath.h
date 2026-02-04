@@ -92,16 +92,16 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float CoastingThresholdKmh = 5.0f;
+    float CoastingThresholdKmh = 5.0f;  // 5.0f
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
     float BrakeProportionalGain = 0.05f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float ThrottleProportionalGain = 0.03f;
+    float ThrottleProportionalGain = 0.03f;  // 0.03f
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float MinThrottleInput = 0.2f;
+    float MinThrottleInput = 0.2f;  // 0.2f
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
     float MinBrakeInput = 0.1f;
