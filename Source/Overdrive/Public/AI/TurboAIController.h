@@ -4,12 +4,37 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Components/TurboVehicleDetectionComponent.h"
 #include "TurboAIController.generated.h"
 
 class UBifrostActionStack;
 class UBifrostAction;
 class ATurboRacingSpline;
 class ATurboVehicle;
+
+USTRUCT(BlueprintType)
+struct FTurboDecisionContext
+{
+    GENERATED_BODY()
+
+    // Track
+    float CurrentCurvature = 0.0f;
+    float DistanceToNextCorner = 0.0f;
+    bool bOnStraight = false;
+
+    // Other vehicles
+    bool bCarAhead = false;
+    float DistanceToCarAhead = 0.0f;
+    float RelativeSpeedAhead = 0.0f;  // Positive = we're faster
+
+    // Clearance
+    bool bLeftClear = false;
+    bool bRightClear = false;
+
+    // Track position
+    float SignedDistanceFromCenter = 0.0f;  // Positive = right side
+    float TrackHalfWidth = 0.0f;
+};
 
 UCLASS()
 class OVERDRIVE_API ATurboAIController : public AAIController
@@ -83,21 +108,50 @@ public:
     void ResetLapTiming();
 
     // =========================================================================
-    // DEBUG
+    // DECISION MAKING
     // =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
-
-    UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowLapTiming = true;
+    UFUNCTION(BlueprintPure, Category = "Decision Making")
+    const FTurboDecisionContext& GetDecisionContext() const { return DecisionContext; }
 
     // =========================================================================
-    // Performance
+    // DECISION MAKING - CONFIGURATION
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Decision Making")
+    float OvertakeConsiderDistance = 3000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Decision Making")
+    float OvertakeMinSpeedAdvantage = 5.0f;  // km/h faster than car ahead
+
+    UPROPERTY(EditAnywhere, Category = "Decision Making")
+    float StraightCurvatureThreshold = 0.0002f;
+
+    UPROPERTY(EditAnywhere, Category = "Decision Making")
+    float CornerScanDistance = 3000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Decision Making")
+    float OvertakeLateralOffset = 350.0f;  // How far to move sideways
+
+    // =========================================================================
+    // PERFORMANCE
     // =========================================================================
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Performance")
     float PerformanceMultiplier = 1.0f;
+
+    // =========================================================================
+    // DEBUG
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Debug")
+    bool bDrawDebug = false;
+
+    UPROPERTY(EditAnywhere, Category = "Debug")
+    bool bShowLapTiming = false;
+
+    UPROPERTY(EditAnywhere, Category = "Debug")
+    bool bShowDecisionContext = true;
 
 protected:
     virtual void BeginPlay() override;
@@ -116,6 +170,13 @@ private:
     void UpdateLapTiming(float DeltaTime);
     FString FormatLapTime(float TimeSeconds) const;
 
+    // Decision making
+    void UpdateDecisionContext();
+    void EvaluateActions();
+    bool TryPushOvertakeAction();
+    EOvertakeSide ChooseOvertakeSide() const;
+    float FindDistanceToNextCorner() const;
+
     float CurrentSplineDistance = 0.0f;
     float PreviousSplineDistance = 0.0f;
 
@@ -125,4 +186,7 @@ private:
     float BestLapTime = 0.0f;
     int32 LapCount = 0;
     bool bLapTimingStarted = false;
+
+    // Decision context
+    FTurboDecisionContext DecisionContext;
 };

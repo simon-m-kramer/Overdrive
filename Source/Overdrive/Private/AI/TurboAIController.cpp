@@ -10,6 +10,7 @@
 #include "Framework/TurboVehicle.h"
 #include "AI/TurboAction_FollowPath.h"
 #include "Components/SplineComponent.h"
+#include "Components/TurboVehicleDetectionComponent.h"
 
 ATurboAIController::ATurboAIController()
 {
@@ -53,6 +54,10 @@ void ATurboAIController::Tick(float DeltaTime)
     // Update shared state
     UpdateSplineDistance();
     UpdateLapTiming(DeltaTime);
+    UpdateDecisionContext();
+
+    // Evaluate and potentially push new actions
+    EvaluateActions();
 
     // Update action stack
     if (ActionStack)
@@ -87,6 +92,32 @@ void ATurboAIController::Tick(float DeltaTime)
 
         GEngine->AddOnScreenDebugMessage(13, 0.0f, FColor::Cyan,
             FString::Printf(TEXT("Lap: %d"), LapCount));
+    }
+
+    // Decision context debug
+    if (bShowDecisionContext)
+    {
+        GEngine->AddOnScreenDebugMessage(30, 0.0f, FColor::Magenta,
+            FString::Printf(TEXT("On Straight: %s | Curvature: %.6f"),
+                DecisionContext.bOnStraight ? TEXT("YES") : TEXT("NO"),
+                DecisionContext.CurrentCurvature));
+
+        GEngine->AddOnScreenDebugMessage(31, 0.0f, FColor::Magenta,
+            FString::Printf(TEXT("Corner in: %.0f cm"), DecisionContext.DistanceToNextCorner));
+
+        if (DecisionContext.bCarAhead)
+        {
+            GEngine->AddOnScreenDebugMessage(32, 0.0f, FColor::Orange,
+                FString::Printf(TEXT("Car Ahead: %.0f cm | Rel Speed: %.1f km/h"),
+                    DecisionContext.DistanceToCarAhead,
+                    DecisionContext.RelativeSpeedAhead));
+        }
+
+        GEngine->AddOnScreenDebugMessage(33, 0.0f, FColor::Cyan,
+            FString::Printf(TEXT("Clear L: %s | R: %s | Pos: %.0f cm"),
+                DecisionContext.bLeftClear ? TEXT("YES") : TEXT("NO"),
+                DecisionContext.bRightClear ? TEXT("YES") : TEXT("NO"),
+                DecisionContext.SignedDistanceFromCenter));
     }
 }
 
@@ -192,6 +223,175 @@ FString ATurboAIController::FormatLapTime(float TimeSeconds) const
     float Seconds = FMath::Fmod(TimeSeconds, 60.0f);
 
     return FString::Printf(TEXT("%d:%06.3f"), Minutes, Seconds);
+}
+
+// =============================================================================
+// DECISION MAKING
+// =============================================================================
+
+void ATurboAIController::UpdateDecisionContext()
+{
+    if (!ControlledVehicle || !RacingSplineActor)
+    {
+        return;
+    }
+
+    // Track geometry
+    DecisionContext.CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, 300.0f);
+    DecisionContext.bOnStraight = DecisionContext.CurrentCurvature < StraightCurvatureThreshold;
+    DecisionContext.DistanceToNextCorner = FindDistanceToNextCorner();
+
+    // Track position
+    FVector VehicleLocation = ControlledVehicle->GetActorLocation();
+    DecisionContext.SignedDistanceFromCenter = RacingSplineActor->GetSignedDistanceFromCenter(VehicleLocation);
+    DecisionContext.TrackHalfWidth = RacingSplineActor->TrackWidth * 0.5f;
+
+    // Detection component data
+    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
+    if (Detection)
+    {
+        DecisionContext.bCarAhead = Detection->IsCarAhead();
+        DecisionContext.DistanceToCarAhead = Detection->GetDistanceToCarAhead();
+        DecisionContext.bLeftClear = !Detection->IsCarOnLeft();
+        DecisionContext.bRightClear = !Detection->IsCarOnRight();
+
+        // Calculate relative speed
+        if (DecisionContext.bCarAhead)
+        {
+            ATurboVehicle* CarAhead = Detection->GetCarAhead();
+            if (CarAhead)
+            {
+                float OurSpeed = ControlledVehicle->GetSpeedKmh();
+                float TheirSpeed = CarAhead->GetSpeedKmh();
+                DecisionContext.RelativeSpeedAhead = OurSpeed - TheirSpeed;
+            }
+        }
+        else
+        {
+            DecisionContext.RelativeSpeedAhead = 0.0f;
+        }
+    }
+}
+
+float ATurboAIController::FindDistanceToNextCorner() const
+{
+    if (!RacingSplineActor)
+    {
+        return CornerScanDistance;
+    }
+
+    for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += 200.0f)
+    {
+        float ScanDist = CurrentSplineDistance + Ahead;
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, 300.0f);
+
+        if (Curvature > StraightCurvatureThreshold)
+        {
+            return Ahead;
+        }
+    }
+
+    return CornerScanDistance;
+}
+
+void ATurboAIController::EvaluateActions()
+{
+
+    // Evaluate by priority (highest first)
+    // TODO: if (TryPushAvoidAction()) return;
+    if (TryPushOvertakeAction()) return;
+}
+
+bool ATurboAIController::TryPushOvertakeAction()
+{
+    // No car ahead?
+    if (!DecisionContext.bCarAhead)
+    {
+        return false;
+    }
+
+    // Too far away?
+    if (DecisionContext.DistanceToCarAhead > OvertakeConsiderDistance)
+    {
+        return false;
+    }
+
+    // Not faster than them?
+    if (DecisionContext.RelativeSpeedAhead < OvertakeMinSpeedAdvantage)
+    {
+        return false;
+    }
+
+    // Choose side and check if safe
+    EOvertakeSide Side = ChooseOvertakeSide();
+
+    // Verify we have clearance
+    bool bSideClear = (Side == EOvertakeSide::Left) ? DecisionContext.bLeftClear : DecisionContext.bRightClear;
+    if (!bSideClear)
+    {
+        return false;
+    }
+
+    // Check if we'd go off track
+    float OvertakeOffset = (Side == EOvertakeSide::Left) ? -OvertakeLateralOffset : OvertakeLateralOffset;
+    float ProjectedPosition = DecisionContext.SignedDistanceFromCenter + OvertakeOffset;
+
+    if (FMath::Abs(ProjectedPosition) > DecisionContext.TrackHalfWidth)
+    {
+        return false;
+    }
+
+    // All checks passed - push overtake action
+    // TODO: Create and push UTurboAction_Overtake
+    if (bShowDecisionContext)
+    {
+        GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
+            FString::Printf(TEXT("OVERTAKE TRIGGERED - Side: %s"),
+                Side == EOvertakeSide::Left ? TEXT("LEFT") : TEXT("RIGHT")));
+    }
+
+    return false;  // Return false until we implement the action
+}
+
+EOvertakeSide ATurboAIController::ChooseOvertakeSide() const
+{
+    // If in a corner, prefer inside line
+    if (!DecisionContext.bOnStraight)
+    {
+        float TurnSign = RacingSplineActor->GetTurnSign(CurrentSplineDistance, 500.0f);
+
+        // TurnSign > 0 = turning right, inside is left
+        // TurnSign < 0 = turning left, inside is right
+        if (TurnSign > 0.1f && DecisionContext.bLeftClear)
+        {
+            return EOvertakeSide::Left;
+        }
+        else if (TurnSign < -0.1f && DecisionContext.bRightClear)
+        {
+            return EOvertakeSide::Right;
+        }
+    }
+
+    // On straight or no clear inside: pick side with more room
+    float RoomOnLeft = DecisionContext.TrackHalfWidth + DecisionContext.SignedDistanceFromCenter;
+    float RoomOnRight = DecisionContext.TrackHalfWidth - DecisionContext.SignedDistanceFromCenter;
+
+    // Prefer side with more room, but only if clear
+    if (RoomOnLeft > RoomOnRight && DecisionContext.bLeftClear)
+    {
+        return EOvertakeSide::Left;
+    }
+    else if (DecisionContext.bRightClear)
+    {
+        return EOvertakeSide::Right;
+    }
+    else if (DecisionContext.bLeftClear)
+    {
+        return EOvertakeSide::Left;
+    }
+
+    // Default to left if nothing else works
+    return EOvertakeSide::Left;
 }
 
 // =============================================================================
