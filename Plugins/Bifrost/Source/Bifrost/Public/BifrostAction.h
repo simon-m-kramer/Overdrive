@@ -22,4 +22,7 @@ public:
 	virtual void End() {}
 
 	virtual bool IsDone() { return true; }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
+	FString ActionName = TEXT("Action");
 };

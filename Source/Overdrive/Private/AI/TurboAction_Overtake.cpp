@@ -17,6 +17,8 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
 
+    ActionName = TEXT("Overtake");
+
     if (bFirstTime)
     {
         CurrentLateralOffset = 0.0f;

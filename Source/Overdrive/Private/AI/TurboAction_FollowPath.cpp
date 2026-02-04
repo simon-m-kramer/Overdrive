@@ -12,6 +12,8 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
 
+    ActionName = TEXT("FollowPath");
+
     AIController = Cast<ATurboAIController>(GetOuter());
     if (AIController.IsValid())
     {

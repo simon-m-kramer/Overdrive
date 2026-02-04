@@ -120,6 +120,28 @@ void ATurboAIController::Tick(float DeltaTime)
                 DecisionContext.bRightClear ? TEXT("YES") : TEXT("NO"),
                 DecisionContext.SignedDistanceFromCenter));
     }
+
+    // Action stack debug
+    if (bShowDecisionContext && ActionStack)
+    {
+        const TArray<UBifrostAction*>& Actions = ActionStack->GetActions();
+        UBifrostAction* Active = ActionStack->GetCurrentAction();
+
+        // Show current action first
+        if (Active)
+        {
+            GEngine->AddOnScreenDebugMessage(60, 0.0f, FColor::White,
+                FString::Printf(TEXT("- %s"), *Active->ActionName));
+        }
+
+        // Show stack
+        for (int32 i = 0; i < Actions.Num(); i++)
+        {
+            GEngine->AddOnScreenDebugMessage(61 + i, 0.0f, FColor::Silver,
+                FString::Printf(TEXT("  [%d] %s"), i, *Actions[i]->ActionName));
+        }
+    }
+
 }
 
 // =============================================================================
@@ -453,4 +475,14 @@ UBifrostAction* ATurboAIController::GetCurrentAction() const
         return ActionStack->GetCurrentAction();
     }
     return nullptr;
+}
+
+const TArray<UBifrostAction*>& ATurboAIController::GetActions() const
+{
+    static TArray<UBifrostAction*> EmptyArray;
+    if (ActionStack)
+    {
+        return ActionStack->GetActions();
+    }
+    return EmptyArray;
 }

@@ -35,6 +35,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Action")
 	UBifrostAction* GetCurrentAction() const { return CurrentAction; }
 
+	UFUNCTION(BlueprintPure, Category = "Action")
+	const TArray<UBifrostAction*>& GetActions() const { return ActionStack; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
 	TArray<UBifrostAction*> ActionStack;
