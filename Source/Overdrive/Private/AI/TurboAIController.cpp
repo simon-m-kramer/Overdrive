@@ -11,6 +11,7 @@
 #include "AI/TurboAction_FollowPath.h"
 #include "Components/SplineComponent.h"
 #include "Components/TurboVehicleDetectionComponent.h"
+#include "AI/TurboAction_Overtake.h"
 
 ATurboAIController::ATurboAIController()
 {
@@ -296,9 +297,13 @@ float ATurboAIController::FindDistanceToNextCorner() const
 
 void ATurboAIController::EvaluateActions()
 {
+    // Don't push another overtake while already overtaking
+    UBifrostAction* CurrentAction = GetCurrentAction();
+    if (Cast<UTurboAction_Overtake>(CurrentAction))
+    {
+        return;
+    }
 
-    // Evaluate by priority (highest first)
-    // TODO: if (TryPushAvoidAction()) return;
     if (TryPushOvertakeAction()) return;
 }
 
@@ -341,16 +346,33 @@ bool ATurboAIController::TryPushOvertakeAction()
         return false;
     }
 
-    // All checks passed - push overtake action
-    // TODO: Create and push UTurboAction_Overtake
+    // Get target vehicle from detection
+    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
+    if (!Detection)
+    {
+        return false;
+    }
+
+    ATurboVehicle* CarAhead = Detection->GetCarAhead();
+    if (!CarAhead)
+    {
+        return false;
+    }
+
+    // All checks passed - create and push overtake action
+    UTurboAction_Overtake* OvertakeAction = NewObject<UTurboAction_Overtake>(this);
+    OvertakeAction->Initialize(CarAhead, Side);
+    OvertakeAction->LateralOffset = OvertakeLateralOffset;
+    PushAction(OvertakeAction);
+
     if (bShowDecisionContext)
     {
         GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
-            FString::Printf(TEXT("OVERTAKE TRIGGERED - Side: %s"),
+            FString::Printf(TEXT("OVERTAKE PUSHED - Side: %s"),
                 Side == EOvertakeSide::Left ? TEXT("LEFT") : TEXT("RIGHT")));
     }
 
-    return false;  // Return false until we implement the action
+    return true;
 }
 
 EOvertakeSide ATurboAIController::ChooseOvertakeSide() const
