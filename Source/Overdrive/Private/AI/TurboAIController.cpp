@@ -318,196 +318,44 @@ float ATurboAIController::FindDistanceToNextCorner() const
 
 void ATurboAIController::EvaluateActions()
 {
-    // Try actions in priority order — tag blocking handles conflicts
-    if (TryPushYieldAction()) return;
-    if (TryPushOvertakeAction()) return;
-    if (TryPushSprintAction()) return;
-
-}
-
-bool ATurboAIController::TryPushYieldAction()
-{
-    if (IsActionBlocked(TurboGameplayTags::Action_Yield))
+    // Iterate through priority list, try to activate first valid action
+    for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
     {
-        return false;
-    }
-
-    if (!ControlledVehicle)
-    {
-        return false;
-    }
-
-    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-    if (!Detection)
-    {
-        return false;
-    }
-
-    // Is there a car beside us?
-    if (!Detection->IsCarOnLeft() && !Detection->IsCarOnRight())
-    {
-        return false;
-    }
-
-    UTurboAction_Yield* YieldAction = NewObject<UTurboAction_Yield>(this);
-    PushAction(YieldAction);
-
-    if (bShowDecisionContext)
-    {
-        GEngine->AddOnScreenDebugMessage(41, 2.0f, FColor::Yellow, TEXT("YIELD PUSHED"));
-    }
-
-    return true;
-}
-
-bool ATurboAIController::TryPushOvertakeAction()
-{
-    if (IsActionBlocked(TurboGameplayTags::Action_Overtake))
-    {
-        return false;
-    }
-
-    // No car ahead?
-    if (!DecisionContext.bCarAhead)
-    {
-        return false;
-    }
-
-    // Too far away?
-    if (DecisionContext.DistanceToCarAhead > OvertakeConsiderDistance)
-    {
-        return false;
-    }
-
-    // Not faster than them?
-    if (DecisionContext.RelativeSpeedAhead < OvertakeMinSpeedAdvantage)
-    {
-        return false;
-    }
-
-    // Choose side and check if safe
-    EOvertakeSide Side = ChooseOvertakeSide();
-
-    // Verify we have clearance
-    bool bSideClear = (Side == EOvertakeSide::Left) ? DecisionContext.bLeftClear : DecisionContext.bRightClear;
-    if (!bSideClear)
-    {
-        return false;
-    }
-
-    // Check if we'd go off track
-    float OvertakeOffset = (Side == EOvertakeSide::Left) ? -OvertakeLateralOffset : OvertakeLateralOffset;
-    float ProjectedPosition = DecisionContext.SignedDistanceFromCenter + OvertakeOffset;
-
-    if (FMath::Abs(ProjectedPosition) > DecisionContext.TrackHalfWidth)
-    {
-        return false;
-    }
-
-    // Get target vehicle from detection
-    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-    if (!Detection)
-    {
-        return false;
-    }
-
-    ATurboVehicle* CarAhead = Detection->GetCarAhead();
-    if (!CarAhead)
-    {
-        return false;
-    }
-
-    // All checks passed - create and push overtake action
-    UTurboAction_Overtake* OvertakeAction = NewObject<UTurboAction_Overtake>(this);
-    OvertakeAction->Initialize(CarAhead, Side);
-    OvertakeAction->LateralOffset = OvertakeLateralOffset;
-    PushAction(OvertakeAction);
-
-    if (bShowDecisionContext)
-    {
-        GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
-            FString::Printf(TEXT("OVERTAKE PUSHED - Side: %s"),
-                Side == EOvertakeSide::Left ? TEXT("LEFT") : TEXT("RIGHT")));
-    }
-
-    return true;
-}
-
-bool ATurboAIController::TryPushSprintAction()
-{
-    if (IsActionBlocked(TurboGameplayTags::Action_Sprint))
-    {
-        return false;
-    }
-
-    // Need to be on a straight
-    if (!DecisionContext.bOnStraight)
-    {
-        return false;
-    }
-
-    // Need enough straight road ahead
-    if (DecisionContext.DistanceToNextCorner < SprintMinStraightDistance)
-    {
-        return false;
-    }
-
-    // Don't sprint if car is close ahead
-    if (DecisionContext.bCarAhead && DecisionContext.DistanceToCarAhead < SprintMinStraightDistance)
-    {
-        return false;
-    }
-
-    UTurboAction_Sprint* SprintAction = NewObject<UTurboAction_Sprint>(this);
-    PushAction(SprintAction);
-
-    if (bShowDecisionContext)
-    {
-        GEngine->AddOnScreenDebugMessage(42, 2.0f, FColor::Cyan, TEXT("SPRINT PUSHED"));
-    }
-
-    return true;
-}
-
-EOvertakeSide ATurboAIController::ChooseOvertakeSide() const
-{
-    // If in a corner, prefer inside line
-    if (!DecisionContext.bOnStraight)
-    {
-        float TurnSign = RacingSplineActor->GetTurnSign(CurrentSplineDistance, 500.0f);
-
-        // TurnSign > 0 = turning right, inside is left
-        // TurnSign < 0 = turning left, inside is right
-        if (TurnSign > 0.1f && DecisionContext.bLeftClear)
+        if (!ActionClass)
         {
-            return EOvertakeSide::Left;
+            continue;
         }
-        else if (TurnSign < -0.1f && DecisionContext.bRightClear)
+
+        UTurboActionBase* CDO = ActionClass->GetDefaultObject<UTurboActionBase>();
+        if (!CDO)
         {
-            return EOvertakeSide::Right;
+            continue;
         }
-    }
 
-    // On straight or no clear inside: pick side with more room
-    float RoomOnLeft = DecisionContext.TrackHalfWidth + DecisionContext.SignedDistanceFromCenter;
-    float RoomOnRight = DecisionContext.TrackHalfWidth - DecisionContext.SignedDistanceFromCenter;
+        // Check if blocked by tag
+        if (IsActionBlocked(CDO->ActionTag))
+        {
+            continue;
+        }
 
-    // Prefer side with more room, but only if clear
-    if (RoomOnLeft > RoomOnRight && DecisionContext.bLeftClear)
-    {
-        return EOvertakeSide::Left;
-    }
-    else if (DecisionContext.bRightClear)
-    {
-        return EOvertakeSide::Right;
-    }
-    else if (DecisionContext.bLeftClear)
-    {
-        return EOvertakeSide::Left;
-    }
+        // Check if action wants to activate
+        if (!CDO->CanActivate(this))
+        {
+            continue;
+        }
 
-    // Default to left if nothing else works
-    return EOvertakeSide::Left;
+        // Create and push the action
+        UTurboActionBase* NewAction = NewObject<UTurboActionBase>(this, ActionClass);
+        PushAction(NewAction);
+
+        if (bShowDecisionContext)
+        {
+            GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
+                FString::Printf(TEXT("ACTION PUSHED: %s"), *CDO->ActionName));
+        }
+
+        return;
+    }
 }
 
 // =============================================================================

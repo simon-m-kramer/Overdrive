@@ -17,6 +17,8 @@ class OVERDRIVE_API UTurboAction_FollowPath : public UTurboActionBase
     GENERATED_BODY()
 
 public:
+    UTurboAction_FollowPath();
+
     virtual void Start(bool bFirstTime) override;
     virtual void Update(float DeltaTime) override;
     virtual bool IsDone() override { return false; }

@@ -7,21 +7,75 @@
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
+#include "Components/TurboVehicleDetectionComponent.h"
 
-void UTurboAction_Overtake::Initialize(ATurboVehicle* InTargetVehicle, EOvertakeSide InSide)
+UTurboAction_Overtake::UTurboAction_Overtake()
 {
-    TargetVehicle = InTargetVehicle;
-    Side = InSide;
+    ActionName = TEXT("Overtake");
+    ActionTag = TurboGameplayTags::Action_Overtake;
+    BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
+    BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
+}
+
+bool UTurboAction_Overtake::CanActivate(const ATurboAIController* Controller) const
+{
+    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
+
+    // No car ahead?
+    if (!Context.bCarAhead)
+    {
+        return false;
+    }
+
+    // Too far away?
+    if (Context.DistanceToCarAhead > ConsiderDistance)
+    {
+        return false;
+    }
+
+    // Not faster than them?
+    if (Context.RelativeSpeedAhead < MinSpeedAdvantage)
+    {
+        return false;
+    }
+
+    // Choose side and check if safe
+    EOvertakeSide ChosenSide = ChooseOvertakeSide(Controller);
+
+    // Verify we have clearance
+    bool bSideClear = (ChosenSide == EOvertakeSide::Left) ? Context.bLeftClear : Context.bRightClear;
+    if (!bSideClear)
+    {
+        return false;
+    }
+
+    // Check if we'd go off track
+    float OvertakeOffset = (ChosenSide == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
+    float ProjectedPosition = Context.SignedDistanceFromCenter + OvertakeOffset;
+    if (FMath::Abs(ProjectedPosition) > Context.TrackHalfWidth)
+    {
+        return false;
+    }
+
+    // Verify target vehicle exists
+    ATurboVehicle* ControlledVehicle = Controller->GetControlledVehicle();
+    if (!ControlledVehicle)
+    {
+        return false;
+    }
+
+    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
+    if (!Detection || !Detection->GetCarAhead())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void UTurboAction_Overtake::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
-
-    ActionName = TEXT("Overtake");
-    ActionTag = TurboGameplayTags::Action_Overtake;
-    BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
-    BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
 
     if (bFirstTime)
     {
@@ -30,6 +84,22 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
         bOvertakeComplete = false;
         bHasPassedTarget = false;
         TimeSincePassed = 0.0f;
+
+        // Set up target and side from current context
+        if (AIController.IsValid())
+        {
+            Side = ChooseOvertakeSide(AIController.Get());
+
+            ATurboVehicle* ControlledVehicle = AIController->GetControlledVehicle();
+            if (ControlledVehicle)
+            {
+                UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
+                if (Detection)
+                {
+                    TargetVehicle = Detection->GetCarAhead();
+                }
+            }
+        }
 
         // Store target's starting position for comparison
         if (TargetVehicle.IsValid() && RacingSplineActor.IsValid())
@@ -161,6 +231,50 @@ FVector UTurboAction_Overtake::GetTargetPoint()
     return BasePoint + (Right * CurrentLateralOffset);
 }
 
+EOvertakeSide UTurboAction_Overtake::ChooseOvertakeSide(const ATurboAIController* Controller) const
+{
+    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
+    ATurboRacingSpline* Spline = Controller->GetRacingSplineActor();
+
+    // If in a corner, prefer inside line
+    if (!Context.bOnStraight && Spline)
+    {
+        float TurnSign = Spline->GetTurnSign(Controller->GetCurrentSplineDistance(), 500.0f);
+
+        // TurnSign > 0 = turning right, inside is left
+        // TurnSign < 0 = turning left, inside is right
+        if (TurnSign > 0.1f && Context.bLeftClear)
+        {
+            return EOvertakeSide::Left;
+        }
+        else if (TurnSign < -0.1f && Context.bRightClear)
+        {
+            return EOvertakeSide::Right;
+        }
+    }
+
+    // On straight or no clear inside: pick side with more room
+    float RoomOnLeft = Context.TrackHalfWidth + Context.SignedDistanceFromCenter;
+    float RoomOnRight = Context.TrackHalfWidth - Context.SignedDistanceFromCenter;
+
+    // Prefer side with more room, but only if clear
+    if (RoomOnLeft > RoomOnRight && Context.bLeftClear)
+    {
+        return EOvertakeSide::Left;
+    }
+    else if (Context.bRightClear)
+    {
+        return EOvertakeSide::Right;
+    }
+    else if (Context.bLeftClear)
+    {
+        return EOvertakeSide::Left;
+    }
+
+    // Default to left if nothing else works
+    return EOvertakeSide::Left;
+}
+
 bool UTurboAction_Overtake::HasPassedTargetVehicle() const
 {
     if (!TargetVehicle.IsValid() || !AIController.IsValid() || !RacingSplineActor.IsValid())
@@ -201,11 +315,13 @@ bool UTurboAction_Overtake::HasPassedTargetVehicle() const
 
 bool UTurboAction_Overtake::ShouldAbort() const
 {
+    // Timeout
     if (TimeInOvertake > AbortTimeout)
     {
         return true;
     }
 
+    // Target vehicle lost
     if (!TargetVehicle.IsValid())
     {
         return true;

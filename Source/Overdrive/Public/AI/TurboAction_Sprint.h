@@ -12,12 +12,22 @@ class OVERDRIVE_API UTurboAction_Sprint : public UTurboAction_FollowPath
     GENERATED_BODY()
 
 public:
+    UTurboAction_Sprint();
+
+    virtual bool CanActivate(const ATurboAIController* Controller) const override;
     virtual void Start(bool bFirstTime) override;
     virtual void Update(float DeltaTime) override;
     virtual bool IsDone() override;
 
     // =========================================================================
-    // CONFIGURATION
+    // ACTIVATION CONDITIONS
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Sprint|Activation")
+    float MinStraightDistance = 3000.0f;
+
+    // =========================================================================
+    // BEHAVIOR
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Sprint")

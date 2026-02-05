@@ -12,6 +12,9 @@ class OVERDRIVE_API UTurboAction_Yield : public UTurboAction_FollowPath
     GENERATED_BODY()
 
 public:
+    UTurboAction_Yield();
+
+    virtual bool CanActivate(const ATurboAIController* Controller) const override;
     virtual void Start(bool bFirstTime) override;
     virtual void Update(float DeltaTime) override;
     virtual bool IsDone() override;

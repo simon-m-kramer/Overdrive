@@ -7,13 +7,41 @@
 #include "Framework/TurboGameplayTags.h"
 #include "Components/TurboVehicleDetectionComponent.h"
 
-void UTurboAction_Sprint::Start(bool bFirstTime)
+UTurboAction_Sprint::UTurboAction_Sprint()
 {
-    Super::Start(bFirstTime);
-
     ActionName = TEXT("Sprint");
     ActionTag = TurboGameplayTags::Action_Sprint;
     BlocksTags.AddTag(TurboGameplayTags::Action_Sprint);
+}
+
+bool UTurboAction_Sprint::CanActivate(const ATurboAIController* Controller) const
+{
+    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
+
+    // Need to be on a straight
+    if (!Context.bOnStraight)
+    {
+        return false;
+    }
+
+    // Need enough straight road ahead
+    if (Context.DistanceToNextCorner < MinStraightDistance)
+    {
+        return false;
+    }
+
+    // Don't sprint if car is close ahead
+    if (Context.bCarAhead && Context.DistanceToCarAhead < MinStraightDistance)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void UTurboAction_Sprint::Start(bool bFirstTime)
+{
+    Super::Start(bFirstTime);
 
     if (bFirstTime)
     {
@@ -96,4 +124,3 @@ bool UTurboAction_Sprint::ShouldExit() const
 
     return false;
 }
-

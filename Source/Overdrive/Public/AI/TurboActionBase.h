@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "TurboActionBase.generated.h"
 
+class ATurboAIController;
 /**
  * 
  */
@@ -16,6 +17,9 @@ class OVERDRIVE_API UTurboActionBase : public UBifrostAction
 	GENERATED_BODY()
 	
 public:
+    /** Check if this action can activate given current context. Called on CDO. */
+    virtual bool CanActivate(const ATurboAIController* Controller) const { return false; }
+
     /** Identifies this action type */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action Tags")
     FGameplayTag ActionTag;

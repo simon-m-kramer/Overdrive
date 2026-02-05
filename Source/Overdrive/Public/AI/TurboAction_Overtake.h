@@ -15,14 +15,25 @@ class OVERDRIVE_API UTurboAction_Overtake : public UTurboAction_FollowPath
     GENERATED_BODY()
 
 public:
-    void Initialize(ATurboVehicle* InTargetVehicle, EOvertakeSide InSide);
+    UTurboAction_Overtake();
 
+    virtual bool CanActivate(const ATurboAIController* Controller) const override;
     virtual void Start(bool bFirstTime) override;
     virtual void Update(float DeltaTime) override;
     virtual bool IsDone() override;
 
     // =========================================================================
-    // CONFIGURATION
+    // ACTIVATION CONDITIONS
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
+    float ConsiderDistance = 3000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
+    float MinSpeedAdvantage = 5.0f;
+
+    // =========================================================================
+    // BEHAVIOR
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
@@ -51,6 +62,7 @@ protected:
     virtual float FindTargetSpeedAhead() const override;
 
 private:
+    EOvertakeSide ChooseOvertakeSide(const ATurboAIController* Controller) const;
     bool HasPassedTargetVehicle() const;
     bool ShouldAbort() const;
 

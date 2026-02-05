@@ -9,12 +9,15 @@
 #include "Components/SplineComponent.h"
 #include "DrawDebugHelpers.h"
 
+UTurboAction_FollowPath::UTurboAction_FollowPath()
+{
+    ActionName = TEXT("FollowPath");
+    ActionTag = TurboGameplayTags::Action_FollowPath;
+}
+
 void UTurboAction_FollowPath::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
-
-    ActionName = TEXT("FollowPath");
-    ActionTag = TurboGameplayTags::Action_FollowPath;
 
     AIController = Cast<ATurboAIController>(GetOuter());
     if (AIController.IsValid())

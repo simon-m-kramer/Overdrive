@@ -7,14 +7,36 @@
 #include "Framework/TurboGameplayTags.h"
 #include "Components/TurboVehicleDetectionComponent.h"
 
-void UTurboAction_Yield::Start(bool bFirstTime)
-{
-    Super::Start(bFirstTime);
 
+UTurboAction_Yield::UTurboAction_Yield()
+{
     ActionName = TEXT("Yield");
     ActionTag = TurboGameplayTags::Action_Yield;
     BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
     BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
+}
+
+bool UTurboAction_Yield::CanActivate(const ATurboAIController* Controller) const
+{
+    ATurboVehicle* ControlledVehicle = Controller->GetControlledVehicle();
+    if (!ControlledVehicle)
+    {
+        return false;
+    }
+
+    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
+    if (!Detection)
+    {
+        return false;
+    }
+
+    // Activate if there's a car beside us
+    return Detection->IsCarOnLeft() || Detection->IsCarOnRight();
+}
+
+void UTurboAction_Yield::Start(bool bFirstTime)
+{
+    Super::Start(bFirstTime);
 
     if (bFirstTime)
     {
