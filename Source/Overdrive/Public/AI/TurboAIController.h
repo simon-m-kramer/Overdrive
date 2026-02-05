@@ -196,6 +196,7 @@ private:
     // Decision making
     void UpdateDecisionContext();
     void EvaluateActions();
+
     bool TryPushYieldAction();
     bool TryPushOvertakeAction();
     bool TryPushSprintAction();
