@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BifrostAction.h"
+#include "AI/TurboActionBase.h"
 #include "TurboAction_FollowPath.generated.h"
 
 class ATurboAIController;
@@ -12,7 +12,7 @@ class ATurboRacingSpline;
 class USplineComponent;
 
 UCLASS()
-class OVERDRIVE_API UTurboAction_FollowPath : public UBifrostAction
+class OVERDRIVE_API UTurboAction_FollowPath : public UTurboActionBase
 {
     GENERATED_BODY()
 
@@ -92,16 +92,16 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float CoastingThresholdKmh = 5.0f;  // 5.0f
+    float CoastingThresholdKmh = 5.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
     float BrakeProportionalGain = 0.05f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float ThrottleProportionalGain = 0.03f;  // 0.03f
+    float ThrottleProportionalGain = 0.03f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float MinThrottleInput = 0.2f;  // 0.2f
+    float MinThrottleInput = 0.2f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
     float MinBrakeInput = 0.1f;

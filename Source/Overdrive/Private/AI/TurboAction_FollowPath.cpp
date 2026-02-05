@@ -5,6 +5,7 @@
 #include "AI/TurboAIController.h"
 #include "Framework/TurboVehicle.h"
 #include "Framework/TurboRacingSpline.h"
+#include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
 #include "DrawDebugHelpers.h"
 
@@ -13,6 +14,7 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
     Super::Start(bFirstTime);
 
     ActionName = TEXT("FollowPath");
+    ActionTag = TurboGameplayTags::Action_FollowPath;
 
     AIController = Cast<ATurboAIController>(GetOuter());
     if (AIController.IsValid())

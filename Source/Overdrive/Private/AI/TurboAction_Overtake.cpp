@@ -5,6 +5,7 @@
 #include "AI/TurboAIController.h"
 #include "Framework/TurboVehicle.h"
 #include "Framework/TurboRacingSpline.h"
+#include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
 
 void UTurboAction_Overtake::Initialize(ATurboVehicle* InTargetVehicle, EOvertakeSide InSide)
@@ -18,6 +19,9 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
     Super::Start(bFirstTime);
 
     ActionName = TEXT("Overtake");
+    ActionTag = TurboGameplayTags::Action_Overtake;
+    BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
+    BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
 
     if (bFirstTime)
     {

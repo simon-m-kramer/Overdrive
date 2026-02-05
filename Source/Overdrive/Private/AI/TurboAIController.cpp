@@ -2,6 +2,7 @@
 
 
 #include "AI/TurboAIController.h"
+#include "AI/TurboActionBase.h"
 #include "BifrostActionStack.h"
 #include "BifrostAction.h"
 #include "Kismet/GameplayStatics.h"
@@ -316,40 +317,21 @@ float ATurboAIController::FindDistanceToNextCorner() const
 
 void ATurboAIController::EvaluateActions()
 {
-    UBifrostAction* CurrentAction = GetCurrentAction();
-
-    // Don't stack yields
-    if (Cast<UTurboAction_Yield>(CurrentAction))
-    {
-        return;
-    }
-
+    // Try actions in priority order — tag blocking handles conflicts
     if (TryPushYieldAction()) return;
-
-    // Overtake only from FollowPath
-    if (Cast<UTurboAction_Overtake>(CurrentAction))
-    {
-        return;
-    }
-
     if (TryPushOvertakeAction()) return;
 }
 
 bool ATurboAIController::TryPushYieldAction()
 {
-    if (!ControlledVehicle)
+    if (IsActionBlocked(TurboGameplayTags::Action_Yield))
     {
         return false;
     }
 
-    // Don't yield if we're the one overtaking
-    const TArray<UBifrostAction*>& Actions = GetActions();
-    for (UBifrostAction* Action : Actions)
+    if (!ControlledVehicle)
     {
-        if (Cast<UTurboAction_Overtake>(Action))
-        {
-            return false;
-        }
+        return false;
     }
 
     UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
@@ -358,15 +340,10 @@ bool ATurboAIController::TryPushYieldAction()
         return false;
     }
 
+    // Is there a car beside us?
     if (!Detection->IsCarOnLeft() && !Detection->IsCarOnRight())
     {
         return false;
-    }
-
-    // Only yield if the car beside is faster than us (they're overtaking)
-    if (DecisionContext.bCarAhead && DecisionContext.RelativeSpeedAhead >= 0.0f)
-    {
-        return false;  // We're faster or equal - don't yield
     }
 
     UTurboAction_Yield* YieldAction = NewObject<UTurboAction_Yield>(this);
@@ -382,6 +359,11 @@ bool ATurboAIController::TryPushYieldAction()
 
 bool ATurboAIController::TryPushOvertakeAction()
 {
+    if (IsActionBlocked(TurboGameplayTags::Action_Overtake))
+    {
+        return false;
+    }
+
     // No car ahead?
     if (!DecisionContext.bCarAhead)
     {
@@ -396,12 +378,6 @@ bool ATurboAIController::TryPushOvertakeAction()
 
     // Not faster than them?
     if (DecisionContext.RelativeSpeedAhead < OvertakeMinSpeedAdvantage)
-    {
-        return false;
-    }
-
-    // Don't overtake in tight corners or approaching them
-    if (DecisionContext.CurrentCurvature > StraightCurvatureThreshold * 3.0f)
     {
         return false;
     }
@@ -542,4 +518,59 @@ const TArray<UBifrostAction*>& ATurboAIController::GetActions() const
         return ActionStack->GetActions();
     }
     return EmptyArray;
+}
+
+// =============================================================================
+// ACTION TAGS
+// =============================================================================
+
+void ATurboAIController::RebuildActiveActionTags()
+{
+    ActiveActionTags.Reset();
+
+    // Current action
+    UTurboActionBase* Current = Cast<UTurboActionBase>(GetCurrentAction());
+    if (Current && Current->ActionTag.IsValid())
+    {
+        ActiveActionTags.AddTag(Current->ActionTag);
+    }
+
+    // Stack actions
+    const TArray<UBifrostAction*>& Actions = GetActions();
+    for (UBifrostAction* Action : Actions)
+    {
+        UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
+        if (TurboAction && TurboAction->ActionTag.IsValid())
+        {
+            ActiveActionTags.AddTag(TurboAction->ActionTag);
+        }
+    }
+}
+
+bool ATurboAIController::IsActionBlocked(FGameplayTag ActionTag) const
+{
+    // Disabled by personality?
+    if (DisabledActions.HasTag(ActionTag))
+    {
+        return true;
+    }
+
+    // Check if any active action blocks this tag
+    UTurboActionBase* Current = Cast<UTurboActionBase>(GetCurrentAction());
+    if (Current && Current->BlocksTags.HasTag(ActionTag))
+    {
+        return true;
+    }
+
+    const TArray<UBifrostAction*>& Actions = GetActions();
+    for (UBifrostAction* Action : Actions)
+    {
+        UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
+        if (TurboAction && TurboAction->BlocksTags.HasTag(ActionTag))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

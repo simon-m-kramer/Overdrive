@@ -4,6 +4,7 @@
 #include "AI/TurboAction_Yield.h"
 #include "AI/TurboAIController.h"
 #include "Framework/TurboVehicle.h"
+#include "Framework/TurboGameplayTags.h"
 #include "Components/TurboVehicleDetectionComponent.h"
 
 void UTurboAction_Yield::Start(bool bFirstTime)
@@ -11,6 +12,9 @@ void UTurboAction_Yield::Start(bool bFirstTime)
     Super::Start(bFirstTime);
 
     ActionName = TEXT("Yield");
+    ActionTag = TurboGameplayTags::Action_Yield;
+    BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
+    BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
 
     if (bFirstTime)
     {

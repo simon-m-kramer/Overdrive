@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract)
 class BIFROST_API UBifrostAction : public UObject
 {
 	GENERATED_BODY()

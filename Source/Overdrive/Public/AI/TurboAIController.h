@@ -5,10 +5,12 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Components/TurboVehicleDetectionComponent.h"
+#include "GameplayTagContainer.h"
 #include "TurboAIController.generated.h"
 
 class UBifrostActionStack;
 class UBifrostAction;
+class UTurboActionBase;
 class ATurboRacingSpline;
 class ATurboVehicle;
 
@@ -67,6 +69,21 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Action")
     const TArray<UBifrostAction*>& GetActions() const;
+
+    /** Check if an action with the given tag would be blocked by the current stack */
+    UFUNCTION(BlueprintPure, Category = "Action Tags")
+    bool IsActionBlocked(FGameplayTag ActionTag) const;
+
+    /** Get all active action tags on the stack (including current action) */
+    UFUNCTION(BlueprintPure, Category = "Action Tags")
+    const FGameplayTagContainer& GetActiveActionTags() const { return ActiveActionTags; }
+
+    // =========================================================================
+    // AI PERSONALITY
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
+    FGameplayTagContainer DisabledActions;
 
     // =========================================================================
     // SPLINE & POSITION
@@ -193,4 +210,9 @@ private:
 
     // Decision context
     FTurboDecisionContext DecisionContext;
+
+    // Action tags
+    void RebuildActiveActionTags();
+    FGameplayTagContainer ActiveActionTags;
+
 };
