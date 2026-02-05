@@ -32,13 +32,19 @@ public:
     float OffsetBlendSpeed = 3.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float MinDistanceAheadToComplete = 500.0f;
+    float MinDistanceAheadToComplete = 1500.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float AbortTimeout = 10.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float SpeedBoostKmh = 15.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Overtake")
+    float CompletionHoldTime = 2.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Overtake")
+    float CornerAbortCurvature = 0.001f;
 
 protected:
     virtual FVector GetTargetPoint() override;
@@ -57,5 +63,6 @@ private:
     float TargetSplineDistanceAtStart = 0.0f;
     float TimeInOvertake = 0.0f;
     bool bOvertakeComplete = false;
+    bool bHasPassedTarget = false;
+    float TimeSincePassed = 0.0f;
 };
-

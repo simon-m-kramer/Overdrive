@@ -24,6 +24,8 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
         CurrentLateralOffset = 0.0f;
         TimeInOvertake = 0.0f;
         bOvertakeComplete = false;
+        bHasPassedTarget = false;
+        TimeSincePassed = 0.0f;
 
         // Store target's starting position for comparison
         if (TargetVehicle.IsValid() && RacingSplineActor.IsValid())
@@ -49,18 +51,37 @@ void UTurboAction_Overtake::Update(float DeltaTime)
 {
     TimeInOvertake += DeltaTime;
 
-    // Blend lateral offset toward target
-    float TargetOffset = (Side == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
-    CurrentLateralOffset = FMath::FInterpTo(CurrentLateralOffset, TargetOffset, DeltaTime, OffsetBlendSpeed);
+    if (bHasPassedTarget)
+    {
+        // Hold phase: blend offset back toward zero
+        TimeSincePassed += DeltaTime;
+
+        float BlendOutAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
+        float FullOffset = (Side == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
+        CurrentLateralOffset = FMath::Lerp(FullOffset, 0.0f, BlendOutAlpha);
+    }
+    else
+    {
+        // Passing phase: blend offset toward target
+        float TargetOffset = (Side == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
+        CurrentLateralOffset = FMath::FInterpTo(CurrentLateralOffset, TargetOffset, DeltaTime, OffsetBlendSpeed);
+
+        if (HasPassedTargetVehicle())
+        {
+            bHasPassedTarget = true;
+            TimeSincePassed = 0.0f;
+        }
+    }
 
     // Call parent update for steering and speed control
     Super::Update(DeltaTime);
 
     if (bDrawDebug)
     {
+        FString Phase = bHasPassedTarget ? TEXT("HOLD") : TEXT("PASSING");
         GEngine->AddOnScreenDebugMessage(51, 0.0f, FColor::Yellow,
-            FString::Printf(TEXT("Overtake: Offset=%.0f / %.0f | Time=%.1fs"),
-                CurrentLateralOffset, TargetOffset, TimeInOvertake));
+            FString::Printf(TEXT("Overtake [%s]: Offset=%.0f | Time=%.1fs"),
+                *Phase, CurrentLateralOffset, TimeInOvertake));
     }
 }
 
@@ -81,7 +102,8 @@ bool UTurboAction_Overtake::IsDone()
         return true;
     }
 
-    if (HasPassedTargetVehicle())
+    // Complete after hold time expires
+    if (bHasPassedTarget && TimeSincePassed >= CompletionHoldTime)
     {
         if (bDrawDebug)
         {
@@ -160,7 +182,6 @@ bool UTurboAction_Overtake::HasPassedTargetVehicle() const
 
     if (Spline->IsClosedLoop())
     {
-        // Handle case where we've wrapped around
         if (DistanceAhead < -SplineLength * 0.5f)
         {
             DistanceAhead += SplineLength;
@@ -176,22 +197,27 @@ bool UTurboAction_Overtake::HasPassedTargetVehicle() const
 
 bool UTurboAction_Overtake::ShouldAbort() const
 {
-    // Timeout
     if (TimeInOvertake > AbortTimeout)
     {
         return true;
     }
 
-    // Target vehicle lost
     if (!TargetVehicle.IsValid())
     {
         return true;
     }
 
-    // Could add more abort conditions:
-    // - Side no longer clear (car appeared)
-    // - Going off track
-    // - Corner too tight
+    // Abort if entering a tight corner mid-overtake (not during hold)
+    if (!bHasPassedTarget && AIController.IsValid() && RacingSplineActor.IsValid())
+    {
+        float CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(
+            AIController->GetCurrentSplineDistance(), 500.0f);
+
+        if (CurrentCurvature > CornerAbortCurvature)
+        {
+            return true;
+        }
+    }
 
     return false;
 }
@@ -199,5 +225,13 @@ bool UTurboAction_Overtake::ShouldAbort() const
 float UTurboAction_Overtake::FindTargetSpeedAhead() const
 {
     float BaseSpeed = Super::FindTargetSpeedAhead();
+
+    // Reduce boost during hold phase
+    if (bHasPassedTarget)
+    {
+        float HoldAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
+        return BaseSpeed + SpeedBoostKmh * (1.0f - HoldAlpha);
+    }
+
     return BaseSpeed + SpeedBoostKmh;
 }

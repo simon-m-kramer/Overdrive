@@ -342,7 +342,7 @@ bool ATurboAIController::TryPushYieldAction()
         return false;
     }
 
-    // Don't yield if we're the one overtaking (even if overtake is paused in stack)
+    // Don't yield if we're the one overtaking
     const TArray<UBifrostAction*>& Actions = GetActions();
     for (UBifrostAction* Action : Actions)
     {
@@ -361,6 +361,12 @@ bool ATurboAIController::TryPushYieldAction()
     if (!Detection->IsCarOnLeft() && !Detection->IsCarOnRight())
     {
         return false;
+    }
+
+    // Only yield if the car beside is faster than us (they're overtaking)
+    if (DecisionContext.bCarAhead && DecisionContext.RelativeSpeedAhead >= 0.0f)
+    {
+        return false;  // We're faster or equal - don't yield
     }
 
     UTurboAction_Yield* YieldAction = NewObject<UTurboAction_Yield>(this);
@@ -390,6 +396,12 @@ bool ATurboAIController::TryPushOvertakeAction()
 
     // Not faster than them?
     if (DecisionContext.RelativeSpeedAhead < OvertakeMinSpeedAdvantage)
+    {
+        return false;
+    }
+
+    // Don't overtake in tight corners or approaching them
+    if (DecisionContext.CurrentCurvature > StraightCurvatureThreshold * 3.0f)
     {
         return false;
     }
