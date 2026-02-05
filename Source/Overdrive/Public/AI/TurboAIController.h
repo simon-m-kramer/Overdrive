@@ -153,6 +153,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "Decision Making")
     float OvertakeLateralOffset = 350.0f;  // How far to move sideways
 
+    UPROPERTY(EditAnywhere, Category = "Decision Making")
+    float SprintMinStraightDistance = 3000.0f;  // Min straight ahead to start sprint
+
     // =========================================================================
     // PERFORMANCE
     // =========================================================================
@@ -195,6 +198,9 @@ private:
     void EvaluateActions();
     bool TryPushYieldAction();
     bool TryPushOvertakeAction();
+    bool TryPushSprintAction();
+
+    // Helper Functions
     EOvertakeSide ChooseOvertakeSide() const;
     float FindDistanceToNextCorner() const;
 

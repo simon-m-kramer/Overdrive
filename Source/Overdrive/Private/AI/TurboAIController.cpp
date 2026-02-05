@@ -12,6 +12,7 @@
 #include "AI/TurboAction_FollowPath.h"
 #include "AI/TurboAction_Overtake.h"
 #include "AI/TurboAction_Yield.h"
+#include "AI/TurboAction_Sprint.h"
 #include "Components/SplineComponent.h"
 #include "Components/TurboVehicleDetectionComponent.h"
 
@@ -320,6 +321,8 @@ void ATurboAIController::EvaluateActions()
     // Try actions in priority order — tag blocking handles conflicts
     if (TryPushYieldAction()) return;
     if (TryPushOvertakeAction()) return;
+    if (TryPushSprintAction()) return;
+
 }
 
 bool ATurboAIController::TryPushYieldAction()
@@ -425,6 +428,42 @@ bool ATurboAIController::TryPushOvertakeAction()
         GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
             FString::Printf(TEXT("OVERTAKE PUSHED - Side: %s"),
                 Side == EOvertakeSide::Left ? TEXT("LEFT") : TEXT("RIGHT")));
+    }
+
+    return true;
+}
+
+bool ATurboAIController::TryPushSprintAction()
+{
+    if (IsActionBlocked(TurboGameplayTags::Action_Sprint))
+    {
+        return false;
+    }
+
+    // Need to be on a straight
+    if (!DecisionContext.bOnStraight)
+    {
+        return false;
+    }
+
+    // Need enough straight road ahead
+    if (DecisionContext.DistanceToNextCorner < SprintMinStraightDistance)
+    {
+        return false;
+    }
+
+    // Don't sprint if car is close ahead
+    if (DecisionContext.bCarAhead && DecisionContext.DistanceToCarAhead < SprintMinStraightDistance)
+    {
+        return false;
+    }
+
+    UTurboAction_Sprint* SprintAction = NewObject<UTurboAction_Sprint>(this);
+    PushAction(SprintAction);
+
+    if (bShowDecisionContext)
+    {
+        GEngine->AddOnScreenDebugMessage(42, 2.0f, FColor::Cyan, TEXT("SPRINT PUSHED"));
     }
 
     return true;
