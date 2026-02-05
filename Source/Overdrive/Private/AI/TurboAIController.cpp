@@ -480,6 +480,7 @@ void ATurboAIController::PushAction(UBifrostAction* NewAction)
     if (ActionStack)
     {
         ActionStack->PushAction(NewAction);
+        RebuildActiveActionTags();
     }
 }
 
@@ -488,6 +489,7 @@ void ATurboAIController::RemoveAction(UBifrostAction* InAction)
     if (ActionStack)
     {
         ActionStack->RemoveAction(InAction);
+        RebuildActiveActionTags();
     }
 }
 
