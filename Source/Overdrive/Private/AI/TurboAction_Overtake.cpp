@@ -226,7 +226,25 @@ float UTurboAction_Overtake::FindTargetSpeedAhead() const
 {
     float BaseSpeed = Super::FindTargetSpeedAhead();
 
-    // Reduce boost during hold phase
+    // No boost in corners
+    if (AIController.IsValid() && RacingSplineActor.IsValid())
+    {
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(
+            AIController->GetCurrentSplineDistance(), 500.0f);
+
+        if (Curvature > 0.0003f)
+        {
+            // In a corner — use base speed, no boost
+            if (bHasPassedTarget)
+            {
+                float HoldAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
+                return BaseSpeed * (1.0f - HoldAlpha * 0.05f);
+            }
+            return BaseSpeed;
+        }
+    }
+
+    // On straight — full boost
     if (bHasPassedTarget)
     {
         float HoldAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
