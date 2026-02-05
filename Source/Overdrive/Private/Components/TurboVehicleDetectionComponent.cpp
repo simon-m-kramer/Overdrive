@@ -6,7 +6,6 @@
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"
 
-
 UTurboVehicleDetectionComponent::UTurboVehicleDetectionComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
@@ -46,14 +45,20 @@ void UTurboVehicleDetectionComponent::UpdateForwardDetection()
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(OwnerVehicle);
 
+    // Box sweep: wide laterally, narrow vertically
+    // X = forward (thin, just the sweep direction)
+    // Y = lateral (wide to catch offset cars)
+    // Z = vertical (short)
+    FCollisionShape BoxShape = FCollisionShape::MakeBox(FVector(10.0f, ForwardBoxHalfWidth, ForwardBoxHalfHeight));
+
     FHitResult HitResult;
     bool bHit = GetWorld()->SweepSingleByChannel(
         HitResult,
         Start,
         End,
-        FQuat::Identity,
+        OwnerVehicle->GetActorQuat(),
         DetectionChannel,
-        FCollisionShape::MakeSphere(ForwardTraceRadius),
+        BoxShape,
         QueryParams
     );
 
@@ -71,7 +76,14 @@ void UTurboVehicleDetectionComponent::UpdateForwardDetection()
     if (bDrawDebug)
     {
         FColor DebugColor = bCarAhead ? FColor::Red : FColor::Green;
-        DrawDebugLine(GetWorld(), Start, End, DebugColor, false, 0.0f, 0, 2.0f);
+
+        // Draw box at start and end to visualize sweep corridor
+        FVector BoxExtent(10.0f, ForwardBoxHalfWidth, ForwardBoxHalfHeight);
+        FQuat Rotation = OwnerVehicle->GetActorQuat();
+
+        DrawDebugBox(GetWorld(), Start, BoxExtent, Rotation, DebugColor, false, 0.0f, 0, 1.0f);
+        DrawDebugBox(GetWorld(), End, BoxExtent, Rotation, DebugColor, false, 0.0f, 0, 1.0f);
+        DrawDebugLine(GetWorld(), Start, End, DebugColor, false, 0.0f, 0, 1.0f);
 
         if (bCarAhead)
         {
@@ -146,11 +158,15 @@ void UTurboVehicleDetectionComponent::UpdateSideDetection()
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(OwnerVehicle);
 
+    // Box extent: X = half car length, Y = lateral width, Z = height
     FVector BoxExtent(SideDetectionLength * 0.5f, SideDetectionWidth * 0.5f, SideDetectionHeight * 0.5f);
     FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
 
+    // Offset center slightly backward so box doesn't extend far past front bumper
+    FVector ForwardShift = Forward * SideDetectionForwardOffset;
+
     // Left side detection
-    FVector LeftCenter = VehicleLocation + (Right * -SideDetectionOffset);
+    FVector LeftCenter = VehicleLocation + (Right * -SideDetectionOffset) + ForwardShift;
 
     TArray<FOverlapResult> LeftOverlaps;
     bool bLeftHit = GetWorld()->OverlapMultiByChannel(
@@ -176,7 +192,7 @@ void UTurboVehicleDetectionComponent::UpdateSideDetection()
     }
 
     // Right side detection
-    FVector RightCenter = VehicleLocation + (Right * SideDetectionOffset);
+    FVector RightCenter = VehicleLocation + (Right * SideDetectionOffset) + ForwardShift;
 
     TArray<FOverlapResult> RightOverlaps;
     bool bRightHit = GetWorld()->OverlapMultiByChannel(
@@ -231,4 +247,3 @@ bool UTurboVehicleDetectionComponent::IsOvertakeSafe(EOvertakeSide Side) const
         return !bCarOnRight;
     }
 }
-

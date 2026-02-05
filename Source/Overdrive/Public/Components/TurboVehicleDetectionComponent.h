@@ -57,14 +57,23 @@ public:
     bool IsOvertakeSafe(EOvertakeSide Side) const;
 
     // =========================================================================
-    // CONFIGURATION - FORWARD/BEHIND
+    // CONFIGURATION - FORWARD
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Detection|Forward")
     float ForwardDetectionRange = 5000.0f;
 
+    /** Half-width of forward detection box (lateral coverage) */
     UPROPERTY(EditAnywhere, Category = "Detection|Forward")
-    float ForwardTraceRadius = 150.0f;
+    float ForwardBoxHalfWidth = 300.0f;
+
+    /** Half-height of forward detection box */
+    UPROPERTY(EditAnywhere, Category = "Detection|Forward")
+    float ForwardBoxHalfHeight = 100.0f;
+
+    // =========================================================================
+    // CONFIGURATION - BEHIND
+    // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Detection|Behind")
     float BehindDetectionRange = 3000.0f;
@@ -76,17 +85,24 @@ public:
     // CONFIGURATION - SIDE ZONES
     // =========================================================================
 
+    /** How far sideways the side box extends */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionWidth = 400.0f;
+    float SideDetectionWidth = 200.0f;
 
+    /** Length of side box along car's forward axis (roughly car length) */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionLength = 800.0f;
+    float SideDetectionLength = 400.0f;
 
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
     float SideDetectionHeight = 100.0f;
 
+    /** How far sideways from car center to place the box center */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
     float SideDetectionOffset = 200.0f;
+
+    /** Forward offset of side box center relative to car center (negative = shifted back) */
+    UPROPERTY(EditAnywhere, Category = "Detection|Side")
+    float SideDetectionForwardOffset = 25.0f;
 
     // =========================================================================
     // DEBUG
