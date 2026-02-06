@@ -37,6 +37,11 @@ struct FTurboDecisionContext
     // Track position
     float SignedDistanceFromCenter = 0.0f;  // Positive = right side
     float TrackHalfWidth = 0.0f;
+
+    UPROPERTY()
+    TWeakObjectPtr<ATurboVehicle> CarAhead;
+
+    float CurrentTurnSign = 0.0f;
 };
 
 UCLASS()

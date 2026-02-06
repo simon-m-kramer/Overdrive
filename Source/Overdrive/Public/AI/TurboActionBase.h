@@ -7,7 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "TurboActionBase.generated.h"
 
-class ATurboAIController;
+//class ATurboAIController;
+struct FTurboDecisionContext;
 /**
  * 
  */
@@ -18,7 +19,7 @@ class OVERDRIVE_API UTurboActionBase : public UBifrostAction
 	
 public:
     /** Check if this action can activate given current context. Called on CDO. */
-    virtual bool CanActivate(const ATurboAIController* Controller) const { return false; }
+    virtual bool CanActivate(const FTurboDecisionContext& Context) const { return false; }
 
     /** Identifies this action type */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action Tags")

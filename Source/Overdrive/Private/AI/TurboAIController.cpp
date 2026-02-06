@@ -70,7 +70,7 @@ void ATurboAIController::Tick(float DeltaTime)
     // Update action stack
     if (ActionStack)
     {
-        ActionStack->EvaluateActions(this);
+        ActionStack->EvaluateActions(DecisionContext);
         ActionStack->UpdateActions(DeltaTime);
     }
 
@@ -299,13 +299,19 @@ void ATurboAIController::UpdateDecisionContext()
                 float OurSpeed = ControlledVehicle->GetSpeedKmh();
                 float TheirSpeed = CarAhead->GetSpeedKmh();
                 DecisionContext.RelativeSpeedAhead = OurSpeed - TheirSpeed;
+                DecisionContext.CarAhead = Detection->GetCarAhead();
             }
         }
         else
         {
             DecisionContext.RelativeSpeedAhead = 0.0f;
+            DecisionContext.CarAhead = nullptr;
         }
     }
+
+    DecisionContext.CurrentTurnSign = RacingSplineActor->GetTurnSign(CurrentSplineDistance, 500.0f);
+
+
 }
 
 float ATurboAIController::FindDistanceToNextCorner() const

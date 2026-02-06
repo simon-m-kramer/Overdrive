@@ -6,7 +6,7 @@
 #include "AI/TurboAction_FollowPath.h"
 #include "TurboAction_Evade.generated.h"
 
-class ATurboAIController;
+struct FTurboDecisionContext;
 
 UCLASS()
 class OVERDRIVE_API UTurboAction_Evade : public UTurboAction_FollowPath
@@ -16,7 +16,7 @@ class OVERDRIVE_API UTurboAction_Evade : public UTurboAction_FollowPath
 public:
     UTurboAction_Evade();
 
-    virtual bool CanActivate(const ATurboAIController* Controller) const override;
+    virtual bool CanActivate(const FTurboDecisionContext& Context) const override;
     virtual void Start(bool bFirstTime) override;
     virtual void Update(float DeltaTime) override;
     virtual bool IsDone() override;

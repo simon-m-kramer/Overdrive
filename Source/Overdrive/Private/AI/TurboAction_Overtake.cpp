@@ -19,58 +19,22 @@ UTurboAction_Overtake::UTurboAction_Overtake()
 
 }
 
-bool UTurboAction_Overtake::CanActivate(const ATurboAIController* Controller) const
+bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) const
 {
-    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
+    if (!Context.bCarAhead) return false;
+    if (Context.DistanceToCarAhead > ConsiderDistance) return false;
+    if (Context.RelativeSpeedAhead < MinSpeedAdvantage) return false;
 
-    // No car ahead?
-    if (!Context.bCarAhead)
-    {
-        return false;
-    }
+    EOvertakeSide ChosenSide = ChooseOvertakeSide(Context);
 
-    // Too far away?
-    if (Context.DistanceToCarAhead > ConsiderDistance)
-    {
-        return false;
-    }
-
-    // Not faster than them?
-    if (Context.RelativeSpeedAhead < MinSpeedAdvantage)
-    {
-        return false;
-    }
-
-    // Choose side and check if safe
-    EOvertakeSide ChosenSide = ChooseOvertakeSide(Controller);
-
-    // Verify we have clearance
     bool bSideClear = (ChosenSide == EOvertakeSide::Left) ? Context.bLeftClear : Context.bRightClear;
-    if (!bSideClear)
-    {
-        return false;
-    }
+    if (!bSideClear) return false;
 
-    // Check if we'd go off track
     float OvertakeOffset = (ChosenSide == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
     float ProjectedPosition = Context.SignedDistanceFromCenter + OvertakeOffset;
-    if (FMath::Abs(ProjectedPosition) > Context.TrackHalfWidth)
-    {
-        return false;
-    }
+    if (FMath::Abs(ProjectedPosition) > Context.TrackHalfWidth) return false;
 
-    // Verify target vehicle exists
-    ATurboVehicle* ControlledVehicle = Controller->GetControlledVehicle();
-    if (!ControlledVehicle)
-    {
-        return false;
-    }
-
-    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-    if (!Detection || !Detection->GetCarAhead())
-    {
-        return false;
-    }
+    if (!Context.CarAhead.IsValid()) return false;
 
     return true;
 }
@@ -90,17 +54,9 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
         // Set up target and side from current context
         if (AIController.IsValid())
         {
-            Side = ChooseOvertakeSide(AIController.Get());
-
-            ATurboVehicle* ControlledVehicle = AIController->GetControlledVehicle();
-            if (ControlledVehicle)
-            {
-                UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-                if (Detection)
-                {
-                    TargetVehicle = Detection->GetCarAhead();
-                }
-            }
+            const FTurboDecisionContext& Context = AIController->GetDecisionContext();
+            Side = ChooseOvertakeSide(Context);
+            TargetVehicle = Context.CarAhead;
         }
 
         // Store target's starting position for comparison
@@ -233,23 +189,18 @@ FVector UTurboAction_Overtake::GetTargetPoint()
     return BasePoint + (Right * CurrentLateralOffset);
 }
 
-EOvertakeSide UTurboAction_Overtake::ChooseOvertakeSide(const ATurboAIController* Controller) const
+EOvertakeSide UTurboAction_Overtake::ChooseOvertakeSide(const FTurboDecisionContext& Context) const
 {
-    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
-    ATurboRacingSpline* Spline = Controller->GetRacingSplineActor();
-
     // If in a corner, prefer inside line
-    if (!Context.bOnStraight && Spline)
+    if (!Context.bOnStraight)
     {
-        float TurnSign = Spline->GetTurnSign(Controller->GetCurrentSplineDistance(), 500.0f);
-
         // TurnSign > 0 = turning right, inside is left
         // TurnSign < 0 = turning left, inside is right
-        if (TurnSign > 0.1f && Context.bLeftClear)
+        if (Context.CurrentTurnSign > 0.1f && Context.bLeftClear)
         {
             return EOvertakeSide::Left;
         }
-        else if (TurnSign < -0.1f && Context.bRightClear)
+        else if (Context.CurrentTurnSign < -0.1f && Context.bRightClear)
         {
             return EOvertakeSide::Right;
         }
@@ -259,7 +210,6 @@ EOvertakeSide UTurboAction_Overtake::ChooseOvertakeSide(const ATurboAIController
     float RoomOnLeft = Context.TrackHalfWidth + Context.SignedDistanceFromCenter;
     float RoomOnRight = Context.TrackHalfWidth - Context.SignedDistanceFromCenter;
 
-    // Prefer side with more room, but only if clear
     if (RoomOnLeft > RoomOnRight && Context.bLeftClear)
     {
         return EOvertakeSide::Left;
@@ -273,7 +223,6 @@ EOvertakeSide UTurboAction_Overtake::ChooseOvertakeSide(const ATurboAIController
         return EOvertakeSide::Left;
     }
 
-    // Default to left if nothing else works
     return EOvertakeSide::Left;
 }
 

@@ -8,6 +8,7 @@
 #include "TurboAction_Overtake.generated.h"
 
 class ATurboVehicle;
+struct FTurboDecisionContext;
 
 UCLASS()
 class OVERDRIVE_API UTurboAction_Overtake : public UTurboAction_FollowPath
@@ -17,7 +18,7 @@ class OVERDRIVE_API UTurboAction_Overtake : public UTurboAction_FollowPath
 public:
     UTurboAction_Overtake();
 
-    virtual bool CanActivate(const ATurboAIController* Controller) const override;
+    virtual bool CanActivate(const FTurboDecisionContext& Context) const override;
     virtual void Start(bool bFirstTime) override;
     virtual void Update(float DeltaTime) override;
     virtual bool IsDone() override;
@@ -62,7 +63,7 @@ protected:
     virtual float FindTargetSpeedAhead() const override;
 
 private:
-    EOvertakeSide ChooseOvertakeSide(const ATurboAIController* Controller) const;
+    EOvertakeSide ChooseOvertakeSide(const FTurboDecisionContext& Context) const;
     bool HasPassedTargetVehicle() const;
     bool ShouldAbort() const;
 

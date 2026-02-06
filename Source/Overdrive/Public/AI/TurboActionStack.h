@@ -26,7 +26,7 @@ public:
 	virtual void UpdateActions(float DeltaTime) override;
 
 	/** Evaluate the priority list and push the first valid action */
-	void EvaluateActions(ATurboAIController* Controller);
+	void EvaluateActions(const FTurboDecisionContext& Context);
 
 	// =========================================================================
 	// ACTION TAGS

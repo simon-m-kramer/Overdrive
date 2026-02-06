@@ -8,6 +8,7 @@
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
 #include "DrawDebugHelpers.h"
+#include "AI/TurboActionStack.h"
 
 UTurboAction_FollowPath::UTurboAction_FollowPath()
 {
@@ -19,7 +20,13 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
 
-    AIController = Cast<ATurboAIController>(GetOuter());
+    UObject* Outer = GetOuter();
+    if (UTurboActionStack* Stack = Cast<UTurboActionStack>(Outer))
+    {
+        Outer = Stack->GetOuter();
+    }
+    AIController = Cast<ATurboAIController>(Outer);
+
     if (AIController.IsValid())
     {
         Vehicle = AIController->GetControlledVehicle();

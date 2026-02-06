@@ -3,10 +3,9 @@
 
 #include "AI/TurboAction_Yield.h"
 #include "AI/TurboAIController.h"
-#include "Framework/TurboVehicle.h"
 #include "Framework/TurboGameplayTags.h"
+#include "Framework/TurboVehicle.h"
 #include "Components/TurboVehicleDetectionComponent.h"
-
 
 UTurboAction_Yield::UTurboAction_Yield()
 {
@@ -18,22 +17,9 @@ UTurboAction_Yield::UTurboAction_Yield()
 
 }
 
-bool UTurboAction_Yield::CanActivate(const ATurboAIController* Controller) const
+bool UTurboAction_Yield::CanActivate(const FTurboDecisionContext& Context) const
 {
-    ATurboVehicle* ControlledVehicle = Controller->GetControlledVehicle();
-    if (!ControlledVehicle)
-    {
-        return false;
-    }
-
-    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-    if (!Detection)
-    {
-        return false;
-    }
-
-    // Activate if there's a car beside us
-    return Detection->IsCarOnLeft() || Detection->IsCarOnRight();
+    return !Context.bLeftClear || !Context.bRightClear;
 }
 
 void UTurboAction_Yield::Start(bool bFirstTime)

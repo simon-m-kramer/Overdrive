@@ -24,13 +24,8 @@ void UTurboActionStack::UpdateActions(float DeltaTime)
 	Super::UpdateActions(DeltaTime);  // execute
 }
 
-void UTurboActionStack::EvaluateActions(ATurboAIController* Controller)
+void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context)
 {
-	if (!Controller)
-	{
-		return;
-	}
-
 	for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
 	{
 		if (!ActionClass)
@@ -49,7 +44,7 @@ void UTurboActionStack::EvaluateActions(ATurboAIController* Controller)
 			continue;
 		}
 
-		if (!CDO->CanActivate(Controller))
+		if (!CDO->CanActivate(Context))
 		{
 			continue;
 		}

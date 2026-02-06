@@ -18,32 +18,18 @@ UTurboAction_Evade::UTurboAction_Evade()
     BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
 }
 
-bool UTurboAction_Evade::CanActivate(const ATurboAIController* Controller) const
+bool UTurboAction_Evade::CanActivate(const FTurboDecisionContext& Context) const
 {
-    ATurboVehicle* ControlledVehicle = Controller->GetControlledVehicle();
-    if (!ControlledVehicle)
-    {
-        return false;
-    }
-
-    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-    if (!Detection)
-    {
-        return false;
-    }
-
     // Activate if there's a car beside us
-    if (!Detection->IsCarOnLeft() && !Detection->IsCarOnRight())
+    if (Context.bLeftClear && Context.bRightClear)
     {
         return false;
     }
 
     // Check if we have room to evade
-    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
-
-    if (Detection->IsCarOnLeft())
+    if (!Context.bLeftClear)
     {
-        // Would evade right — check room
+        // Car on left, would evade right
         float ProjectedPosition = Context.SignedDistanceFromCenter + LateralOffset;
         if (FMath::Abs(ProjectedPosition) > Context.TrackHalfWidth * 0.9f)
         {
@@ -52,7 +38,7 @@ bool UTurboAction_Evade::CanActivate(const ATurboAIController* Controller) const
     }
     else
     {
-        // Would evade left — check room
+        // Car on right, would evade left
         float ProjectedPosition = Context.SignedDistanceFromCenter - LateralOffset;
         if (FMath::Abs(ProjectedPosition) > Context.TrackHalfWidth * 0.9f)
         {

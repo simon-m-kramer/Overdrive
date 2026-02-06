@@ -14,23 +14,18 @@ UTurboAction_Sprint::UTurboAction_Sprint()
     BlocksTags.AddTag(TurboGameplayTags::Action_Sprint);
 }
 
-bool UTurboAction_Sprint::CanActivate(const ATurboAIController* Controller) const
+bool UTurboAction_Sprint::CanActivate(const FTurboDecisionContext& Context) const
 {
-    const FTurboDecisionContext& Context = Controller->GetDecisionContext();
-
-    // Need to be on a straight
     if (!Context.bOnStraight)
     {
         return false;
     }
 
-    // Need enough straight road ahead
     if (Context.DistanceToNextCorner < MinStraightDistance)
     {
         return false;
     }
 
-    // Don't sprint if car is close ahead
     if (Context.bCarAhead && Context.DistanceToCarAhead < MinStraightDistance)
     {
         return false;
