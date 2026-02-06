@@ -13,6 +13,7 @@ class UBifrostAction;
 class UTurboActionBase;
 class ATurboRacingSpline;
 class ATurboVehicle;
+class UTurboActionStack;
 
 USTRUCT(BlueprintType)
 struct FTurboDecisionContext
@@ -70,25 +71,6 @@ public:
     UFUNCTION(BlueprintPure, Category = "Action")
     const TArray<UBifrostAction*>& GetActions() const;
 
-    /** Check if an action with the given tag would be blocked by the current stack */
-    UFUNCTION(BlueprintPure, Category = "Action Tags")
-    bool IsActionBlocked(FGameplayTag ActionTag) const;
-
-    /** Get all active action tags on the stack (including current action) */
-    UFUNCTION(BlueprintPure, Category = "Action Tags")
-    const FGameplayTagContainer& GetActiveActionTags() const { return ActiveActionTags; }
-
-    // =========================================================================
-    // AI PERSONALITY
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
-    FGameplayTagContainer DisabledActions;
-
-    /** Actions to evaluate each tick, in priority order (first = highest) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
-    TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
-
     // =========================================================================
     // SPLINE & POSITION
     // =========================================================================
@@ -138,10 +120,6 @@ public:
     UFUNCTION(BlueprintPure, Category = "Decision Making")
     const FTurboDecisionContext& GetDecisionContext() const { return DecisionContext; }
 
-    // =========================================================================
-    // DECISION MAKING - CONFIGURATION
-    // =========================================================================
-
     UPROPERTY(EditAnywhere, Category = "Decision Making")
     float StraightCurvatureThreshold = 0.0002f;
 
@@ -168,12 +146,24 @@ public:
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bShowDecisionContext = true;
 
+    // =========================================================================
+    // CONFIGURATION
+    // =========================================================================
+
+    /** Actions to evaluate each tick, in priority order (first = highest) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
+    TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
+
+    /** Actions disabled by personality — these tags will always be blocked */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
+    FGameplayTagContainer DisabledActions;
+
 protected:
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
-    TObjectPtr<UBifrostActionStack> ActionStack;
+    TObjectPtr<UTurboActionStack> ActionStack;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
     TObjectPtr<ATurboRacingSpline> RacingSplineActor;
@@ -182,29 +172,23 @@ protected:
     TObjectPtr<ATurboVehicle> ControlledVehicle;
 
 private:
-    void UpdateLapTiming(float DeltaTime);
-    FString FormatLapTime(float TimeSeconds) const;
-
     // Decision making
     void UpdateDecisionContext();
     float FindDistanceToNextCorner() const;
-    void EvaluateActions();
+    FTurboDecisionContext DecisionContext;
 
+    // Spline
     float CurrentSplineDistance = 0.0f;
     float PreviousSplineDistance = 0.0f;
 
     // Lap timing
+    void UpdateLapTiming(float DeltaTime);
+    FString FormatLapTime(float TimeSeconds) const;
     float CurrentLapTime = 0.0f;
     float LastLapTime = 0.0f;
     float BestLapTime = 0.0f;
     int32 LapCount = 0;
     bool bLapTimingStarted = false;
 
-    // Decision context
-    FTurboDecisionContext DecisionContext;
-
-    // Action tags
-    void RebuildActiveActionTags();
-    FGameplayTagContainer ActiveActionTags;
 
 };

@@ -18,25 +18,25 @@ class BIFROST_API UBifrostActionStack : public UObject
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Action")
-	void UpdateActions(float DeltaTime);
+	virtual void UpdateActions(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
-	void PushAction(UBifrostAction* NewAction);
+	virtual void PushAction(UBifrostAction* NewAction);
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
-	void RemoveAction(UBifrostAction* InAction);
+	virtual void RemoveAction(UBifrostAction* InAction);
 
 	UFUNCTION(BlueprintPure, Category = "Action")
-	bool Contains(UBifrostAction* InAction);
+	virtual bool Contains(UBifrostAction* InAction);
 
 	UFUNCTION(BlueprintPure, Category = "Action")
-	bool IsEmpty() const { return !CurrentAction && ActionStack.Num() == 0; }
+	virtual bool IsEmpty() const { return !CurrentAction && ActionStack.Num() == 0; }
 
 	UFUNCTION(BlueprintPure, Category = "Action")
-	UBifrostAction* GetCurrentAction() const { return CurrentAction; }
+	virtual UBifrostAction* GetCurrentAction() const { return CurrentAction; }
 
 	UFUNCTION(BlueprintPure, Category = "Action")
-	const TArray<UBifrostAction*>& GetActions() const { return ActionStack; }
+	virtual const TArray<UBifrostAction*>& GetActions() const { return ActionStack; }
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")

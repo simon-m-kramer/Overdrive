@@ -3,8 +3,9 @@
 
 #include "AI/TurboAIController.h"
 #include "AI/TurboActionBase.h"
-#include "BifrostActionStack.h"
-#include "BifrostAction.h"
+#include "AI/TurboActionStack.h"
+#include "BifrostActionStack.h"  // old?
+#include "BifrostAction.h"  // old?
 #include "Kismet/GameplayStatics.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
@@ -30,7 +31,13 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    ActionStack = NewObject<UBifrostActionStack>(this);
+    ActionStack = NewObject<UTurboActionStack>(this);
+    if (ActionStack)
+    {
+        ActionStack->ActionPriorityList = ActionPriorityList;
+        ActionStack->DisabledActions = DisabledActions;
+    }
+
     FindRacingSpline();
     ControlledVehicle = Cast<ATurboVehicle>(InPawn);
 
@@ -60,12 +67,10 @@ void ATurboAIController::Tick(float DeltaTime)
     UpdateLapTiming(DeltaTime);
     UpdateDecisionContext();
 
-    // Evaluate and potentially push new actions
-    EvaluateActions();
-
     // Update action stack
     if (ActionStack)
     {
+        ActionStack->EvaluateActions(DecisionContext, this);
         ActionStack->UpdateActions(DeltaTime);
     }
 
@@ -324,48 +329,6 @@ float ATurboAIController::FindDistanceToNextCorner() const
     return CornerScanDistance;
 }
 
-void ATurboAIController::EvaluateActions()
-{
-    // Iterate through priority list, try to activate first valid action
-    for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
-    {
-        if (!ActionClass)
-        {
-            continue;
-        }
-
-        UTurboActionBase* CDO = ActionClass->GetDefaultObject<UTurboActionBase>();
-        if (!CDO)
-        {
-            continue;
-        }
-
-        // Check if blocked by tag
-        if (IsActionBlocked(CDO->ActionTag))
-        {
-            continue;
-        }
-
-        // Check if action wants to activate
-        if (!CDO->CanActivate(this))
-        {
-            continue;
-        }
-
-        // Create and push the action
-        UTurboActionBase* NewAction = NewObject<UTurboActionBase>(this, ActionClass);
-        PushAction(NewAction);
-
-        if (bShowDecisionContext)
-        {
-            GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
-                FString::Printf(TEXT("ACTION PUSHED: %s"), *CDO->ActionName));
-        }
-
-        return;
-    }
-}
-
 // =============================================================================
 // ACTION STACK
 // =============================================================================
@@ -375,7 +338,6 @@ void ATurboAIController::PushAction(UBifrostAction* NewAction)
     if (ActionStack)
     {
         ActionStack->PushAction(NewAction);
-        RebuildActiveActionTags();
     }
 }
 
@@ -384,7 +346,6 @@ void ATurboAIController::RemoveAction(UBifrostAction* InAction)
     if (ActionStack)
     {
         ActionStack->RemoveAction(InAction);
-        RebuildActiveActionTags();
     }
 }
 
@@ -417,57 +378,3 @@ const TArray<UBifrostAction*>& ATurboAIController::GetActions() const
     return EmptyArray;
 }
 
-// =============================================================================
-// ACTION TAGS
-// =============================================================================
-
-void ATurboAIController::RebuildActiveActionTags()
-{
-    ActiveActionTags.Reset();
-
-    // Current action
-    UTurboActionBase* Current = Cast<UTurboActionBase>(GetCurrentAction());
-    if (Current && Current->ActionTag.IsValid())
-    {
-        ActiveActionTags.AddTag(Current->ActionTag);
-    }
-
-    // Stack actions
-    const TArray<UBifrostAction*>& Actions = GetActions();
-    for (UBifrostAction* Action : Actions)
-    {
-        UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
-        if (TurboAction && TurboAction->ActionTag.IsValid())
-        {
-            ActiveActionTags.AddTag(TurboAction->ActionTag);
-        }
-    }
-}
-
-bool ATurboAIController::IsActionBlocked(FGameplayTag ActionTag) const
-{
-    // Disabled by personality?
-    if (DisabledActions.HasTag(ActionTag))
-    {
-        return true;
-    }
-
-    // Check if any active action blocks this tag
-    UTurboActionBase* Current = Cast<UTurboActionBase>(GetCurrentAction());
-    if (Current && Current->BlocksTags.HasTag(ActionTag))
-    {
-        return true;
-    }
-
-    const TArray<UBifrostAction*>& Actions = GetActions();
-    for (UBifrostAction* Action : Actions)
-    {
-        UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
-        if (TurboAction && TurboAction->BlocksTags.HasTag(ActionTag))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
