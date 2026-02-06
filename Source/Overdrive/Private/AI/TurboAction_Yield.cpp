@@ -14,6 +14,8 @@ UTurboAction_Yield::UTurboAction_Yield()
     ActionTag = TurboGameplayTags::Action_Yield;
     BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
     BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
+    BlocksTags.AddTag(TurboGameplayTags::Action_Evade);
+
 }
 
 bool UTurboAction_Yield::CanActivate(const ATurboAIController* Controller) const

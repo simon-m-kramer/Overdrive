@@ -101,6 +101,12 @@ void ATurboAIController::Tick(float DeltaTime)
     // Decision context debug
     if (bShowDecisionContext)
     {
+        if (ControlledVehicle)
+        {
+            GEngine->AddOnScreenDebugMessage(34, 0.0f, FColor::White,
+                FString::Printf(TEXT("Speed: %.1f km/h"), ControlledVehicle->GetSpeedKmh()));
+        }
+
         GEngine->AddOnScreenDebugMessage(30, 0.0f, FColor::Magenta,
             FString::Printf(TEXT("On Straight: %s | Curvature: %.6f"),
                 DecisionContext.bOnStraight ? TEXT("YES") : TEXT("NO"),
@@ -140,6 +146,8 @@ void ATurboAIController::Tick(float DeltaTime)
                     FString::Printf(TEXT("  [%d] %s"), i, *Actions[i]->ActionName));
             }
         }
+
+
     }
 }
 

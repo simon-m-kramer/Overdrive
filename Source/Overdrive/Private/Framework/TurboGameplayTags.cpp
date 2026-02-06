@@ -13,5 +13,7 @@ namespace TurboGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Action_Overtake, "Action.Overtake");
 	UE_DEFINE_GAMEPLAY_TAG(Action_Yield, "Action.Yield");
 	UE_DEFINE_GAMEPLAY_TAG(Action_Sprint, "Action.Sprint");
+	UE_DEFINE_GAMEPLAY_TAG(Action_Evade, "Action.Evade");
+
 
 }
