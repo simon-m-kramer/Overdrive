@@ -70,7 +70,7 @@ void ATurboAIController::Tick(float DeltaTime)
     // Update action stack
     if (ActionStack)
     {
-        ActionStack->EvaluateActions(DecisionContext, this);
+        ActionStack->EvaluateActions(this);
         ActionStack->UpdateActions(DeltaTime);
     }
 

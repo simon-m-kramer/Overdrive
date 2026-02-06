@@ -24,7 +24,7 @@ void UTurboActionStack::UpdateActions(float DeltaTime)
 	Super::UpdateActions(DeltaTime);  // execute
 }
 
-void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context, ATurboAIController* Controller)
+void UTurboActionStack::EvaluateActions(ATurboAIController* Controller)
 {
 	if (!Controller)
 	{
@@ -54,7 +54,7 @@ void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context, AT
 			continue;
 		}
 
-		UTurboActionBase* NewAction = NewObject<UTurboActionBase>(Controller, ActionClass);
+		UTurboActionBase* NewAction = NewObject<UTurboActionBase>(this, ActionClass);
 		PushAction(NewAction);
 
 		if (bShowEvaluationDebug)
