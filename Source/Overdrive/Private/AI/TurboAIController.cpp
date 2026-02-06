@@ -31,6 +31,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
+    // ActionPriorityList and DisabledActions pass through
     ActionStack = NewObject<UTurboActionStack>(this);
     if (ActionStack)
     {
@@ -38,6 +39,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
         ActionStack->DisabledActions = DisabledActions;
     }
 
+    // Initialize spline and vehicle
     FindRacingSpline();
     ControlledVehicle = Cast<ATurboVehicle>(InPawn);
 
@@ -54,7 +56,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
     }
 
     // Push the default follow path action
-    UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(this);
+    UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack);
     PushAction(DefaultAction);
 }
 

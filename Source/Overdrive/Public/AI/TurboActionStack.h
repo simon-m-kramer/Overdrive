@@ -23,7 +23,6 @@ public:
 
 	virtual void PushAction(UBifrostAction* NewAction) override;
 	virtual void RemoveAction(UBifrostAction* InAction) override;
-	virtual void UpdateActions(float DeltaTime) override;
 
 	/** Evaluate the priority list and push the first valid action */
 	void EvaluateActions(const FTurboDecisionContext& Context);

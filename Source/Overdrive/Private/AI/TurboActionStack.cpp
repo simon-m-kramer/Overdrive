@@ -18,12 +18,6 @@ void UTurboActionStack::RemoveAction(UBifrostAction* InAction)
 	RebuildActiveActionTags();
 }
 
-void UTurboActionStack::UpdateActions(float DeltaTime)
-{
-	//EvaluateActions();    // decide
-	Super::UpdateActions(DeltaTime);  // execute
-}
-
 void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context)
 {
 	for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
