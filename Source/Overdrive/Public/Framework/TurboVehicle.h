@@ -18,6 +18,9 @@ class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
 public:
 	ATurboVehicle();
 
+	virtual void Tick(float DeltaTime) override;
+
+
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	void SetSteeringInput(float Value);
 
@@ -71,4 +74,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> WheelRR;
+
+	UPROPERTY(EditAnywhere, Category = "Surface")
+	float OffTrackDragForce = 2000000.0f;  // 800000.0f
+
+private:
+	EPhysicalSurface GetWheelSurfaceType() const;
+
 };
