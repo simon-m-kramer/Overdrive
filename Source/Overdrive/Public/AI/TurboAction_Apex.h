@@ -72,11 +72,11 @@ public:
 
     /** Bigger buffer — carry more speed toward corners */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexDistanceSpeedBuffer = 70.0f;
+    float ApexDistanceSpeedBuffer = 120.0f;
 
     /** Lower grip factor — more conservative corner speed estimate to compensate for late braking */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexGripFactor = 2000.0f;
+    float ApexGripFactor = 1600.0f;
 
     // =========================================================================
     // PHASE DETECTION

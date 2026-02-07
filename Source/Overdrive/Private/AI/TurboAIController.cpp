@@ -154,8 +154,7 @@ void ATurboAIController::Tick(float DeltaTime)
         {
             if (Actions[i])
             {
-                int32 DisplayIndex = Actions.Num() - 1 - i;
-                GEngine->AddOnScreenDebugMessage(61 + DisplayIndex, 0.0f, FColor::Silver,
+                GEngine->AddOnScreenDebugMessage(61 + i, 0.0f, FColor::Silver,
                     FString::Printf(TEXT("  [%d] %s"), i, *Actions[i]->ActionName));
             }
         }

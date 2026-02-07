@@ -44,7 +44,7 @@ public:
     float LateralOffset = 300.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float OffsetBlendSpeed = 2.0f;
+    float OffsetBlendSpeed = 3.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float MinDistanceAheadToComplete = 1500.0f;
