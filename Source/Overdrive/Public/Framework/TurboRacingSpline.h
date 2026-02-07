@@ -123,6 +123,21 @@ public:
     UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
     int32 SmoothingWindow = 15;
 
+    // =========================================================================
+    // OVERTAKE LANE
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Overtake Lane")
+    float GetOvertakeLaneOffset(float Distance) const;
+
+    UFUNCTION(BlueprintPure, Category = "Overtake Lane")
+    FVector GetPointOnOvertakeLane(float Distance) const;
+
+    void DrawDebugOvertakeLane(UWorld* World) const;
+
+    UPROPERTY(EditAnywhere, Category = "Overtake Lane")
+    float OvertakeLaneWidthUsage = 0.75f;
+
 protected:
     virtual void BeginPlay() override;
 
@@ -138,4 +153,6 @@ private:
 
     TArray<float> PreCalculatedOffsets;
     bool bRacingLineCalculated = false;
+
+    TArray<float> PreCalculatedOvertakeOffsets;
 };
