@@ -11,6 +11,7 @@
 #include "Framework/TurboGameplayTags.h"
 #include "Framework/TurboVehicle.h"
 #include "AI/TurboAction_FollowPath.h"
+#include "AI/TurboAction_Apex.h"
 #include "AI/TurboAction_Overtake.h"
 #include "AI/TurboAction_Yield.h"
 #include "AI/TurboAction_Sprint.h"
@@ -56,8 +57,12 @@ void ATurboAIController::OnPossess(APawn* InPawn)
     }
 
     // Push the default follow path action
-    UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack);
+    //UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack);
+    //PushAction(DefaultAction);
+
+    UTurboAction_Apex* DefaultAction = NewObject<UTurboAction_Apex>(ActionStack);
     PushAction(DefaultAction);
+
 }
 
 void ATurboAIController::Tick(float DeltaTime)
