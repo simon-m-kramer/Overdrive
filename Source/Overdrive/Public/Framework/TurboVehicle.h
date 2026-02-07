@@ -20,6 +20,8 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vehicle")
+	FString VehicleName = TEXT("Car");
 
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	void SetSteeringInput(float Value);

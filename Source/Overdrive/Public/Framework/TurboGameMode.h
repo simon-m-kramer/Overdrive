@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "TurboGameMode.generated.h"
 
+class UTurboRaceManager;
 /**
  * 
  */
@@ -14,4 +15,11 @@ class OVERDRIVE_API ATurboGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+
+public:
+	ATurboGameMode();
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Race")
+	TObjectPtr<UTurboRaceManager> RaceManager;
 };
