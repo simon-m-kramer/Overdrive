@@ -126,7 +126,7 @@ void ATurboVehicle::SetupWheels()
 
 void ATurboVehicle::SetupEngine()
 {
-    VehicleMovement->EngineSetup.MaxTorque = 750.0f;
+    VehicleMovement->EngineSetup.MaxTorque = 1000.0f;  // was 750
     VehicleMovement->EngineSetup.MaxRPM = 7000.0f;
     VehicleMovement->EngineSetup.EngineIdleRPM = 900.0f;
     VehicleMovement->EngineSetup.EngineBrakeEffect = 0.2f;

@@ -47,6 +47,8 @@ public:
 protected:
     virtual float FindTargetSpeedAhead() const override;
 
+    virtual void ApplySpeedControl() override;
+
 private:
     bool ShouldExit() const;
 

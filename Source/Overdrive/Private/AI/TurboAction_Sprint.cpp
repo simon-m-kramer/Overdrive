@@ -119,3 +119,31 @@ bool UTurboAction_Sprint::ShouldExit() const
 
     return false;
 }
+
+void UTurboAction_Sprint::ApplySpeedControl()
+{
+    if (!Vehicle.IsValid())
+    {
+        return;
+    }
+
+    float CurrentSpeed = Vehicle->GetSpeedKmh();
+    float TargetSpeed = FindTargetSpeedAhead();
+    float SpeedError = TargetSpeed - CurrentSpeed;
+
+    if (SpeedError < -CoastingThresholdKmh)
+    {
+        // Only brake if genuinely too fast
+        float BrakeInput = FMath::Clamp(-SpeedError * BrakeProportionalGain, MinBrakeInput, MaxBrakeInput);
+        Vehicle->SetThrottleInput(0.0f);
+        Vehicle->SetBrakeInput(BrakeInput);
+    }
+    else
+    {
+        // Sprint: always full throttle unless braking
+        Vehicle->SetThrottleInput(1.0f);
+        Vehicle->SetBrakeInput(0.0f);
+    }
+
+    Vehicle->SetHandbrakeInput(false);
+}

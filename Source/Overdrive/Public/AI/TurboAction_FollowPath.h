@@ -61,7 +61,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float MaxSpeedKmh = 280.0f;
+    float MaxSpeedKmh = 240.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
     float MinCornerSpeedKmh = 60.0f;
@@ -71,7 +71,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float GripFactor = 3000.0f;
+    float GripFactor = 2800.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
     float SpeedCurvatureSampleRange = 1000.0f;
