@@ -85,12 +85,8 @@ void UTurboAction_Overtake::Update(float DeltaTime)
 
     if (bHasPassedTarget)
     {
-        // Hold phase: blend offset back toward zero
         TimeSincePassed += DeltaTime;
-
-        float BlendOutAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
-        float FullOffset = (Side == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
-        CurrentLateralOffset = FMath::Lerp(FullOffset, 0.0f, BlendOutAlpha);
+        CurrentLateralOffset = FMath::FInterpTo(CurrentLateralOffset, 0.0f, DeltaTime, OffsetBlendSpeed);
     }
     else
     {

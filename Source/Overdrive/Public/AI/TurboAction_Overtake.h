@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AI/TurboAction_Apex.h"
+#include "AI/TurboAction_FollowPath.h"
 #include "Components/TurboVehicleDetectionComponent.h"
 #include "TurboAction_Overtake.generated.h"
 
@@ -11,7 +11,7 @@ class ATurboVehicle;
 struct FTurboDecisionContext;
 
 UCLASS()
-class OVERDRIVE_API UTurboAction_Overtake : public UTurboAction_Apex
+class OVERDRIVE_API UTurboAction_Overtake : public UTurboAction_FollowPath
 {
     GENERATED_BODY()
 
@@ -38,10 +38,10 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float LateralOffset = 450.0f;
+    float LateralOffset = 300.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float OffsetBlendSpeed = 3.0f;
+    float OffsetBlendSpeed = 1.5f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float MinDistanceAheadToComplete = 1500.0f;
