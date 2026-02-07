@@ -46,6 +46,10 @@ public:
     UPROPERTY(EditAnywhere, Category = "Apex|Trail Braking")
     float TrailBrakeThrottle = 0.0f;
 
+    /** How quickly steering adjusts (lower = smoother, higher = more responsive) */
+    UPROPERTY(EditAnywhere, Category = "Apex|Steering")
+    float SteeringInterpSpeed = 50.0f;
+
     // =========================================================================
     // CORNER EXIT
     // =========================================================================
@@ -64,15 +68,15 @@ public:
 
     /** Shorter scan distance — brake later */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexCornerScanDistance = 3500.0f;
+    float ApexCornerScanDistance = 2500.0f;
 
     /** Bigger buffer — carry more speed toward corners */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexDistanceSpeedBuffer = 120.0f;
+    float ApexDistanceSpeedBuffer = 80.0f;
 
     /** Lower grip factor — more conservative corner speed estimate to compensate for late braking */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexGripFactor = 2200.0f;
+    float ApexGripFactor = 2000.0f;
 
     // =========================================================================
     // PHASE DETECTION
@@ -107,4 +111,6 @@ private:
     float ExitThrottleAlpha = 0.0f;
     EApexCornerPhase CurrentPhase = EApexCornerPhase::Straight;
     bool IsCurvatureDecreasing() const;
+    float SmoothedSteeringInput = 0.0f;
+
 };
