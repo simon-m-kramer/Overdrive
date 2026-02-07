@@ -28,10 +28,13 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
-    float ConsiderDistance = 4000.0f;
+    float ConsiderDistance = 2500.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
     float MinSpeedAdvantage = 5.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
+    float OvertakeMaxCurvature = 0.0005f;
 
     // =========================================================================
     // BEHAVIOR
@@ -41,7 +44,7 @@ public:
     float LateralOffset = 300.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float OffsetBlendSpeed = 1.5f;
+    float OffsetBlendSpeed = 2.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float MinDistanceAheadToComplete = 1500.0f;
@@ -57,6 +60,8 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float CornerAbortCurvature = 0.001f;
+
+
 
 protected:
     virtual FVector GetTargetPoint() override;

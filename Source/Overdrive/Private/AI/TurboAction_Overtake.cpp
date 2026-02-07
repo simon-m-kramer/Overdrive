@@ -25,6 +25,9 @@ bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) co
     if (Context.DistanceToCarAhead > ConsiderDistance) return false;
     if (Context.RelativeSpeedAhead < MinSpeedAdvantage) return false;
 
+    // Don't start an overtake in a significant corner
+    if (Context.CurrentCurvature > OvertakeMaxCurvature) return false;
+
     EOvertakeSide ChosenSide = ChooseOvertakeSide(Context);
 
     bool bSideClear = (ChosenSide == EOvertakeSide::Left) ? Context.bLeftClear : Context.bRightClear;
