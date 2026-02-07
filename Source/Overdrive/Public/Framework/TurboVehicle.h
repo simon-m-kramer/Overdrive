@@ -1,34 +1,23 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
 #pragma once
-
 #include "CoreMinimal.h"
 #include "WheeledVehiclePawn.h"
 #include "TurboVehicle.generated.h"
-
 
 class UChaosWheeledVehicleMovementComponent;
 class UStaticMeshComponent;
 class UBoxComponent;
 class UTurboVehicleDetectionComponent;
 
-/**
- * 
- */
 UCLASS()
 class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
 {
 	GENERATED_BODY()
-	
 
 public:
 	ATurboVehicle();
 
-
-
-
-
-	// Input methods
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	void SetSteeringInput(float Value);
 
@@ -41,7 +30,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	void SetHandbrakeInput(bool bEngaged);
 
-	// Getters for AI decision making
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetSpeedKmh() const;
 
@@ -51,11 +39,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Vehicle")
 	UTurboVehicleDetectionComponent* GetDetectionComponent() const { return DetectionComponent; }
 
-
 protected:
-	virtual void PostInitializeComponents() override;
-
-
 	UPROPERTY()
 	TObjectPtr<UChaosWheeledVehicleMovementComponent> VehicleMovement;
 
@@ -64,21 +48,18 @@ protected:
 	void SetupTransmission();
 	void SetupSteering();
 
-	// Detection
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<UBoxComponent> DetectionBox;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<UTurboVehicleDetectionComponent> DetectionComponent;
 
-	// Meshes
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> ChassisMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> GlassMesh;
 
-	// Wheel Meshes
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> WheelFL;
 
@@ -90,10 +71,4 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> WheelRR;
-
-
-private:
-	void AttachWheelMeshes();
-
-
 };
