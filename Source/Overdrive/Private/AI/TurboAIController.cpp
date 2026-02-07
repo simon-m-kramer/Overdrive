@@ -57,11 +57,11 @@ void ATurboAIController::OnPossess(APawn* InPawn)
     }
 
     // Push the default follow path action
-    //UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack);
-    //PushAction(DefaultAction);
-
-    UTurboAction_Apex* DefaultAction = NewObject<UTurboAction_Apex>(ActionStack);
-    PushAction(DefaultAction);
+    if (DefaultActionClass)
+    {
+        UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack, DefaultActionClass);
+        PushAction(DefaultAction);
+    }
 
 }
 

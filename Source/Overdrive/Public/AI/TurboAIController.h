@@ -14,6 +14,7 @@ class UTurboActionBase;
 class ATurboRacingSpline;
 class ATurboVehicle;
 class UTurboActionStack;
+class UTurboAction_FollowPath;
 
 USTRUCT(BlueprintType)
 struct FTurboDecisionContext
@@ -143,7 +144,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
+    bool bDrawDebug = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bShowLapTiming = true;
@@ -155,7 +156,10 @@ public:
     // CONFIGURATION
     // =========================================================================
 
-    /** Actions to evaluate each tick, in priority order (first = highest) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
+    TSubclassOf<UTurboAction_FollowPath> DefaultActionClass;
+
+    /** Conditional Actions to evaluate each tick, in priority order (first = highest) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
     TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
 

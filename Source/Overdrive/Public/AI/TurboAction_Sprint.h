@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AI/TurboAction_FollowPath.h"
+#include "AI/TurboAction_Apex.h"
 #include "TurboAction_Sprint.generated.h"
 
 struct FTurboDecisionContext;
 
 UCLASS()
-class OVERDRIVE_API UTurboAction_Sprint : public UTurboAction_FollowPath
+class OVERDRIVE_API UTurboAction_Sprint : public UTurboAction_Apex
 {
     GENERATED_BODY()
 
