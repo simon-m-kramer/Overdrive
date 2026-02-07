@@ -23,9 +23,10 @@ void UTurboAction_Apex::Update(float DeltaTime)
 
     // Get target and calculate steering — same as parent
     FVector TargetPoint = GetTargetPoint();
-    //CurrentSteeringInput = CalculateSteering(TargetPoint);
-    //Vehicle->SetSteeringInput(CurrentSteeringInput);
-
+    /*
+    CurrentSteeringInput = CalculateSteering(TargetPoint);
+    Vehicle->SetSteeringInput(CurrentSteeringInput);
+    */
     float RawSteering = CalculateSteering(TargetPoint);
     SmoothedSteeringInput = FMath::FInterpTo(SmoothedSteeringInput, RawSteering, DeltaTime, SteeringInterpSpeed);
     CurrentSteeringInput = SmoothedSteeringInput;

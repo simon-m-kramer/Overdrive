@@ -64,7 +64,7 @@ public:
     float MaxSpeedKmh = 240.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float MinCornerSpeedKmh = 60.0f;
+    float MinCornerSpeedKmh = 90.0f;
 
     // =========================================================================
     // SPEED CONTROL - PHYSICS

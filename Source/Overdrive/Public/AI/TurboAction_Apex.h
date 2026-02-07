@@ -68,11 +68,11 @@ public:
 
     /** Shorter scan distance — brake later */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexCornerScanDistance = 2500.0f;
+    float ApexCornerScanDistance = 3000.0f;
 
     /** Bigger buffer — carry more speed toward corners */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexDistanceSpeedBuffer = 80.0f;
+    float ApexDistanceSpeedBuffer = 70.0f;
 
     /** Lower grip factor — more conservative corner speed estimate to compensate for late braking */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
