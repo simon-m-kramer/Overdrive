@@ -150,7 +150,7 @@ public:
     bool bShowLapTiming = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowDecisionContext = false;
+    bool bShowDecisionContext = true;
 
     // =========================================================================
     // CONFIGURATION
