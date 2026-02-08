@@ -144,13 +144,13 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowLapTiming = true;
+    bool bShowLapTiming = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowDecisionContext = true;
+    bool bShowDecisionContext = false;
 
     // =========================================================================
     // CONFIGURATION

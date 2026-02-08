@@ -57,7 +57,17 @@ UBifrostAction* UBifrostActionComponent::GetCurrentAction() const
 {
 	if (ActionStack)
 	{
-		ActionStack->GetCurrentAction();
+		return ActionStack->GetCurrentAction();
 	}
 	return nullptr;
+}
+
+const TArray<UBifrostAction*>& UBifrostActionComponent::GetActions() const
+{
+	static TArray<UBifrostAction*> EmptyArray;
+	if (ActionStack)
+	{
+		return ActionStack->GetActions();
+	}
+	return EmptyArray;
 }

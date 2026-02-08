@@ -34,6 +34,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Action")
 	UBifrostAction* GetCurrentAction() const;
 
+	UFUNCTION(BlueprintPure, Category = "Action")
+	const TArray<UBifrostAction*>& GetActions() const;
+
 protected:
 	virtual void BeginPlay() override;
 
