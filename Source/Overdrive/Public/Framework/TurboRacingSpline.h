@@ -111,7 +111,7 @@ public:
     float CurvatureSampleRange = 400.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float CurvatureToOffsetScale = 1000000.0f;
+    float CurvatureToOffsetScale = 2000000.0f;
 
     // =========================================================================
     // RACING LINE ADVANCED
@@ -141,7 +141,7 @@ public:
 
     /** Constant lateral offset from primary line. Positive = right, Negative = left. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Secondary Racing Line")
-    float LaneSeparation = -300.0f;
+    float LaneSeparation = -350.0f;
 
 protected:
     virtual void BeginPlay() override;

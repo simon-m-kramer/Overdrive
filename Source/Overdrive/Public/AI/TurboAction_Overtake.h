@@ -33,7 +33,7 @@ public:
     float MinSpeedAdvantage = 5.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
-    float OvertakeMaxCurvature = 0.0001f;
+    float OvertakeMaxCurvature = 0.0005f;
 
     // =========================================================================
     // BEHAVIOR
