@@ -47,16 +47,13 @@ float ATurboRacingSpline::GetSignedDistanceFromCenter(FVector WorldLocation) con
         return 0.0f;
     }
 
-    // Find closest point on spline
     float SplineDistance = Spline->GetDistanceAlongSplineAtLocation(WorldLocation, ESplineCoordinateSpace::World);
     FVector CenterPoint = Spline->GetLocationAtDistanceAlongSpline(SplineDistance, ESplineCoordinateSpace::World);
 
-    // Get right vector at this point
     FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(SplineDistance, ESplineCoordinateSpace::World);
     FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(SplineDistance, ESplineCoordinateSpace::World);
     FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
 
-    // Project offset onto right vector (positive = right of center, negative = left)
     FVector ToLocation = WorldLocation - CenterPoint;
     float SignedDistance = FVector::DotProduct(ToLocation, Right);
 
@@ -135,7 +132,6 @@ void ATurboRacingSpline::DrawDebugTrackBoundaries(UWorld* World) const
         bFirstPoint = false;
     }
 
-    // Close the loop
     if (Spline->IsClosedLoop() && !bFirstPoint)
     {
         FVector FirstLeftPoint = GetLeftEdgeAtDistance(0.0f) + FVector(0.0f, 0.0f, DebugHeight);
@@ -147,7 +143,7 @@ void ATurboRacingSpline::DrawDebugTrackBoundaries(UWorld* World) const
 }
 
 // =============================================================================
-// RACING LINE
+// RACING LINE CALCULATION
 // =============================================================================
 
 void ATurboRacingSpline::CalculateRacingLine()
@@ -157,17 +153,16 @@ void ATurboRacingSpline::CalculateRacingLine()
         return;
     }
 
-    PreCalculatedOffsets.Empty();
     float SplineLength = Spline->GetSplineLength();
 
-    // First pass: Calculate raw offsets
+    PreCalculatedOffsets.Empty();
+
     for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
     {
         float Offset = CalculateIdealOffset(Dist);
         PreCalculatedOffsets.Add(Offset);
     }
 
-    // Multiple smoothing passes with triangular kernel
     for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
     {
         TArray<float> SmoothedOffsets;
@@ -181,7 +176,6 @@ void ATurboRacingSpline::CalculateRacingLine()
             for (int32 j = -SmoothingWindow; j <= SmoothingWindow; j++)
             {
                 int32 Index = (i + j + PreCalculatedOffsets.Num()) % PreCalculatedOffsets.Num();
-
                 float Weight = 1.0f - (FMath::Abs(j) / static_cast<float>(SmoothingWindow + 1));
                 Weight = Weight * Weight;
 
@@ -196,76 +190,6 @@ void ATurboRacingSpline::CalculateRacingLine()
     }
 
     bRacingLineCalculated = true;
-
-    // Generate overtake lane — opposite side of racing line
-    float MaxOffset = (TrackWidth * 0.5f) * OvertakeLaneWidthUsage;
-
-    PreCalculatedOvertakeOffsets.Empty();
-    PreCalculatedOvertakeOffsets.Reserve(PreCalculatedOffsets.Num());
-
-    for (int32 i = 0; i < PreCalculatedOffsets.Num(); i++)
-    {
-        float RacingOffset = PreCalculatedOffsets[i];
-
-        // Mirror but stay closer to center in corners
-        float CornerScale = 0.4f;  // tune this — lower = closer to center
-        float OvertakeOffset = -RacingOffset * CornerScale;
-
-        // On straights (racing line near center), push overtake lane to one side
-        if (FMath::Abs(RacingOffset) < MaxOffset * 0.2f)
-        {
-            // Look ahead to find which side the next corner's racing line goes
-            int32 LookAheadSamples = FMath::CeilToInt(2000.0f / RacingLineSampleInterval);
-            float MaxFutureOffset = 0.0f;
-
-            for (int32 j = 1; j <= LookAheadSamples; j++)
-            {
-                int32 FutureIndex = (i + j) % PreCalculatedOffsets.Num();
-                if (FMath::Abs(PreCalculatedOffsets[FutureIndex]) > FMath::Abs(MaxFutureOffset))
-                {
-                    MaxFutureOffset = PreCalculatedOffsets[FutureIndex];
-                }
-            }
-
-            // Position on opposite side of where the racing line will go
-            if (FMath::Abs(MaxFutureOffset) > MaxOffset * 0.2f)
-            {
-                OvertakeOffset = -FMath::Sign(MaxFutureOffset) * MaxOffset * 0.7f;
-            }
-        }
-
-        // Clamp to track boundaries
-        OvertakeOffset = FMath::Clamp(OvertakeOffset, -MaxOffset, MaxOffset);
-
-        PreCalculatedOvertakeOffsets.Add(OvertakeOffset);
-    }
-
-    // Smooth the overtake lane
-    for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
-    {
-        TArray<float> Smoothed;
-        Smoothed.Reserve(PreCalculatedOvertakeOffsets.Num());
-
-        for (int32 i = 0; i < PreCalculatedOvertakeOffsets.Num(); i++)
-        {
-            float Sum = 0.0f;
-            float WeightSum = 0.0f;
-
-            for (int32 j = -SmoothingWindow; j <= SmoothingWindow; j++)
-            {
-                int32 Index = (i + j + PreCalculatedOvertakeOffsets.Num()) % PreCalculatedOvertakeOffsets.Num();
-                float Weight = 1.0f - (FMath::Abs(j) / static_cast<float>(SmoothingWindow + 1));
-                Weight = Weight * Weight;
-
-                Sum += PreCalculatedOvertakeOffsets[Index] * Weight;
-                WeightSum += Weight;
-            }
-
-            Smoothed.Add(Sum / WeightSum);
-        }
-
-        PreCalculatedOvertakeOffsets = MoveTemp(Smoothed);
-    }
 }
 
 float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
@@ -284,7 +208,6 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
     float CurvatureCurrent = GetCurvatureAtDistance(Distance, CurvatureSampleRange);
     float CurvatureAhead = GetCurvatureAtDistance(DistAhead, CurvatureSampleRange);
 
-    // Not in or near a corner - look ahead for upcoming turns
     if (CurvatureCurrent < RacingLineMinCurvature && CurvatureAhead < RacingLineMinCurvature)
     {
         for (float LookAhead = ApproachSampleDistance; LookAhead < RacingLineLookahead; LookAhead += LookaheadStepSize)
@@ -305,7 +228,6 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
     float TurnSign = GetTurnSign(Distance, TurnSignLookahead);
     float OffsetMagnitude = FMath::Min(CurvatureCurrent * CurvatureToOffsetScale * TrackWidthUsage, MaxOffset);
 
-    // Use relative threshold for curvature change detection
     float CurvatureChangeThreshold = FMath::Max(CurvatureCurrent * CurvatureChangePercent, RacingLineMinCurvature * 0.5f);
 
     bool bCurvatureIncreasing = CurvatureAhead > CurvatureCurrent + CurvatureChangeThreshold;
@@ -316,7 +238,6 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
 
     if (bCurvatureIncreasing)
     {
-        // CORNER ENTRY: Transition from outside to inside
         float ApproachFactor = CurvatureCurrent / FMath::Max(CurvatureAhead, RacingLineMinCurvature);
         ApproachFactor = FMath::Clamp(ApproachFactor, 0.0f, 1.0f);
         float InsideFactor = (ApproachFactor * 2.0f) - 1.0f;
@@ -324,24 +245,25 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
     }
     else if (bAtApex)
     {
-        // APEX: Full inside offset
         Offset = TurnSign * OffsetMagnitude;
     }
     else if (bCurvatureDecreasing)
     {
-        // CORNER EXIT: Transition from inside back toward center
         float ExitFactor = CurvatureCurrent / FMath::Max(CurvatureBehind, RacingLineMinCurvature);
         ExitFactor = FMath::Clamp(ExitFactor, 0.0f, 1.0f);
         Offset = TurnSign * OffsetMagnitude * ExitFactor;
     }
     else
     {
-        // Sustained corner
         Offset = TurnSign * OffsetMagnitude;
     }
 
     return Offset;
 }
+
+// =============================================================================
+// PRIMARY RACING LINE — GETTERS
+// =============================================================================
 
 float ATurboRacingSpline::GetRacingLineOffset(float Distance) const
 {
@@ -386,6 +308,43 @@ FVector ATurboRacingSpline::GetPointOnRacingLine(float Distance) const
     return CenterPoint + (Right * -Offset);
 }
 
+// =============================================================================
+// SECONDARY RACING LINE — GETTERS
+// =============================================================================
+
+float ATurboRacingSpline::GetSecondaryLineOffset(float Distance) const
+{
+    return GetRacingLineOffset(Distance) + LaneSeparation;
+}
+
+FVector ATurboRacingSpline::GetPointOnSecondaryLine(float Distance) const
+{
+    if (!Spline)
+    {
+        return FVector::ZeroVector;
+    }
+
+    Distance = WrapDistance(Distance);
+
+    FVector CenterPoint = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+
+    float Offset = GetSecondaryLineOffset(Distance);
+    if (FMath::Abs(Offset) < 1.0f)
+    {
+        return CenterPoint;
+    }
+
+    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
+
+    return CenterPoint + (Right * -Offset);
+}
+
+// =============================================================================
+// UTILITY
+// =============================================================================
+
 float ATurboRacingSpline::WrapDistance(float Distance) const
 {
     if (!Spline)
@@ -407,6 +366,10 @@ float ATurboRacingSpline::WrapDistance(float Distance) const
 
     return Distance;
 }
+
+// =============================================================================
+// DEBUG DRAWING
+// =============================================================================
 
 void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
 {
@@ -454,6 +417,40 @@ void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
     {
         FVector FirstPoint = GetPointOnRacingLine(0.0f) + FVector(0.0f, 0.0f, 20.0f);
         DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Yellow, false, 0.0f, 0, 2.0f);
+    }
+}
+
+void ATurboRacingSpline::DrawDebugSecondaryLine(UWorld* World) const
+{
+    if (!bRacingLineCalculated || !Spline || !World)
+    {
+        return;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+
+    FVector PreviousPoint = FVector::ZeroVector;
+    bool bFirstPoint = true;
+
+    for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
+    {
+        FVector Point = GetPointOnSecondaryLine(Dist) + FVector(0.0f, 0.0f, 20.0f);
+
+        DrawDebugPoint(World, Point, 8.0f, FColor::Cyan, false, 0.0f);
+
+        if (!bFirstPoint)
+        {
+            DrawDebugLine(World, PreviousPoint, Point, FColor::Cyan, false, 0.0f, 0, 2.0f);
+        }
+
+        PreviousPoint = Point;
+        bFirstPoint = false;
+    }
+
+    if (Spline->IsClosedLoop() && !bFirstPoint)
+    {
+        FVector FirstPoint = GetPointOnSecondaryLine(0.0f) + FVector(0.0f, 0.0f, 20.0f);
+        DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Cyan, false, 0.0f, 0, 2.0f);
     }
 }
 
@@ -512,85 +509,4 @@ float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance)
     }
 
     return (DotResult > 0.0f) ? 1.0f : -1.0f;
-}
-
-// =============================================================================
-// OVERTAKE LANE
-// =============================================================================
-
-float ATurboRacingSpline::GetOvertakeLaneOffset(float Distance) const
-{
-    if (!bRacingLineCalculated || PreCalculatedOvertakeOffsets.Num() == 0 || !Spline)
-    {
-        return 0.0f;
-    }
-
-    Distance = WrapDistance(Distance);
-
-    float IndexFloat = Distance / RacingLineSampleInterval;
-    int32 Index = FMath::FloorToInt(IndexFloat);
-    float Alpha = IndexFloat - Index;
-
-    Index = FMath::Clamp(Index, 0, PreCalculatedOvertakeOffsets.Num() - 1);
-    int32 NextIndex = (Index + 1) % PreCalculatedOvertakeOffsets.Num();
-
-    return FMath::Lerp(PreCalculatedOvertakeOffsets[Index], PreCalculatedOvertakeOffsets[NextIndex], Alpha);
-}
-
-FVector ATurboRacingSpline::GetPointOnOvertakeLane(float Distance) const
-{
-    if (!Spline)
-    {
-        return FVector::ZeroVector;
-    }
-
-    Distance = WrapDistance(Distance);
-
-    FVector CenterPoint = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-
-    float Offset = GetOvertakeLaneOffset(Distance);
-    if (FMath::Abs(Offset) < 1.0f)
-    {
-        return CenterPoint;
-    }
-
-    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
-
-    return CenterPoint + (Right * -Offset);
-}
-
-void ATurboRacingSpline::DrawDebugOvertakeLane(UWorld* World) const
-{
-    if (!bRacingLineCalculated || !Spline || !World)
-    {
-        return;
-    }
-
-    float SplineLength = Spline->GetSplineLength();
-
-    FVector PreviousPoint = FVector::ZeroVector;
-    bool bFirstPoint = true;
-
-    for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
-    {
-        FVector Point = GetPointOnOvertakeLane(Dist) + FVector(0.0f, 0.0f, 20.0f);
-
-        DrawDebugPoint(World, Point, 8.0f, FColor::Cyan, false, 0.0f);
-
-        if (!bFirstPoint)
-        {
-            DrawDebugLine(World, PreviousPoint, Point, FColor::Cyan, false, 0.0f, 0, 2.0f);
-        }
-
-        PreviousPoint = Point;
-        bFirstPoint = false;
-    }
-
-    if (Spline->IsClosedLoop() && !bFirstPoint)
-    {
-        FVector FirstPoint = GetPointOnOvertakeLane(0.0f) + FVector(0.0f, 0.0f, 20.0f);
-        DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Cyan, false, 0.0f, 0, 2.0f);
-    }
 }

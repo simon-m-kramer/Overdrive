@@ -85,8 +85,8 @@ void ATurboAIController::Tick(float DeltaTime)
     if (bDrawDebug && RacingSplineActor)
     {
         RacingSplineActor->DrawDebugRacingLine(GetWorld());
-        RacingSplineActor->DrawDebugTrackBoundaries(GetWorld());
-        RacingSplineActor->DrawDebugOvertakeLane(GetWorld());
+        //RacingSplineActor->DrawDebugTrackBoundaries(GetWorld());
+        RacingSplineActor->DrawDebugSecondaryLine(GetWorld());
     }
 
     // Lap timing display

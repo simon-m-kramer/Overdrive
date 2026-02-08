@@ -42,7 +42,7 @@ public:
     void DrawDebugTrackBoundaries(UWorld* World) const;
 
     // =========================================================================
-    // RACING LINE
+    // PRIMARY RACING LINE
     // =========================================================================
 
     UFUNCTION(BlueprintCallable, Category = "Racing Line")
@@ -58,6 +58,18 @@ public:
     bool IsRacingLineReady() const { return bRacingLineCalculated; }
 
     void DrawDebugRacingLine(UWorld* World) const;
+
+    // =========================================================================
+    // SECONDARY RACING LINE
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Secondary Racing Line")
+    float GetSecondaryLineOffset(float Distance) const;
+
+    UFUNCTION(BlueprintPure, Category = "Secondary Racing Line")
+    FVector GetPointOnSecondaryLine(float Distance) const;
+
+    void DrawDebugSecondaryLine(UWorld* World) const;
 
     // =========================================================================
     // CURVATURE ANALYSIS
@@ -77,7 +89,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
-    float TrackWidth = 1400.0f;
+    float TrackWidth = 1200.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float TrackWidthUsage = 0.85f;
@@ -99,7 +111,7 @@ public:
     float CurvatureSampleRange = 400.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float CurvatureToOffsetScale = 2000000.0f;
+    float CurvatureToOffsetScale = 1000000.0f;
 
     // =========================================================================
     // RACING LINE ADVANCED
@@ -124,19 +136,12 @@ public:
     int32 SmoothingWindow = 15;
 
     // =========================================================================
-    // OVERTAKE LANE
+    // SECONDARY RACING LINE CONFIGURATION
     // =========================================================================
 
-    UFUNCTION(BlueprintPure, Category = "Overtake Lane")
-    float GetOvertakeLaneOffset(float Distance) const;
-
-    UFUNCTION(BlueprintPure, Category = "Overtake Lane")
-    FVector GetPointOnOvertakeLane(float Distance) const;
-
-    void DrawDebugOvertakeLane(UWorld* World) const;
-
-    UPROPERTY(EditAnywhere, Category = "Overtake Lane")
-    float OvertakeLaneWidthUsage = 0.75f;
+    /** Constant lateral offset from primary line. Positive = right, Negative = left. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Secondary Racing Line")
+    float LaneSeparation = -300.0f;
 
 protected:
     virtual void BeginPlay() override;
@@ -153,6 +158,4 @@ private:
 
     TArray<float> PreCalculatedOffsets;
     bool bRacingLineCalculated = false;
-
-    TArray<float> PreCalculatedOvertakeOffsets;
 };
