@@ -76,7 +76,7 @@ public:
 
     /** Lower grip factor — more conservative corner speed estimate to compensate for late braking */
     UPROPERTY(EditAnywhere, Category = "Apex|Speed")
-    float ApexGripFactor = 2000.0f;
+    float ApexGripFactor = 1500.0f;
 
     // =========================================================================
     // PHASE DETECTION

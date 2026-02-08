@@ -1,6 +1,5 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
-
 #include "AI/TurboAction_Overtake.h"
 #include "AI/TurboAIController.h"
 #include "Framework/TurboVehicle.h"
@@ -16,7 +15,6 @@ UTurboAction_Overtake::UTurboAction_Overtake()
     BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
     BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
     BlocksTags.AddTag(TurboGameplayTags::Action_Evade);
-
 }
 
 bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) const
@@ -24,19 +22,7 @@ bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) co
     if (!Context.bCarAhead) return false;
     if (Context.DistanceToCarAhead > ConsiderDistance) return false;
     if (Context.RelativeSpeedAhead < MinSpeedAdvantage) return false;
-
-    // Don't start an overtake in a significant corner
     if (Context.CurrentCurvature > OvertakeMaxCurvature) return false;
-
-    EOvertakeSide ChosenSide = ChooseOvertakeSide(Context);
-
-    bool bSideClear = (ChosenSide == EOvertakeSide::Left) ? Context.bLeftClear : Context.bRightClear;
-    if (!bSideClear) return false;
-
-    float OvertakeOffset = (ChosenSide == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
-    float ProjectedPosition = Context.SignedDistanceFromCenter + OvertakeOffset;
-    if (FMath::Abs(ProjectedPosition) > Context.TrackHalfWidth) return false;
-
     if (!Context.CarAhead.IsValid()) return false;
 
     return true;
@@ -48,36 +34,21 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
 
     if (bFirstTime)
     {
-        CurrentLateralOffset = 0.0f;
+        LaneBlendAlpha = 0.0f;
         TimeInOvertake = 0.0f;
         bOvertakeComplete = false;
         bHasPassedTarget = false;
         TimeSincePassed = 0.0f;
 
-        // Set up target and side from current context
         if (AIController.IsValid())
         {
             const FTurboDecisionContext& Context = AIController->GetDecisionContext();
-            Side = ChooseOvertakeSide(Context);
             TargetVehicle = Context.CarAhead;
-        }
-
-        // Store target's starting position for comparison
-        if (TargetVehicle.IsValid() && RacingSplineActor.IsValid())
-        {
-            USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
-            if (Spline)
-            {
-                FVector TargetLocation = TargetVehicle->GetActorLocation();
-                TargetSplineDistanceAtStart = Spline->GetDistanceAlongSplineAtLocation(TargetLocation, ESplineCoordinateSpace::World);
-            }
         }
 
         if (bDrawDebug)
         {
-            GEngine->AddOnScreenDebugMessage(50, 3.0f, FColor::Green,
-                FString::Printf(TEXT("OVERTAKE STARTED - Side: %s"),
-                    Side == EOvertakeSide::Left ? TEXT("LEFT") : TEXT("RIGHT")));
+            GEngine->AddOnScreenDebugMessage(50, 3.0f, FColor::Green, TEXT("OVERTAKE STARTED — switching to secondary lane"));
         }
     }
 }
@@ -89,13 +60,14 @@ void UTurboAction_Overtake::Update(float DeltaTime)
     if (bHasPassedTarget)
     {
         TimeSincePassed += DeltaTime;
-        CurrentLateralOffset = FMath::FInterpTo(CurrentLateralOffset, 0.0f, DeltaTime, OffsetBlendSpeed);
+
+        // Blend back to primary line
+        LaneBlendAlpha = FMath::FInterpConstantTo(LaneBlendAlpha, 0.0f, DeltaTime, LaneBlendSpeed);
     }
     else
     {
-        // Passing phase: blend offset toward target
-        float TargetOffset = (Side == EOvertakeSide::Left) ? -LateralOffset : LateralOffset;
-        CurrentLateralOffset = FMath::FInterpTo(CurrentLateralOffset, TargetOffset, DeltaTime, OffsetBlendSpeed);
+        // Blend toward secondary line
+        LaneBlendAlpha = FMath::FInterpConstantTo(LaneBlendAlpha, 1.0f, DeltaTime, LaneBlendSpeed);
 
         if (HasPassedTargetVehicle())
         {
@@ -104,15 +76,14 @@ void UTurboAction_Overtake::Update(float DeltaTime)
         }
     }
 
-    // Call parent update for steering and speed control
     Super::Update(DeltaTime);
 
     if (bDrawDebug)
     {
         FString Phase = bHasPassedTarget ? TEXT("HOLD") : TEXT("PASSING");
         GEngine->AddOnScreenDebugMessage(51, 0.0f, FColor::Yellow,
-            FString::Printf(TEXT("Overtake [%s]: Offset=%.0f | Time=%.1fs"),
-                *Phase, CurrentLateralOffset, TimeInOvertake));
+            FString::Printf(TEXT("Overtake [%s]: Blend=%.2f | Time=%.1fs"),
+                *Phase, LaneBlendAlpha, TimeInOvertake));
     }
 }
 
@@ -133,8 +104,8 @@ bool UTurboAction_Overtake::IsDone()
         return true;
     }
 
-    // Complete after hold time expires
-    if (bHasPassedTarget && TimeSincePassed >= CompletionHoldTime)
+    // Complete after hold time and fully blended back to primary
+    if (bHasPassedTarget && TimeSincePassed >= CompletionHoldTime && LaneBlendAlpha < 0.01f)
     {
         if (bDrawDebug)
         {
@@ -149,87 +120,36 @@ bool UTurboAction_Overtake::IsDone()
 
 FVector UTurboAction_Overtake::GetTargetPoint()
 {
-    // Get the base racing line point from parent
-    FVector BasePoint = Super::GetTargetPoint();
-
     if (!RacingSplineActor.IsValid() || !AIController.IsValid())
     {
-        return BasePoint;
-    }
-
-    // Apply lateral offset
-    if (FMath::Abs(CurrentLateralOffset) < 1.0f)
-    {
-        return BasePoint;
-    }
-
-    USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
-    if (!Spline)
-    {
-        return BasePoint;
+        return Super::GetTargetPoint();
     }
 
     float CurrentDistance = AIController->GetCurrentSplineDistance();
     float LookaheadDist = GetLookaheadDistance();
     float TargetDistance = CurrentDistance + LookaheadDist;
 
-    // Wrap for closed loop
-    float SplineLength = Spline->GetSplineLength();
-    if (Spline->IsClosedLoop() && TargetDistance >= SplineLength)
+    USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
+    if (Spline && Spline->IsClosedLoop())
     {
-        TargetDistance = FMath::Fmod(TargetDistance, SplineLength);
-    }
-
-    FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
-    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
-    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
-
-    // Add offset to base point (positive offset = right, negative = left)
-    return BasePoint + (Right * CurrentLateralOffset);
-}
-
-EOvertakeSide UTurboAction_Overtake::ChooseOvertakeSide(const FTurboDecisionContext& Context) const
-{
-    // If in a corner, prefer inside line
-    if (!Context.bOnStraight)
-    {
-        // TurnSign > 0 = turning right, inside is left
-        // TurnSign < 0 = turning left, inside is right
-        if (Context.CurrentTurnSign > 0.1f && Context.bLeftClear)
+        float SplineLength = Spline->GetSplineLength();
+        if (TargetDistance >= SplineLength)
         {
-            return EOvertakeSide::Left;
-        }
-        else if (Context.CurrentTurnSign < -0.1f && Context.bRightClear)
-        {
-            return EOvertakeSide::Right;
+            TargetDistance = FMath::Fmod(TargetDistance, SplineLength);
         }
     }
 
-    // On straight or no clear inside: pick side with more room
-    float RoomOnLeft = Context.TrackHalfWidth + Context.SignedDistanceFromCenter;
-    float RoomOnRight = Context.TrackHalfWidth - Context.SignedDistanceFromCenter;
+    FVector PrimaryPoint = RacingSplineActor->GetPointOnRacingLine(TargetDistance);
+    FVector SecondaryPoint = RacingSplineActor->GetPointOnSecondaryLine(TargetDistance);
 
-    if (RoomOnLeft > RoomOnRight && Context.bLeftClear)
-    {
-        return EOvertakeSide::Left;
-    }
-    else if (Context.bRightClear)
-    {
-        return EOvertakeSide::Right;
-    }
-    else if (Context.bLeftClear)
-    {
-        return EOvertakeSide::Left;
-    }
-
-    return EOvertakeSide::Left;
+    return FMath::Lerp(PrimaryPoint, SecondaryPoint, LaneBlendAlpha);
 }
 
 bool UTurboAction_Overtake::HasPassedTargetVehicle() const
 {
     if (!TargetVehicle.IsValid() || !AIController.IsValid() || !RacingSplineActor.IsValid())
     {
-        return true;  // Target lost, consider done
+        return true;
     }
 
     USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
@@ -238,13 +158,11 @@ bool UTurboAction_Overtake::HasPassedTargetVehicle() const
         return true;
     }
 
-    // Get current positions on spline
     float OurDistance = AIController->GetCurrentSplineDistance();
 
     FVector TargetLocation = TargetVehicle->GetActorLocation();
     float TargetDistance = Spline->GetDistanceAlongSplineAtLocation(TargetLocation, ESplineCoordinateSpace::World);
 
-    // Handle lap wrap-around
     float SplineLength = Spline->GetSplineLength();
     float DistanceAhead = OurDistance - TargetDistance;
 
@@ -265,28 +183,14 @@ bool UTurboAction_Overtake::HasPassedTargetVehicle() const
 
 bool UTurboAction_Overtake::ShouldAbort() const
 {
-    // Timeout
     if (TimeInOvertake > AbortTimeout)
     {
         return true;
     }
 
-    // Target vehicle lost
     if (!TargetVehicle.IsValid())
     {
         return true;
-    }
-
-    // Abort if entering a tight corner mid-overtake (not during hold)
-    if (!bHasPassedTarget && AIController.IsValid() && RacingSplineActor.IsValid())
-    {
-        float CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(
-            AIController->GetCurrentSplineDistance(), 500.0f);
-
-        if (CurrentCurvature > CornerAbortCurvature)
-        {
-            return true;
-        }
     }
 
     return false;
@@ -296,25 +200,26 @@ float UTurboAction_Overtake::FindTargetSpeedAhead() const
 {
     float BaseSpeed = Super::FindTargetSpeedAhead();
 
-    // No boost in corners
-    if (AIController.IsValid() && RacingSplineActor.IsValid())
+    if (!AIController.IsValid() || !RacingSplineActor.IsValid())
     {
-        float Curvature = RacingSplineActor->GetCurvatureAtDistance(
-            AIController->GetCurrentSplineDistance(), 500.0f);
-
-        if (Curvature > 0.0003f)
-        {
-            // In a corner — use base speed, no boost
-            if (bHasPassedTarget)
-            {
-                float HoldAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
-                return BaseSpeed * (1.0f - HoldAlpha * 0.05f);
-            }
-            return BaseSpeed;
-        }
+        return BaseSpeed;
     }
 
-    // On straight — full boost
+    float Curvature = RacingSplineActor->GetCurvatureAtDistance(
+        AIController->GetCurrentSplineDistance(), 500.0f);
+
+    // No boost in corners
+    if (Curvature > 0.0003f)
+    {
+        if (bHasPassedTarget)
+        {
+            float HoldAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);
+            return BaseSpeed * (1.0f - HoldAlpha * 0.05f);
+        }
+        return BaseSpeed;
+    }
+
+    // On straights — boost
     if (bHasPassedTarget)
     {
         float HoldAlpha = FMath::Clamp(TimeSincePassed / CompletionHoldTime, 0.0f, 1.0f);

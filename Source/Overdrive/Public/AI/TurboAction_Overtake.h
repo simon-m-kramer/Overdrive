@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AI/TurboAction_FollowPath.h"
-#include "Components/TurboVehicleDetectionComponent.h"
 #include "TurboAction_Overtake.generated.h"
 
 class ATurboVehicle;
@@ -34,17 +33,11 @@ public:
     float MinSpeedAdvantage = 5.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake|Activation")
-    float OvertakeMaxCurvature = 0.0005f;
+    float OvertakeMaxCurvature = 0.0001f;
 
     // =========================================================================
     // BEHAVIOR
     // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Overtake")
-    float LateralOffset = 300.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Overtake")
-    float OffsetBlendSpeed = 3.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float MinDistanceAheadToComplete = 1500.0f;
@@ -53,32 +46,29 @@ public:
     float AbortTimeout = 10.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float SpeedBoostKmh = 15.0f;
+    float SpeedBoostKmh = 5.0f;
 
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float CompletionHoldTime = 2.0f;
+    float CompletionHoldTime = 3.0f;
 
+    /** How fast the AI blends between primary and secondary line (0-1 per second) */
     UPROPERTY(EditAnywhere, Category = "Overtake")
-    float CornerAbortCurvature = 0.001f;
-
-
+    float LaneBlendSpeed = 2.0f;
 
 protected:
     virtual FVector GetTargetPoint() override;
     virtual float FindTargetSpeedAhead() const override;
 
 private:
-    EOvertakeSide ChooseOvertakeSide(const FTurboDecisionContext& Context) const;
     bool HasPassedTargetVehicle() const;
     bool ShouldAbort() const;
 
     UPROPERTY()
     TWeakObjectPtr<ATurboVehicle> TargetVehicle;
 
-    EOvertakeSide Side = EOvertakeSide::Left;
+    /** 0 = primary line, 1 = secondary line */
+    float LaneBlendAlpha = 0.0f;
 
-    float CurrentLateralOffset = 0.0f;
-    float TargetSplineDistanceAtStart = 0.0f;
     float TimeInOvertake = 0.0f;
     bool bOvertakeComplete = false;
     bool bHasPassedTarget = false;
