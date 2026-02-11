@@ -98,38 +98,67 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
 
     const float MaxOffset = (TrackWidth * 0.5f) * TrackWidthUsage;
 
-    // Normalized curvature: 0 = straight, 1 = tightest corner on track
     auto GetNormalizedCurvature = [&](float Dist) -> float
         {
-            return GetCurvatureAtDistance(WrapDistance(Dist), CurvatureSampleRange) / MaxTrackCurvature;
+            return GetCurvatureAtDistance(WrapDistance(Dist), CurvatureSampleRange)
+                / MaxTrackCurvature;
         };
 
     const float CurvatureHere = GetNormalizedCurvature(Distance);
-    const float CurvatureAhead = GetNormalizedCurvature(Distance + ApproachSampleDistance);
 
-    // ---- On a straight: look ahead for the next turn, position to outside ----
-
-    if (CurvatureHere < MinCurvatureThreshold && CurvatureAhead < MinCurvatureThreshold)
+    // ----- In a curve: cut toward the inside -----
+    if (CurvatureHere >= MinCurvatureThreshold)
     {
-        for (float Look = ApproachSampleDistance; Look < RacingLineLookahead; Look += LookaheadStepSize)
+        const float TurnDir = GetTurnSign(Distance, TurnSignLookahead);
+        if (FMath::Abs(TurnDir) > 0.0f)
         {
-            const float LookDist = WrapDistance(Distance + Look);
-            const float LookCurvature = GetNormalizedCurvature(Distance + Look);
+            return TurnDir * MaxOffset;
+        }
+    }
 
-            if (LookCurvature > MinCurvatureThreshold)
+    // ----- On a straight: look ahead, position to the outside of the next curve -----
+    for (float Look = LookaheadStepSize; Look < RacingLineLookahead;
+        Look += LookaheadStepSize)
+    {
+        const float LookCurvature = GetNormalizedCurvature(Distance + Look);
+
+        if (LookCurvature <= MinCurvatureThreshold)
+            continue;
+
+        // Found a curve — scan forward to find the peak
+        float PeakCurvature = 0.0f;
+        float PeakDist = Distance + Look;
+
+        for (float Scan = Look; Scan < RacingLineLookahead;
+            Scan += LookaheadStepSize)
+        {
+            const float ScanCurvature = GetNormalizedCurvature(Distance + Scan);
+
+            if (ScanCurvature <= MinCurvatureThreshold)
+                break;
+
+            if (ScanCurvature > PeakCurvature)
             {
-                const float TurnDir = GetTurnSign(LookDist, TurnSignLookahead);
-                return -TurnDir * MaxOffset; // outside of upcoming turn, full width
+                PeakCurvature = ScanCurvature;
+                PeakDist = Distance + Scan;
             }
         }
 
-        return 0.0f; // no turn ahead, stay centered
+        const float TurnDir = GetTurnSign(
+            WrapDistance(PeakDist), TurnSignLookahead);
+
+        if (FMath::Abs(TurnDir) > 0.0f)
+        {
+            // Outside = opposite of turn direction
+            // Fade out the offset the further away the curve is
+            float Proximity = 1.0f - (Look / RacingLineLookahead);
+            return -TurnDir * MaxOffset * Proximity;
+        }
+
+        break;  // only react to the first curve found
     }
 
-    // ---- In a curve: full offset to the inside ----
-
-    const float TurnDir = GetTurnSign(Distance, TurnSignLookahead);
-    return TurnDir * MaxOffset;
+    return 0.0f;
 }
 
 // =============================================================================
@@ -174,32 +203,9 @@ FVector ATurboRacingSpline::GetPointOnRacingLine(float Distance) const
 
     FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
     FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-    FVector Right = FVector::CrossProduct(Tangent, Up).GetSafeNormal();
+    FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
 
-    return CenterPoint + (Right * -Offset);
-}
-
-// =============================================================================
-// UTILITY
-// =============================================================================
-
-float ATurboRacingSpline::WrapDistance(float Distance) const
-{
-    if (!Spline) return Distance;
-    const float SplineLength = Spline->GetSplineLength();
-    if (SplineLength <= KINDA_SMALL_NUMBER) return 0.0f;  // handling zero-length spline
-
-    if (Spline->IsClosedLoop())
-    {
-        Distance = FMath::Fmod(Distance, SplineLength);
-        if (Distance < 0.0f) Distance += SplineLength;  // negative FMod correction
-    }
-    else
-    {
-        Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);  // making sure that the end of the track is handled gracefully
-    }
-
-    return Distance;
+    return CenterPoint + (Right * Offset);
 }
 
 // =============================================================================
@@ -259,6 +265,25 @@ void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
 // CURVATURE ANALYSIS
 // =============================================================================
 
+float ATurboRacingSpline::WrapDistance(float Distance) const
+{
+    if (!Spline) return Distance;
+    const float SplineLength = Spline->GetSplineLength();
+    if (SplineLength <= KINDA_SMALL_NUMBER) return 0.0f;  // handling zero-length spline
+
+    if (Spline->IsClosedLoop())
+    {
+        Distance = FMath::Fmod(Distance, SplineLength);
+        if (Distance < 0.0f) Distance += SplineLength;  // negative FMod correction
+    }
+    else
+    {
+        Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);  // making sure that the end of the track is handled gracefully
+    }
+
+    return Distance;
+}
+
 float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRange) const
 {
     if (!Spline) return 0.0f;
@@ -274,28 +299,26 @@ float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRan
     const float Dot = FVector::DotProduct(TangentA, TangentB);
     const float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));  // clamp is a floating point error safeguard;
 
-    return Angle / SampleRange;  // this is the derivative in radians/cm
+    return Angle / SampleRange;
 }
 
 float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance) const
 {
     if (!Spline) return 0.0f;
 
-    float CurrentWrappedDist = WrapDistance(Distance);
-    FVector CurrentPos = Spline->GetLocationAtDistanceAlongSpline(CurrentWrappedDist, ESplineCoordinateSpace::World);
-    FVector RightVec = Spline->GetRightVectorAtDistanceAlongSpline(CurrentWrappedDist, ESplineCoordinateSpace::World);
+    const float HalfRange = InLookaheadDistance * 0.5f;
 
-    float FutureWrappedDist = WrapDistance(Distance + InLookaheadDistance);
-    FVector FuturePos = Spline->GetLocationAtDistanceAlongSpline(FutureWrappedDist, ESplineCoordinateSpace::World);
+    FVector TangentA = Spline->GetDirectionAtDistanceAlongSpline(WrapDistance(Distance - HalfRange), ESplineCoordinateSpace::World);
+    FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(WrapDistance(Distance + HalfRange), ESplineCoordinateSpace::World);
+    FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(WrapDistance(Distance), ESplineCoordinateSpace::World);
 
-    FVector Delta = (FuturePos - CurrentPos).GetSafeNormal();
+    FVector Cross = FVector::CrossProduct(TangentA, TangentB);
+    float DotUp = FVector::DotProduct(Cross, Up);
 
-    float DotResult = FVector::DotProduct(Delta, RightVec);
-
-    if (FMath::Abs(DotResult) < 0.01f)
+    if (FMath::Abs(DotUp) < KINDA_SMALL_NUMBER)
     {
         return 0.0f;
     }
 
-    return (DotResult > 0.0f) ? 1.0f : -1.0f;
+    return (DotUp > 0.0f) ? 1.0f : -1.0f;
 }

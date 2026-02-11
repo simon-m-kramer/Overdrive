@@ -69,25 +69,22 @@ public:
     int32 SmoothingWindow = 15;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float MinCurvatureThreshold = 0.05f;  // normalized: 5% of max curvature = "straight"
+    float MinCurvatureThreshold = 0.05f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float RacingLineSampleInterval = 100.0f;
+    float CurvatureSampleRange = 400.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float RacingLineLookahead = 10000.0f;  // 100 meters
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float CurvatureSampleRange = 400.0f;  // the length of a car
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float ApproachSampleDistance = 800.0f;  // 8 meters
+    float RacingLineLookahead = 10000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float LookaheadStepSize = 200.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float TurnSignLookahead = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    float RacingLineSampleInterval = 100.0f;
 
 protected:
     virtual void BeginPlay() override;
