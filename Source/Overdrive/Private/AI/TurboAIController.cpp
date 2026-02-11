@@ -85,8 +85,6 @@ void ATurboAIController::Tick(float DeltaTime)
     if (bDrawDebug && RacingSplineActor)
     {
         RacingSplineActor->DrawDebugRacingLine(GetWorld());
-        //RacingSplineActor->DrawDebugTrackBoundaries(GetWorld());
-        //RacingSplineActor->DrawDebugSecondaryLine(GetWorld());
     }
 
     // Lap timing display
@@ -286,7 +284,7 @@ void ATurboAIController::UpdateDecisionContext()
 
     // Track position
     FVector VehicleLocation = ControlledVehicle->GetActorLocation();
-    DecisionContext.SignedDistanceFromCenter = RacingSplineActor->GetSignedDistanceFromCenter(VehicleLocation);
+    //DecisionContext.SignedDistanceFromCenter = RacingSplineActor->GetSignedDistanceFromCenter(VehicleLocation);
     DecisionContext.TrackHalfWidth = RacingSplineActor->TrackWidth * 0.5f;
 
     // Detection component data

@@ -21,28 +21,7 @@ public:
     const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
     // =========================================================================
-    // TRACK BOUNDARIES
-    // =========================================================================
-
-    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
-    bool IsOffTrack(FVector WorldLocation) const;
-
-    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
-    float GetDistanceFromCenter(FVector WorldLocation) const;
-
-    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
-    float GetSignedDistanceFromCenter(FVector WorldLocation) const;
-
-    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
-    FVector GetLeftEdgeAtDistance(float Distance) const;
-
-    UFUNCTION(BlueprintPure, Category = "Track Boundaries")
-    FVector GetRightEdgeAtDistance(float Distance) const;
-
-    void DrawDebugTrackBoundaries(UWorld* World) const;
-
-    // =========================================================================
-    // PRIMARY RACING LINE
+    // RACING LINE
     // =========================================================================
 
     UFUNCTION(BlueprintCallable, Category = "Racing Line")
@@ -58,18 +37,6 @@ public:
     bool IsRacingLineReady() const { return bRacingLineCalculated; }
 
     void DrawDebugRacingLine(UWorld* World) const;
-
-    // =========================================================================
-    // SECONDARY RACING LINE
-    // =========================================================================
-
-    UFUNCTION(BlueprintPure, Category = "Secondary Racing Line")
-    float GetSecondaryLineOffset(float Distance) const;
-
-    UFUNCTION(BlueprintPure, Category = "Secondary Racing Line")
-    FVector GetPointOnSecondaryLine(float Distance) const;
-
-    void DrawDebugSecondaryLine(UWorld* World) const;
 
     // =========================================================================
     // CURVATURE ANALYSIS
@@ -134,14 +101,6 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
     int32 SmoothingWindow = 15;
-
-    // =========================================================================
-    // SECONDARY RACING LINE CONFIGURATION
-    // =========================================================================
-
-    /** Constant lateral offset from primary line. Positive = right, Negative = left. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Secondary Racing Line")
-    float LaneSeparation = -350.0f;
 
 protected:
     virtual void BeginPlay() override;

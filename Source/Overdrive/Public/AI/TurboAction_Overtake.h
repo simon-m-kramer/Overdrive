@@ -1,5 +1,6 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
+/*
 #pragma once
 
 #include "CoreMinimal.h"
@@ -51,7 +52,6 @@ public:
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float CompletionHoldTime = 3.0f;
 
-    /** How fast the AI blends between primary and secondary line (0-1 per second) */
     UPROPERTY(EditAnywhere, Category = "Overtake")
     float LaneBlendSpeed = 2.0f;
 
@@ -66,7 +66,6 @@ private:
     UPROPERTY()
     TWeakObjectPtr<ATurboVehicle> TargetVehicle;
 
-    /** 0 = primary line, 1 = secondary line */
     float LaneBlendAlpha = 0.0f;
 
     float TimeInOvertake = 0.0f;
@@ -74,3 +73,4 @@ private:
     bool bHasPassedTarget = false;
     float TimeSincePassed = 0.0f;
 };
+*/
