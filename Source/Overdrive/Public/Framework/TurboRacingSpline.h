@@ -69,13 +69,10 @@ public:
     float RacingLineLookahead = 10000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float RacingLineMinCurvature = 0.0001f;
+    float CurvatureSampleRange = 400.0f;  // the length of a car
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float CurvatureSampleRange = 400.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float CurvatureToOffsetScale = 2000000.0f;
+    float MinCurvatureThreshold = 0.05f;  // normalized: 5% of max curvature = "straight"
 
     // =========================================================================
     // RACING LINE ADVANCED
@@ -90,8 +87,8 @@ public:
     UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
     float TurnSignLookahead = 200.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
-    float CurvatureChangePercent = 0.15f;
+    //UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
+    //float CurvatureChangePercent = 0.15f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line|Advanced")
     int32 SmoothingPasses = 5;
@@ -113,5 +110,7 @@ private:
     float WrapDistance(float Distance) const;
 
     TArray<float> PreCalculatedOffsets;
+    float MaxTrackCurvature = 0.0f;
     bool bRacingLineCalculated = false;
+
 };

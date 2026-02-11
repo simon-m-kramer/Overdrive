@@ -29,20 +29,39 @@ void ATurboRacingSpline::BeginPlay()
 
 void ATurboRacingSpline::CalculateRacingLine()
 {
-    if (!Spline)
+    if (!Spline) return;
+
+    const float SplineLength = Spline->GetSplineLength();
+
+    // ---- Pass 1: Find max curvature for normalization ----
+
+    MaxTrackCurvature = 0.0f;
+
+    for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
     {
+        const float Curvature = GetCurvatureAtDistance(Dist, CurvatureSampleRange);
+        MaxTrackCurvature = FMath::Max(MaxTrackCurvature, Curvature);
+    }
+
+    if (MaxTrackCurvature < KINDA_SMALL_NUMBER)
+    {
+        // Track is essentially straight — no offsets needed
+        PreCalculatedOffsets.Init(0.0f, FMath::CeilToInt(SplineLength / RacingLineSampleInterval));
+        bRacingLineCalculated = true;
         return;
     }
 
-    float SplineLength = Spline->GetSplineLength();
+    // ---- Pass 2: Calculate offsets ----
 
     PreCalculatedOffsets.Empty();
 
     for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
     {
-        float Offset = CalculateIdealOffset(Dist);
+        const float Offset = CalculateIdealOffset(Dist);
         PreCalculatedOffsets.Add(Offset);
     }
+
+    // ---- Pass 3: Smoothing ----
 
     for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
     {
@@ -56,7 +75,7 @@ void ATurboRacingSpline::CalculateRacingLine()
 
             for (int32 j = -SmoothingWindow; j <= SmoothingWindow; j++)
             {
-                int32 Index = (i + j + PreCalculatedOffsets.Num()) % PreCalculatedOffsets.Num();
+                const int32 Index = (i + j + PreCalculatedOffsets.Num()) % PreCalculatedOffsets.Num();
                 float Weight = 1.0f - (FMath::Abs(j) / static_cast<float>(SmoothingWindow + 1));
                 Weight = Weight * Weight;
 
@@ -75,71 +94,42 @@ void ATurboRacingSpline::CalculateRacingLine()
 
 float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
 {
-    if (!Spline)
-    {
-        return 0.0f;
-    }
+    if (!Spline) return 0.0f;
 
-    float MaxOffset = (TrackWidth * 0.5f) * TrackWidthUsage;
+    const float MaxOffset = (TrackWidth * 0.5f) * TrackWidthUsage;
 
-    float DistBehind = WrapDistance(Distance - ApproachSampleDistance);
-    float DistAhead = WrapDistance(Distance + ApproachSampleDistance);
-
-    float CurvatureBehind = GetCurvatureAtDistance(DistBehind, CurvatureSampleRange);
-    float CurvatureCurrent = GetCurvatureAtDistance(Distance, CurvatureSampleRange);
-    float CurvatureAhead = GetCurvatureAtDistance(DistAhead, CurvatureSampleRange);
-
-    if (CurvatureCurrent < RacingLineMinCurvature && CurvatureAhead < RacingLineMinCurvature)
-    {
-        for (float LookAhead = ApproachSampleDistance; LookAhead < RacingLineLookahead; LookAhead += LookaheadStepSize)
+    // Normalized curvature: 0 = straight, 1 = tightest corner on track
+    auto GetNormalizedCurvature = [&](float Dist) -> float
         {
-            float LookDist = WrapDistance(Distance + LookAhead);
-            float LookCurvature = GetCurvatureAtDistance(LookDist, CurvatureSampleRange);
+            return GetCurvatureAtDistance(WrapDistance(Dist), CurvatureSampleRange) / MaxTrackCurvature;
+        };
 
-            if (LookCurvature > RacingLineMinCurvature)
+    const float CurvatureHere = GetNormalizedCurvature(Distance);
+    const float CurvatureAhead = GetNormalizedCurvature(Distance + ApproachSampleDistance);
+
+    // ---- On a straight: look ahead for the next turn, position to outside ----
+
+    if (CurvatureHere < MinCurvatureThreshold && CurvatureAhead < MinCurvatureThreshold)
+    {
+        for (float Look = ApproachSampleDistance; Look < RacingLineLookahead; Look += LookaheadStepSize)
+        {
+            const float LookDist = WrapDistance(Distance + Look);
+            const float LookCurvature = GetNormalizedCurvature(Distance + Look);
+
+            if (LookCurvature > MinCurvatureThreshold)
             {
-                float TurnSign = GetTurnSign(LookDist, TurnSignLookahead);
-                float OffsetMagnitude = FMath::Min(LookCurvature * CurvatureToOffsetScale * TrackWidthUsage, MaxOffset);
-                return -TurnSign * OffsetMagnitude;
+                const float TurnDir = GetTurnSign(LookDist, TurnSignLookahead);
+                return -TurnDir * MaxOffset; // outside of upcoming turn, full width
             }
         }
-        return 0.0f;
+
+        return 0.0f; // no turn ahead, stay centered
     }
 
-    float TurnSign = GetTurnSign(Distance, TurnSignLookahead);
-    float OffsetMagnitude = FMath::Min(CurvatureCurrent * CurvatureToOffsetScale * TrackWidthUsage, MaxOffset);
+    // ---- In a curve: full offset to the inside ----
 
-    float CurvatureChangeThreshold = FMath::Max(CurvatureCurrent * CurvatureChangePercent, RacingLineMinCurvature * 0.5f);
-
-    bool bCurvatureIncreasing = CurvatureAhead > CurvatureCurrent + CurvatureChangeThreshold;
-    bool bCurvatureDecreasing = CurvatureBehind > CurvatureCurrent + CurvatureChangeThreshold;
-    bool bAtApex = !bCurvatureIncreasing && !bCurvatureDecreasing && CurvatureCurrent > RacingLineMinCurvature;
-
-    float Offset = 0.0f;
-
-    if (bCurvatureIncreasing)
-    {
-        float ApproachFactor = CurvatureCurrent / FMath::Max(CurvatureAhead, RacingLineMinCurvature);
-        ApproachFactor = FMath::Clamp(ApproachFactor, 0.0f, 1.0f);
-        float InsideFactor = (ApproachFactor * 2.0f) - 1.0f;
-        Offset = TurnSign * OffsetMagnitude * InsideFactor;
-    }
-    else if (bAtApex)
-    {
-        Offset = TurnSign * OffsetMagnitude;
-    }
-    else if (bCurvatureDecreasing)
-    {
-        float ExitFactor = CurvatureCurrent / FMath::Max(CurvatureBehind, RacingLineMinCurvature);
-        ExitFactor = FMath::Clamp(ExitFactor, 0.0f, 1.0f);
-        Offset = TurnSign * OffsetMagnitude * ExitFactor;
-    }
-    else
-    {
-        Offset = TurnSign * OffsetMagnitude;
-    }
-
-    return Offset;
+    const float TurnDir = GetTurnSign(Distance, TurnSignLookahead);
+    return TurnDir * MaxOffset;
 }
 
 // =============================================================================
@@ -282,9 +272,9 @@ float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRan
     const FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(DistB, ESplineCoordinateSpace::World);
 
     const float Dot = FVector::DotProduct(TangentA, TangentB);
-    const float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));  // clamp is a floating point error safeguard; Angle in radians
+    const float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));  // clamp is a floating point error safeguard;
 
-    return Angle / SampleRange;
+    return Angle / SampleRange;  // this is the derivative in radians/cm
 }
 
 float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance) const
