@@ -46,9 +46,6 @@ public:
     float GetCurvatureAtDistance(float Distance, float SampleRange = 300.0f) const;
 
     UFUNCTION(BlueprintPure, Category = "Curvature")
-    float GetCurvatureNormalized(float Distance, float SampleRange = 300.0f) const;
-
-    UFUNCTION(BlueprintPure, Category = "Curvature")
     float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
 
     // =========================================================================

@@ -195,21 +195,18 @@ FVector ATurboRacingSpline::GetPointOnRacingLine(float Distance) const
 
 float ATurboRacingSpline::WrapDistance(float Distance) const
 {
-    if (!Spline)
-    {
-        return Distance;
-    }
-
-    float SplineLength = Spline->GetSplineLength();
+    if (!Spline) return Distance;
+    const float SplineLength = Spline->GetSplineLength();
+    if (SplineLength <= KINDA_SMALL_NUMBER) return 0.0f;  // handling zero-length spline
 
     if (Spline->IsClosedLoop())
     {
-        while (Distance < 0.0f) Distance += SplineLength;
-        while (Distance >= SplineLength) Distance -= SplineLength;
+        Distance = FMath::Fmod(Distance, SplineLength);
+        if (Distance < 0.0f) Distance += SplineLength;  // negative FMod correction
     }
     else
     {
-        Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);
+        Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);  // making sure that the end of the track is handled gracefully
     }
 
     return Distance;
@@ -274,45 +271,33 @@ void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
 
 float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRange) const
 {
-    if (!Spline)
-    {
-        return 0.0f;
-    }
+    if (!Spline) return 0.0f;
 
-    float HalfRange = SampleRange * 0.5f;
-    FVector TangentA = Spline->GetDirectionAtDistanceAlongSpline(Distance - HalfRange, ESplineCoordinateSpace::World);
-    FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(Distance + HalfRange, ESplineCoordinateSpace::World);
+    const float HalfRange = SampleRange * 0.5f;
 
-    float Dot = FVector::DotProduct(TangentA, TangentB);
-    float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));
+    const float DistA = WrapDistance(Distance - HalfRange);
+    const float DistB = WrapDistance(Distance + HalfRange);
+
+    const FVector TangentA = Spline->GetDirectionAtDistanceAlongSpline(DistA, ESplineCoordinateSpace::World);
+    const FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(DistB, ESplineCoordinateSpace::World);
+
+    const float Dot = FVector::DotProduct(TangentA, TangentB);
+    const float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));  // clamp is a floating point error safeguard; Angle in radians
 
     return Angle / SampleRange;
 }
 
-float ATurboRacingSpline::GetCurvatureNormalized(float Distance, float SampleRange) const
-{
-    if (!Spline)
-    {
-        return 0.0f;
-    }
-
-    FVector DirA = Spline->GetDirectionAtDistanceAlongSpline(Distance - SampleRange, ESplineCoordinateSpace::World);
-    FVector DirB = Spline->GetDirectionAtDistanceAlongSpline(Distance + SampleRange, ESplineCoordinateSpace::World);
-    float Dot = FVector::DotProduct(DirA, DirB);
-
-    return FMath::Clamp(1.0f - Dot, 0.0f, 1.0f);
-}
-
 float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance) const
 {
-    if (!Spline)
-    {
-        return 0.0f;
-    }
+    if (!Spline) return 0.0f;
 
-    FVector RightVec = Spline->GetRightVectorAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-    FVector CurrentPos = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-    FVector FuturePos = Spline->GetLocationAtDistanceAlongSpline(Distance + InLookaheadDistance, ESplineCoordinateSpace::World);
+    float CurrentWrappedDist = WrapDistance(Distance);
+    FVector CurrentPos = Spline->GetLocationAtDistanceAlongSpline(CurrentWrappedDist, ESplineCoordinateSpace::World);
+    FVector RightVec = Spline->GetRightVectorAtDistanceAlongSpline(CurrentWrappedDist, ESplineCoordinateSpace::World);
+
+    float FutureWrappedDist = WrapDistance(Distance + InLookaheadDistance);
+    FVector FuturePos = Spline->GetLocationAtDistanceAlongSpline(FutureWrappedDist, ESplineCoordinateSpace::World);
+
     FVector Delta = (FuturePos - CurrentPos).GetSafeNormal();
 
     float DotResult = FVector::DotProduct(Delta, RightVec);
