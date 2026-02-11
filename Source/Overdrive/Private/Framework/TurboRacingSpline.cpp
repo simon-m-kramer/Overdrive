@@ -34,7 +34,6 @@ void ATurboRacingSpline::CalculateRacingLine()
     const float SplineLength = Spline->GetSplineLength();
 
     // ---- Pass 1: Find max curvature for normalization ----
-
     MaxTrackCurvature = 0.0f;
 
     for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
@@ -45,14 +44,12 @@ void ATurboRacingSpline::CalculateRacingLine()
 
     if (MaxTrackCurvature < KINDA_SMALL_NUMBER)
     {
-        // Track is essentially straight — no offsets needed
         PreCalculatedOffsets.Init(0.0f, FMath::CeilToInt(SplineLength / RacingLineSampleInterval));
         bRacingLineCalculated = true;
         return;
     }
 
     // ---- Pass 2: Calculate offsets ----
-
     PreCalculatedOffsets.Empty();
 
     for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
@@ -62,32 +59,7 @@ void ATurboRacingSpline::CalculateRacingLine()
     }
 
     // ---- Pass 3: Smoothing ----
-
-    for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
-    {
-        TArray<float> SmoothedOffsets;
-        SmoothedOffsets.Reserve(PreCalculatedOffsets.Num());
-
-        for (int32 i = 0; i < PreCalculatedOffsets.Num(); i++)
-        {
-            float Sum = 0.0f;
-            float WeightSum = 0.0f;
-
-            for (int32 j = -SmoothingWindow; j <= SmoothingWindow; j++)
-            {
-                const int32 Index = (i + j + PreCalculatedOffsets.Num()) % PreCalculatedOffsets.Num();
-                float Weight = 1.0f - (FMath::Abs(j) / static_cast<float>(SmoothingWindow + 1));
-                Weight = Weight * Weight;
-
-                Sum += PreCalculatedOffsets[Index] * Weight;
-                WeightSum += Weight;
-            }
-
-            SmoothedOffsets.Add(Sum / WeightSum);
-        }
-
-        PreCalculatedOffsets = MoveTemp(SmoothedOffsets);
-    }
+    SmoothRacingLine();
 
     bRacingLineCalculated = true;
 }
@@ -159,6 +131,52 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
     }
 
     return 0.0f;
+}
+
+void ATurboRacingSpline::SmoothRacingLine()
+{
+    if (PreCalculatedOffsets.Num() == 0 || MaxTrackCurvature < KINDA_SMALL_NUMBER)
+        return;
+
+    for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
+    {
+        TArray<float> SmoothedOffsets;
+        SmoothedOffsets.Reserve(PreCalculatedOffsets.Num());
+
+        for (int32 i = 0; i < PreCalculatedOffsets.Num(); i++)
+        {
+            const float Dist = i * RacingLineSampleInterval;
+            const float Curvature = GetCurvatureAtDistance(Dist, CurvatureSampleRange);
+            const float NormalizedCurvature = Curvature / MaxTrackCurvature;
+
+            float T = FMath::Clamp(NormalizedCurvature / MinCurvatureThreshold, 0.0f, 1.0f);
+            int32 AdaptiveWindow = FMath::RoundToInt(
+                FMath::Lerp(
+                    static_cast<float>(SmoothingWindowMax),
+                    static_cast<float>(SmoothingWindowMin),
+                    T));
+
+            float Sum = 0.0f;
+            float WeightSum = 0.0f;
+
+            for (int32 j = -AdaptiveWindow; j <= AdaptiveWindow; j++)
+            {
+                const int32 Index = (i + j + PreCalculatedOffsets.Num())
+                    % PreCalculatedOffsets.Num();
+
+                float Weight = 1.0f - (FMath::Abs(j)
+                    / static_cast<float>(AdaptiveWindow + 1));
+                Weight = Weight * Weight;
+
+                Sum += PreCalculatedOffsets[Index] * Weight;
+                WeightSum += Weight;
+            }
+
+            SmoothedOffsets.Add(Sum / WeightSum);
+        }
+
+        PreCalculatedOffsets = MoveTemp(SmoothedOffsets);
+    }
 }
 
 // =============================================================================

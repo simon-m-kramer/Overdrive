@@ -66,7 +66,10 @@ public:
     int32 SmoothingPasses = 5;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    int32 SmoothingWindow = 15;
+    int32 SmoothingWindowMin = 15;
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    int32 SmoothingWindowMax = 35;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float MinCurvatureThreshold = 0.05f;
@@ -102,5 +105,7 @@ private:
     TArray<float> PreCalculatedOffsets;
     float MaxTrackCurvature = 0.0f;
     bool bRacingLineCalculated = false;
+
+    void SmoothRacingLine();
 
 };
