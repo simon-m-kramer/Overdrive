@@ -18,29 +18,7 @@ USTRUCT(BlueprintType)
 struct FTurboDecisionContext
 {
     GENERATED_BODY()
-
-    // Track
-    float CurrentCurvature = 0.0f;
-    float DistanceToNextCorner = 0.0f;
-    bool bOnStraight = false;
-
-    // Other vehicles
-    bool bCarAhead = false;
-    float DistanceToCarAhead = 0.0f;
-    float RelativeSpeedAhead = 0.0f;  // Positive = we're faster
-
-    // Clearance
-    bool bLeftClear = false;
-    bool bRightClear = false;
-
-    // Track position
-    float SignedDistanceFromCenter = 0.0f;  // Positive = right side
-    float TrackHalfWidth = 0.0f;
-
-    UPROPERTY()
-    TWeakObjectPtr<ATurboVehicle> CarAhead;
-
-    float CurrentTurnSign = 0.0f;
+    // TO DO: Add decision making properties
 };
 
 UCLASS()
@@ -169,13 +147,13 @@ protected:
     TObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
-    TObjectPtr<ATurboVehicle> ControlledVehicle;
+    TObjectPtr<ATurboVehicle> ControlledVehicle;  // TO DO: Update this to TurboAIVehicle
 
 private:
     // Decision making
+    FTurboDecisionContext DecisionContext;
     void UpdateDecisionContext();
     float FindDistanceToNextCorner() const;
-    FTurboDecisionContext DecisionContext;
 
     // Spline
     float CurrentSplineDistance = 0.0f;

@@ -41,6 +41,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetForwardSpeed() const;
 
+	// TO DO: move this to TurboAIVehicle
 	UFUNCTION(BlueprintPure, Category = "Vehicle")
 	UTurboVehicleDetectionComponent* GetDetectionComponent() const { return DetectionComponent; }
 

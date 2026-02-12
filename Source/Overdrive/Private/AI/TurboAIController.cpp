@@ -103,57 +103,6 @@ void ATurboAIController::Tick(float DeltaTime)
             FString::Printf(TEXT("Lap: %d"), LapCount));
     }
 
-    // Decision context debug
-    if (bShowDecisionContext)
-    {
-        if (ControlledVehicle)
-        {
-            GEngine->AddOnScreenDebugMessage(34, 0.0f, FColor::White,
-                FString::Printf(TEXT("Speed: %.1f km/h"), ControlledVehicle->GetSpeedKmh()));
-        }
-
-        GEngine->AddOnScreenDebugMessage(30, 0.0f, FColor::Magenta,
-            FString::Printf(TEXT("On Straight: %s | Curvature: %.6f"),
-                DecisionContext.bOnStraight ? TEXT("YES") : TEXT("NO"),
-                DecisionContext.CurrentCurvature));
-
-        GEngine->AddOnScreenDebugMessage(31, 0.0f, FColor::Magenta,
-            FString::Printf(TEXT("Corner in: %.0f cm"), DecisionContext.DistanceToNextCorner));
-
-        if (DecisionContext.bCarAhead)
-        {
-            GEngine->AddOnScreenDebugMessage(32, 0.0f, FColor::Orange,
-                FString::Printf(TEXT("Car Ahead: %.0f cm | Rel Speed: %.1f km/h"),
-                    DecisionContext.DistanceToCarAhead,
-                    DecisionContext.RelativeSpeedAhead));
-        }
-
-        GEngine->AddOnScreenDebugMessage(33, 0.0f, FColor::Cyan,
-            FString::Printf(TEXT("Clear L: %s | R: %s | Pos: %.0f cm"),
-                DecisionContext.bLeftClear ? TEXT("YES") : TEXT("NO"),
-                DecisionContext.bRightClear ? TEXT("YES") : TEXT("NO"),
-                DecisionContext.SignedDistanceFromCenter));
-
-        // Action stack
-        UBifrostAction* Active = GetCurrentAction();
-        if (Active)
-        {
-            GEngine->AddOnScreenDebugMessage(60, 0.0f, FColor::White,
-                FString::Printf(TEXT("* %s"), *Active->ActionName));
-        }
-
-        const TArray<UBifrostAction*>& Actions = GetActions();
-        for (int32 i = 0; i < Actions.Num(); i++)
-        {
-            if (Actions[i])
-            {
-                GEngine->AddOnScreenDebugMessage(61 + i, 0.0f, FColor::Silver,
-                    FString::Printf(TEXT("  [%d] %s"), i, *Actions[i]->ActionName));
-            }
-        }
-
-
-    }
 }
 
 // =============================================================================
@@ -193,6 +142,36 @@ void ATurboAIController::UpdateSplineDistance()
 
     FVector VehicleLocation = ControlledVehicle->GetActorLocation();
     CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
+}
+
+// =============================================================================
+// DECISION MAKING
+// =============================================================================
+
+void ATurboAIController::UpdateDecisionContext()
+{
+
+}
+
+float ATurboAIController::FindDistanceToNextCorner() const
+{
+    if (!RacingSplineActor)
+    {
+        return CornerScanDistance;
+    }
+
+    for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += 200.0f)
+    {
+        float ScanDist = CurrentSplineDistance + Ahead;
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, 300.0f);
+
+        if (Curvature > StraightCurvatureThreshold)
+        {
+            return Ahead;
+        }
+    }
+
+    return CornerScanDistance;
 }
 
 // =============================================================================
@@ -258,81 +237,6 @@ FString ATurboAIController::FormatLapTime(float TimeSeconds) const
     float Seconds = FMath::Fmod(TimeSeconds, 60.0f);
 
     return FString::Printf(TEXT("%d:%06.3f"), Minutes, Seconds);
-}
-
-// =============================================================================
-// DECISION MAKING
-// =============================================================================
-
-void ATurboAIController::UpdateDecisionContext()
-{
-    if (!ControlledVehicle || !RacingSplineActor)
-    {
-        return;
-    }
-
-    // Track geometry
-    DecisionContext.CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, 300.0f);
-    DecisionContext.bOnStraight = DecisionContext.CurrentCurvature < StraightCurvatureThreshold;
-    DecisionContext.DistanceToNextCorner = FindDistanceToNextCorner();
-
-    // Track position
-    FVector VehicleLocation = ControlledVehicle->GetActorLocation();
-    //DecisionContext.SignedDistanceFromCenter = RacingSplineActor->GetSignedDistanceFromCenter(VehicleLocation);
-    DecisionContext.TrackHalfWidth = RacingSplineActor->TrackWidth * 0.5f;
-
-    // Detection component data
-    UTurboVehicleDetectionComponent* Detection = ControlledVehicle->GetDetectionComponent();
-    if (Detection)
-    {
-        DecisionContext.bCarAhead = Detection->IsCarAhead();
-        DecisionContext.DistanceToCarAhead = Detection->GetDistanceToCarAhead();
-        DecisionContext.bLeftClear = !Detection->IsCarOnLeft();
-        DecisionContext.bRightClear = !Detection->IsCarOnRight();
-
-        // Calculate relative speed
-        if (DecisionContext.bCarAhead)
-        {
-            ATurboVehicle* CarAhead = Detection->GetCarAhead();
-            if (CarAhead)
-            {
-                float OurSpeed = ControlledVehicle->GetSpeedKmh();
-                float TheirSpeed = CarAhead->GetSpeedKmh();
-                DecisionContext.RelativeSpeedAhead = OurSpeed - TheirSpeed;
-                DecisionContext.CarAhead = Detection->GetCarAhead();
-            }
-        }
-        else
-        {
-            DecisionContext.RelativeSpeedAhead = 0.0f;
-            DecisionContext.CarAhead = nullptr;
-        }
-    }
-
-    DecisionContext.CurrentTurnSign = RacingSplineActor->GetTurnSign(CurrentSplineDistance, 500.0f);
-
-
-}
-
-float ATurboAIController::FindDistanceToNextCorner() const
-{
-    if (!RacingSplineActor)
-    {
-        return CornerScanDistance;
-    }
-
-    for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += 200.0f)
-    {
-        float ScanDist = CurrentSplineDistance + Ahead;
-        float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, 300.0f);
-
-        if (Curvature > StraightCurvatureThreshold)
-        {
-            return Ahead;
-        }
-    }
-
-    return CornerScanDistance;
 }
 
 // =============================================================================
