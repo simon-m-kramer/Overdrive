@@ -72,42 +72,6 @@ void ATurboVehicle::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (GetWheelSurfaceType() == SurfaceType1)
-    {
-        FVector Velocity = GetMesh()->GetPhysicsLinearVelocity();
-        float Speed = Velocity.Size();
-
-        if (Speed > 10.0f)
-        {
-            float SpeedFactor = Speed / 4000.0f; // full effect around 144 km/h
-            SpeedFactor = FMath::Clamp(SpeedFactor, 0.0f, 1.0f);
-
-            FVector DragDirection = -Velocity.GetSafeNormal();
-            GetMesh()->AddForce(DragDirection * OffTrackDragForce * SpeedFactor);
-        }
-    }
-}
-
-EPhysicalSurface ATurboVehicle::GetWheelSurfaceType() const
-{
-    // Trace down from vehicle to detect surface
-    FHitResult Hit;
-    FVector Start = GetActorLocation();
-    FVector End = Start - FVector(0.0f, 0.0f, 200.0f);
-
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-    Params.bReturnPhysicalMaterial = true;
-
-    if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
-    {
-        if (Hit.PhysMaterial.IsValid())
-        {
-            return Hit.PhysMaterial->SurfaceType;
-        }
-    }
-
-    return SurfaceType_Default;
 }
 
 void ATurboVehicle::SetSteeringInput(float Value)

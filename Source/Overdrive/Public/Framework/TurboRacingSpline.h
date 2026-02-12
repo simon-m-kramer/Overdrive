@@ -62,13 +62,13 @@ public:
     // RACING LINE CONFIGURATION
     // =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Smoothing")
     int32 SmoothingPasses = 5;
 
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Smoothing")
     int32 SmoothingWindowMin = 15;
 
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    UPROPERTY(EditAnywhere, Category = "Racing Line|Smoothing")
     int32 SmoothingWindowMax = 35;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
@@ -88,6 +88,8 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float RacingLineSampleInterval = 100.0f;
+
+
 
 protected:
     virtual void BeginPlay() override;
