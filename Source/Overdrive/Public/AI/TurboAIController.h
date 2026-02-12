@@ -8,8 +8,6 @@
 #include "GameplayTagContainer.h"
 #include "TurboAIController.generated.h"
 
-class UBifrostActionStack;
-class UBifrostAction;
 class UTurboActionBase;
 class ATurboRacingSpline;
 class ATurboVehicle;
@@ -131,13 +129,6 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Decision Making")
     float CornerScanDistance = 3000.0f;
-
-    // =========================================================================
-    // PERFORMANCE
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Performance")
-    float PerformanceMultiplier = 1.0f;
 
     // =========================================================================
     // DEBUG
