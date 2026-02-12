@@ -79,7 +79,5 @@ protected:
 
 
 
-private:
-	EPhysicalSurface GetWheelSurfaceType() const;
 
 };
