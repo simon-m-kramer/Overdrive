@@ -65,12 +65,6 @@ ATurboVehicle::ATurboVehicle()
 
 }
 
-void ATurboVehicle::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-
-}
-
 void ATurboVehicle::SetSteeringInput(float Value)
 {
     VehicleMovement->SetSteeringInput(Value);

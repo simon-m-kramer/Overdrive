@@ -7,7 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
-#include "Framework/TurboVehicle.h"
+#include "AI/TurboAIVehicle.h"
 #include "AI/TurboAction_FollowPath.h"
 #include "Components/SplineComponent.h"
 #include "AI/TurboVehicleDetectionComponent.h"
@@ -36,7 +36,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 
     // Initialize spline and vehicle
     FindRacingSpline();
-    ControlledVehicle = Cast<ATurboVehicle>(InPawn);
+    ControlledVehicle = Cast<ATurboAIVehicle>(InPawn);
 
     // Initialize spline distance
     if (ControlledVehicle && RacingSplineActor)

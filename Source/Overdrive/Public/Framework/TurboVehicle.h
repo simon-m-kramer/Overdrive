@@ -19,8 +19,6 @@ class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
 public:
 	ATurboVehicle();
 
-	virtual void Tick(float DeltaTime) override;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vehicle")
 	FString VehicleName = TEXT("Car");
 

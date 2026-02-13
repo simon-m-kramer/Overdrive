@@ -3,7 +3,7 @@
 
 #include "AI/TurboAction_FollowPath.h"
 #include "AI/TurboAIController.h"
-#include "Framework/TurboVehicle.h"
+#include "AI/TurboAIVehicle.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
