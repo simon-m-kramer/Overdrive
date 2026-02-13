@@ -57,11 +57,6 @@ USplineComponent* UTurboAction_FollowPath::GetSpline() const
 
 float UTurboAction_FollowPath::GetLookaheadDistance() const
 {
-    if (!bUseSpeedDependentLookahead)
-    {
-        return FixedLookaheadDistance;
-    }
-
     if (!Vehicle.IsValid())
     {
         return MinLookaheadDistance;
@@ -97,7 +92,7 @@ FVector UTurboAction_FollowPath::GetTargetPoint()
     }
 
     // Get point on racing line or centerline
-    if (bUseRacingLine && RacingSplineActor->IsRacingLineReady())
+    if (RacingSplineActor->IsRacingLineReady())
     {
         return RacingSplineActor->GetPointOnRacingLine(TargetDistance);
     }

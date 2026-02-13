@@ -24,29 +24,16 @@ public:
     virtual bool IsDone() override { return false; }
 
     // =========================================================================
-    // FEATURE FLAGS
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Features")
-    bool bUseSpeedDependentLookahead = true;
-
-    UPROPERTY(EditAnywhere, Category = "Features")
-    bool bUseRacingLine = true;
-
-    // =========================================================================
     // LOOKAHEAD CONFIGURATION
     // =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Lookahead", meta = (EditCondition = "!bUseSpeedDependentLookahead"))
-    float FixedLookaheadDistance = 1500.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Lookahead", meta = (EditCondition = "bUseSpeedDependentLookahead"))
+    UPROPERTY(EditAnywhere, Category = "Lookahead")
     float MinLookaheadDistance = 800.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Lookahead", meta = (EditCondition = "bUseSpeedDependentLookahead"))
+    UPROPERTY(EditAnywhere, Category = "Lookahead")
     float MaxLookaheadDistance = 2500.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Lookahead", meta = (EditCondition = "bUseSpeedDependentLookahead"))
+    UPROPERTY(EditAnywhere, Category = "Lookahead")
     float LookaheadSpeedFactor = 0.5f;
 
     // =========================================================================
