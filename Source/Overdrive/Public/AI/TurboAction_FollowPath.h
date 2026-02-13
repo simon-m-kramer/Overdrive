@@ -24,13 +24,6 @@ public:
     virtual bool IsDone() override { return false; }
 
     // =========================================================================
-    // DEBUG
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
-
-    // =========================================================================
     // FEATURE FLAGS
     // =========================================================================
 
@@ -107,6 +100,9 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
     float MinBrakeInput = 0.1f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    float MaxThrottleInput = 1.0f;
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
     float MaxBrakeInput = 1.0f;
