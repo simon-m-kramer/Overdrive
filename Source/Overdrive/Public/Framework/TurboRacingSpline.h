@@ -69,7 +69,7 @@ public:
     int32 SmoothingWindowMin = 15;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line|Smoothing")
-    int32 SmoothingWindowMax = 35;
+    int32 SmoothingWindowMax = 40;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float MinCurvatureThreshold = 0.05f;

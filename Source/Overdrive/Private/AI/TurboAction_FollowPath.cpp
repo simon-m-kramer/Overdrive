@@ -46,7 +46,7 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 
 
 // =============================================================================
-// STEERING
+// STEERING CONTROL
 // =============================================================================
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
@@ -116,7 +116,7 @@ float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)
 }
 
 // =============================================================================
-// SPEED
+// SPEED CONTROL
 // =============================================================================
 
 void UTurboAction_FollowPath::ApplySpeedControl()

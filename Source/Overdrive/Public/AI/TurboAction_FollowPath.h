@@ -98,7 +98,7 @@ protected:
     TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
     // =========================================================================
-    // STEERING
+    // STEERING CONTROL
     // =========================================================================
 
     USplineComponent* GetSpline() const;
@@ -107,7 +107,7 @@ protected:
     float CalculateSteering(const FVector& TargetPoint);
 
     // =========================================================================
-    // SPEED
+    // SPEED CONTROL
     // =========================================================================
 
     virtual void ApplySpeedControl();
