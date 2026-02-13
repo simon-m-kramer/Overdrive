@@ -28,7 +28,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
     // =========================================================================
     // FEATURE FLAGS
@@ -143,4 +143,11 @@ protected:
 
     virtual float FindTargetSpeedAhead() const;
     virtual void ApplySpeedControl();
+
+private:
+    // =========================================================================
+    // DEBUG
+    // =========================================================================
+    void CreateDebugVisualization();
+
 };

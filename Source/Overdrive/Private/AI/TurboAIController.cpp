@@ -41,7 +41,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
         }
     }
 
-    // ActionPriorityList pass through
+    // Create ActionStack and ActionPriorityList pass through
     ActionStack = NewObject<UTurboActionStack>(this);
     if (ActionStack)
     {

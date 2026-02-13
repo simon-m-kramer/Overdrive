@@ -20,13 +20,8 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
 
-    UObject* Outer = GetOuter();
-    if (UTurboActionStack* Stack = Cast<UTurboActionStack>(Outer))
-    {
-        Outer = Stack->GetOuter();
-    }
-    AIController = Cast<ATurboAIController>(Outer);
-
+    // Action is owned by ActionStack and ActionStack is owned by AIController. GetTypedOuter goes through the whole outer chain.
+    AIController = GetTypedOuter<ATurboAIController>();
     if (AIController.IsValid())
     {
         Vehicle = AIController->GetVehicle();
@@ -42,86 +37,18 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
     }
 
     FVector TargetPoint = GetTargetPoint();
-
-    if (bDrawDebug)
-    {
-        UWorld* World = Vehicle->GetWorld();
-        FVector VehicleLocation = Vehicle->GetActorLocation();
-        USplineComponent* Spline = GetSpline();
-        float CurrentDistance = AIController->GetCurrentSplineDistance();
-
-        // Target point (green)
-        DrawDebugSphere(World, TargetPoint, 50.0f, 12, FColor::Green, false, 0.0f);
-
-        // Line to target (yellow)
-        DrawDebugLine(World, VehicleLocation, TargetPoint, FColor::Yellow, false, 0.0f, 0, 3.0f);
-
-        // Vehicle forward (red)
-        FVector ForwardEnd = VehicleLocation + Vehicle->GetActorForwardVector() * 500.0f;
-        DrawDebugLine(World, VehicleLocation, ForwardEnd, FColor::Red, false, 0.0f, 0, 3.0f);
-
-        // Current spline position (blue)
-        FVector CurrentSplinePoint = Spline->GetLocationAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
-        DrawDebugSphere(World, CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
-
-        // DEBUG: Visualize corner scanning
-        float WorstCurvature = 0.0f;
-        float WorstDistance = 0.0f;
-        float WorstRequiredSpeed = MaxSpeedKmh;
-
-        for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += CornerScanInterval)
-        {
-            float ScanDist = CurrentDistance + Ahead;
-            float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, SpeedCurvatureSampleRange);
-            FVector ScanPoint = Spline->GetLocationAtDistanceAlongSpline(ScanDist, ESplineCoordinateSpace::World) + FVector(0, 0, 50);
-
-            // Color based on curvature: green = straight, red = sharp
-            float CurvatureNormalized = FMath::Clamp(Curvature * 50000.0f, 0.0f, 1.0f);
-            FColor ScanColor = FColor::MakeRedToGreenColorFromScalar(1.0f - CurvatureNormalized);
-            DrawDebugPoint(World, ScanPoint, 10.0f, ScanColor, false, 0.0f);
-
-            if (Curvature > WorstCurvature)
-            {
-                WorstCurvature = Curvature;
-                WorstDistance = Ahead;
-                if (Curvature > KINDA_SMALL_NUMBER)
-                {
-                    float SpeedCmPerSec = FMath::Sqrt(GripFactor / Curvature);
-                    WorstRequiredSpeed = SpeedCmPerSec * 0.036f;
-                }
-            }
-        }
-
-        // Mark the sharpest corner found
-        if (WorstCurvature > KINDA_SMALL_NUMBER)
-        {
-            FVector WorstPoint = Spline->GetLocationAtDistanceAlongSpline(CurrentDistance + WorstDistance, ESplineCoordinateSpace::World) + FVector(0, 0, 100);
-            DrawDebugSphere(World, WorstPoint, 80.0f, 8, FColor::Magenta, false, 0.0f);
-        }
-
-        // On-screen info
-        float CurrentSpeed = Vehicle->GetSpeedKmh();
-        float TargetSpeed = FindTargetSpeedAhead();
-        float SpeedError = TargetSpeed - CurrentSpeed;
-
-        FString State = SpeedError > CoastingThresholdKmh ? TEXT("THROTTLE") :
-            SpeedError < -CoastingThresholdKmh ? TEXT("BRAKE") : TEXT("COAST");
-
-        GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White,
-            FString::Printf(TEXT("Speed: %.1f / %.1f km/h [%s]"), CurrentSpeed, TargetSpeed, *State));
-        GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::Yellow,
-            FString::Printf(TEXT("Worst corner in %.0f cm, curvature: %.6f"), WorstDistance, WorstCurvature));
-        GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::Cyan,
-            FString::Printf(TEXT("Required speed at corner: %.1f km/h"), WorstRequiredSpeed));
-        GEngine->AddOnScreenDebugMessage(4, 0.0f, FColor::Green,
-            FString::Printf(TEXT("Speed error: %.1f km/h"), SpeedError));
-    }
-
     float SteeringInput = CalculateSteering(TargetPoint);
     Vehicle->SetSteeringInput(SteeringInput);
 
     ApplySpeedControl();
+
+    if (bDrawDebug)
+    {
+        CreateDebugVisualization();
+    }
 }
+
+
 
 // =============================================================================
 // CORE METHODS
@@ -269,4 +196,84 @@ void UTurboAction_FollowPath::ApplySpeedControl()
     }
 
     Vehicle->SetHandbrakeInput(false);
+}
+
+// =============================================================================
+// DEBUG
+// =============================================================================
+
+void UTurboAction_FollowPath::CreateDebugVisualization()
+{
+    FVector TargetPoint = GetTargetPoint();
+
+    UWorld* World = Vehicle->GetWorld();
+    FVector VehicleLocation = Vehicle->GetActorLocation();
+    USplineComponent* Spline = GetSpline();
+    float CurrentDistance = AIController->GetCurrentSplineDistance();
+
+    // Target point (green)
+    DrawDebugSphere(World, TargetPoint, 50.0f, 12, FColor::Green, false, 0.0f);
+
+    // Line to target (yellow)
+    DrawDebugLine(World, VehicleLocation, TargetPoint, FColor::Yellow, false, 0.0f, 0, 3.0f);
+
+    // Vehicle forward (red)
+    FVector ForwardEnd = VehicleLocation + Vehicle->GetActorForwardVector() * 500.0f;
+    DrawDebugLine(World, VehicleLocation, ForwardEnd, FColor::Red, false, 0.0f, 0, 3.0f);
+
+    // Current spline position (blue)
+    FVector CurrentSplinePoint = Spline->GetLocationAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::World);
+    DrawDebugSphere(World, CurrentSplinePoint, 30.0f, 8, FColor::Blue, false, 0.0f);
+
+    // DEBUG: Visualize corner scanning
+    float WorstCurvature = 0.0f;
+    float WorstDistance = 0.0f;
+    float WorstRequiredSpeed = MaxSpeedKmh;
+
+    for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += CornerScanInterval)
+    {
+        float ScanDist = CurrentDistance + Ahead;
+        float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, SpeedCurvatureSampleRange);
+        FVector ScanPoint = Spline->GetLocationAtDistanceAlongSpline(ScanDist, ESplineCoordinateSpace::World) + FVector(0, 0, 50);
+
+        // Color based on curvature: green = straight, red = sharp
+        float CurvatureNormalized = FMath::Clamp(Curvature * 50000.0f, 0.0f, 1.0f);
+        FColor ScanColor = FColor::MakeRedToGreenColorFromScalar(1.0f - CurvatureNormalized);
+        DrawDebugPoint(World, ScanPoint, 10.0f, ScanColor, false, 0.0f);
+
+        if (Curvature > WorstCurvature)
+        {
+            WorstCurvature = Curvature;
+            WorstDistance = Ahead;
+            if (Curvature > KINDA_SMALL_NUMBER)
+            {
+                float SpeedCmPerSec = FMath::Sqrt(GripFactor / Curvature);
+                WorstRequiredSpeed = SpeedCmPerSec * 0.036f;
+            }
+        }
+    }
+
+    // Mark the sharpest corner found
+    if (WorstCurvature > KINDA_SMALL_NUMBER)
+    {
+        FVector WorstPoint = Spline->GetLocationAtDistanceAlongSpline(CurrentDistance + WorstDistance, ESplineCoordinateSpace::World) + FVector(0, 0, 100);
+        DrawDebugSphere(World, WorstPoint, 80.0f, 8, FColor::Magenta, false, 0.0f);
+    }
+
+    // On-screen info
+    float CurrentSpeed = Vehicle->GetSpeedKmh();
+    float TargetSpeed = FindTargetSpeedAhead();
+    float SpeedError = TargetSpeed - CurrentSpeed;
+
+    FString State = SpeedError > CoastingThresholdKmh ? TEXT("THROTTLE") :
+        SpeedError < -CoastingThresholdKmh ? TEXT("BRAKE") : TEXT("COAST");
+
+    GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::White,
+        FString::Printf(TEXT("Speed: %.1f / %.1f km/h [%s]"), CurrentSpeed, TargetSpeed, *State));
+    GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::Yellow,
+        FString::Printf(TEXT("Worst corner in %.0f cm, curvature: %.6f"), WorstDistance, WorstCurvature));
+    GEngine->AddOnScreenDebugMessage(3, 0.0f, FColor::Cyan,
+        FString::Printf(TEXT("Required speed at corner: %.1f km/h"), WorstRequiredSpeed));
+    GEngine->AddOnScreenDebugMessage(4, 0.0f, FColor::Green,
+        FString::Printf(TEXT("Speed error: %.1f km/h"), SpeedError));
 }
