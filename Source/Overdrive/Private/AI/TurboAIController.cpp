@@ -10,7 +10,7 @@
 #include "Framework/TurboVehicle.h"
 #include "AI/TurboAction_FollowPath.h"
 #include "Components/SplineComponent.h"
-#include "Components/TurboVehicleDetectionComponent.h"
+#include "AI/TurboVehicleDetectionComponent.h"
 
 ATurboAIController::ATurboAIController()
 {

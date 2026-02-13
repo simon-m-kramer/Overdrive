@@ -1,7 +1,7 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
 
-#include "Components/TurboVehicleDetectionComponent.h"
+#include "AI/TurboVehicleDetectionComponent.h"
 #include "Framework/TurboVehicle.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/OverlapResult.h"

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "Components/TurboVehicleDetectionComponent.h"
+#include "AI/TurboVehicleDetectionComponent.h"
 #include "GameplayTagContainer.h"
 #include "TurboAIController.generated.h"
 

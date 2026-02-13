@@ -4,7 +4,7 @@
 #include "AI/TurboAIVehicle.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/TurboVehicleDetectionComponent.h"
+#include "AI/TurboVehicleDetectionComponent.h"
 
 
 ATurboAIVehicle::ATurboAIVehicle()
