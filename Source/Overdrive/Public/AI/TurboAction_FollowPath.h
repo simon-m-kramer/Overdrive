@@ -112,7 +112,7 @@ protected:
     TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
     // =========================================================================
-    // CORE METHODS
+    // STEERING
     // =========================================================================
 
     USplineComponent* GetSpline() const;
@@ -126,11 +126,5 @@ protected:
 
     virtual float FindTargetSpeedAhead() const;
     virtual void ApplySpeedControl();
-
-private:
-    // =========================================================================
-    // DEBUG
-    // =========================================================================
-    void CreateDebugVisualization();
 
 };

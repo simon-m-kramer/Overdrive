@@ -45,9 +45,8 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 }
 
 
-
 // =============================================================================
-// CORE METHODS
+// STEERING
 // =============================================================================
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
