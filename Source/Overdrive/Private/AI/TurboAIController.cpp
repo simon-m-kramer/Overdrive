@@ -28,15 +28,14 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 
     // Initialize spline and vehicle
     FindRacingSpline();
-    ControlledVehicle = Cast<ATurboAIVehicle>(InPawn);
+    Vehicle = Cast<ATurboAIVehicle>(InPawn);
 
     // Initialize CurrentSplineDistance and PreviousSplineDistance
-    if (ControlledVehicle && RacingSplineActor)
+    if (Vehicle && RacingSplineActor)
     {
-        USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
-        if (Spline)
+        if (USplineComponent* Spline = RacingSplineActor->GetSplineComponent())
         {
-            FVector VehicleLocation = ControlledVehicle->GetActorLocation();
+            FVector VehicleLocation = Vehicle->GetActorLocation();
             CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
             PreviousSplineDistance = CurrentSplineDistance;
         }
@@ -125,7 +124,7 @@ void ATurboAIController::FindRacingSpline()
 
 void ATurboAIController::UpdateSplineDistance()
 {
-    if (!ControlledVehicle || !RacingSplineActor)
+    if (!Vehicle || !RacingSplineActor)
     {
         return;
     }
@@ -138,7 +137,7 @@ void ATurboAIController::UpdateSplineDistance()
 
     PreviousSplineDistance = CurrentSplineDistance;
 
-    FVector VehicleLocation = ControlledVehicle->GetActorLocation();
+    FVector VehicleLocation = Vehicle->GetActorLocation();
     CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
 }
 
@@ -148,7 +147,7 @@ void ATurboAIController::UpdateSplineDistance()
 
 void ATurboAIController::UpdateDecisionContext()
 {
-
+    // TO DO: Implementation
 }
 
 // =============================================================================

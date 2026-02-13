@@ -74,7 +74,7 @@ public:
     // =========================================================================
 
     UFUNCTION(BlueprintPure, Category = "Vehicle")
-    ATurboAIVehicle* GetControlledVehicle() const { return ControlledVehicle; }
+    ATurboAIVehicle* GetVehicle() const { return Vehicle; }
 
     // =========================================================================
     // LAP TIMING
@@ -136,7 +136,7 @@ protected:
     TObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
-    TObjectPtr<ATurboAIVehicle> ControlledVehicle;
+    TObjectPtr<ATurboAIVehicle> Vehicle;
 
 private:
     // Decision making

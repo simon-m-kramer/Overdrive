@@ -29,7 +29,7 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 
     if (AIController.IsValid())
     {
-        Vehicle = AIController->GetControlledVehicle();
+        Vehicle = AIController->GetVehicle();
         RacingSplineActor = AIController->GetRacingSplineActor();
     }
 }
