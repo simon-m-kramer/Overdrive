@@ -24,7 +24,7 @@ public:
     virtual bool IsDone() override { return false; }
 
     // =========================================================================
-    // LOOKAHEAD CONFIGURATION
+    // STEERING CONFIGURATION
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Lookahead")
@@ -36,8 +36,11 @@ public:
     UPROPERTY(EditAnywhere, Category = "Lookahead")
     float LookaheadSpeedFactor = 0.5f;
 
+    UPROPERTY(EditAnywhere, Category = "Turbo AI|Steering")
+    float SteeringGain = 2.0f;
+
     // =========================================================================
-    // SPEED CONTROL - LIMITS
+    // SPEED - LIMITS
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
@@ -47,7 +50,7 @@ public:
     float MinCornerSpeedKmh = 90.0f;
 
     // =========================================================================
-    // SPEED CONTROL - PHYSICS
+    // SPEED - PHYSICS
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
@@ -57,7 +60,7 @@ public:
     float SpeedCurvatureSampleRange = 1000.0f;
 
     // =========================================================================
-    // SPEED CONTROL - CORNER SCANNING
+    // SPEED - CORNER SCANNING
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control")
@@ -70,7 +73,7 @@ public:
     float DistanceSpeedBuffer = 50.0f;
 
     // =========================================================================
-    // SPEED CONTROL - INPUT TUNING
+    // SPEED - INPUT TUNING
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
@@ -121,7 +124,7 @@ protected:
     float CalculateSteering(const FVector& TargetPoint);
 
     // =========================================================================
-    // SPEED CONTROL
+    // SPEED
     // =========================================================================
 
     virtual float FindTargetSpeedAhead() const;

@@ -108,16 +108,15 @@ float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)
 
     FVector VehicleLocation = Vehicle->GetActorLocation();
     FVector VehicleRight = Vehicle->GetActorRightVector();
-
     FVector ToTarget = (TargetPoint - VehicleLocation).GetSafeNormal();
 
     float DotRight = FVector::DotProduct(ToTarget, VehicleRight);
 
-    return FMath::Clamp(DotRight * 2.0f, -1.0f, 1.0f);
+    return FMath::Clamp(DotRight * SteeringGain, -1.0f, 1.0f);
 }
 
 // =============================================================================
-// SPEED CONTROL
+// SPEED
 // =============================================================================
 
 float UTurboAction_FollowPath::FindTargetSpeedAhead() const
