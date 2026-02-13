@@ -24,22 +24,6 @@ public:
     virtual bool IsDone() override { return false; }
 
     // =========================================================================
-    // STEERING CONFIGURATION
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Lookahead")
-    float MinLookaheadDistance = 800.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Lookahead")
-    float MaxLookaheadDistance = 2500.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Lookahead")
-    float LookaheadSpeedFactor = 0.5f;
-
-    UPROPERTY(EditAnywhere, Category = "Turbo AI|Steering")
-    float SteeringGain = 2.0f;
-
-    // =========================================================================
     // SPEED - PROFILE
     // =========================================================================
 
@@ -56,7 +40,23 @@ public:
     float CorneringSpeedSafetyFactor = 0.9f;
 
     // =========================================================================
-    // SPEED - INPUT TUNING
+    // STEERING CONTROL
+    // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Lookahead")
+    float MinLookaheadDistance = 800.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Lookahead")
+    float MaxLookaheadDistance = 2500.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Lookahead")
+    float LookaheadSpeedFactor = 0.5f;
+
+    UPROPERTY(EditAnywhere, Category = "Turbo AI|Steering")
+    float SteeringGain = 2.0f;
+
+    // =========================================================================
+    // SPEED CONTROL
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
@@ -98,18 +98,13 @@ protected:
     TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
     // =========================================================================
-    // STEERING CONTROL
+    // SPEED AND STEERING CONTROL
     // =========================================================================
 
     USplineComponent* GetSpline() const;
     float GetLookaheadDistance() const;
     virtual FVector GetTargetPoint();
     float CalculateSteering(const FVector& TargetPoint);
-
-    // =========================================================================
-    // SPEED CONTROL
-    // =========================================================================
-
     virtual void ApplySpeedControl();
 
     // =========================================================================
@@ -118,8 +113,11 @@ protected:
 
     void CalculateSpeedProfile();
     float GetTargetSpeedAtDistance(float Distance) const;
-
     TArray<float> SpeedProfile;  // target speeds in cm/s at each sample point
     bool bSpeedProfileReady = false;
+
+    /*
+    float FindTargetSpeedAhead();  // Alternative to calculate speed profile
+    */
 
 };

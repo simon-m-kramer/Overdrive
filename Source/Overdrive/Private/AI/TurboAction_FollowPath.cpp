@@ -290,8 +290,7 @@ float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const
     }
 
     const float IndexFloat = Distance / SpeedProfileSampleInterval;
-    const int32 Index = FMath::Clamp(
-        FMath::FloorToInt(IndexFloat), 0, SpeedProfile.Num() - 1);
+    const int32 Index = FMath::Clamp(FMath::FloorToInt(IndexFloat), 0, SpeedProfile.Num() - 1);
     const int32 NextIndex = (Index + 1) % SpeedProfile.Num();
     const float Alpha = IndexFloat - FMath::FloorToInt(IndexFloat);
 
