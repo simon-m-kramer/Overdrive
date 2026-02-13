@@ -179,7 +179,6 @@ void ATurboRacingSpline::SmoothRacingLine()
     }
 }
 
-
 // =============================================================================
 // RACING LINE — GETTERS
 // =============================================================================
@@ -225,59 +224,6 @@ FVector ATurboRacingSpline::GetPointOnRacingLine(float Distance) const
     FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
 
     return CenterPoint + (Right * Offset);
-}
-
-// =============================================================================
-// DEBUG DRAWING
-// =============================================================================
-
-void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
-{
-    if (!bRacingLineCalculated || !Spline || !World)
-    {
-        return;
-    }
-
-    float SplineLength = Spline->GetSplineLength();
-
-    FVector PreviousPoint = FVector::ZeroVector;
-    bool bFirstPoint = true;
-
-    for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
-    {
-        FVector RacingLinePoint = GetPointOnRacingLine(Dist) + FVector(0.0f, 0.0f, 20.0f);
-        float Offset = GetRacingLineOffset(Dist);
-
-        FColor PointColor;
-        if (FMath::Abs(Offset) < 50.0f)
-        {
-            PointColor = FColor::Yellow;
-        }
-        else if (Offset > 0.0f)
-        {
-            PointColor = FColor::Green;
-        }
-        else
-        {
-            PointColor = FColor::Red;
-        }
-
-        DrawDebugPoint(World, RacingLinePoint, 8.0f, PointColor, false, 0.0f);
-
-        if (!bFirstPoint)
-        {
-            DrawDebugLine(World, PreviousPoint, RacingLinePoint, PointColor, false, 0.0f, 0, 2.0f);
-        }
-
-        PreviousPoint = RacingLinePoint;
-        bFirstPoint = false;
-    }
-
-    if (Spline->IsClosedLoop() && !bFirstPoint)
-    {
-        FVector FirstPoint = GetPointOnRacingLine(0.0f) + FVector(0.0f, 0.0f, 20.0f);
-        DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Yellow, false, 0.0f, 0, 2.0f);
-    }
 }
 
 // =============================================================================
@@ -340,4 +286,57 @@ float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance)
     }
 
     return (DotUp > 0.0f) ? 1.0f : -1.0f;
+}
+
+// =============================================================================
+// DEBUG DRAWING
+// =============================================================================
+
+void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
+{
+    if (!bRacingLineCalculated || !Spline || !World)
+    {
+        return;
+    }
+
+    float SplineLength = Spline->GetSplineLength();
+
+    FVector PreviousPoint = FVector::ZeroVector;
+    bool bFirstPoint = true;
+
+    for (float Dist = 0.0f; Dist < SplineLength; Dist += RacingLineSampleInterval)
+    {
+        FVector RacingLinePoint = GetPointOnRacingLine(Dist) + FVector(0.0f, 0.0f, 20.0f);
+        float Offset = GetRacingLineOffset(Dist);
+
+        FColor PointColor;
+        if (FMath::Abs(Offset) < 50.0f)
+        {
+            PointColor = FColor::Yellow;
+        }
+        else if (Offset > 0.0f)
+        {
+            PointColor = FColor::Green;
+        }
+        else
+        {
+            PointColor = FColor::Red;
+        }
+
+        DrawDebugPoint(World, RacingLinePoint, 8.0f, PointColor, false, 0.0f);
+
+        if (!bFirstPoint)
+        {
+            DrawDebugLine(World, PreviousPoint, RacingLinePoint, PointColor, false, 0.0f, 0, 2.0f);
+        }
+
+        PreviousPoint = RacingLinePoint;
+        bFirstPoint = false;
+    }
+
+    if (Spline->IsClosedLoop() && !bFirstPoint)
+    {
+        FVector FirstPoint = GetPointOnRacingLine(0.0f) + FVector(0.0f, 0.0f, 20.0f);
+        DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Yellow, false, 0.0f, 0, 2.0f);
+    }
 }

@@ -23,12 +23,5 @@ public:
 protected:
 	virtual void PossessedBy(AController* NewController) override;
 
-	UPROPERTY()
-	TObjectPtr<USplineComponent> TrackSpline;
-
-
-
-	void FindTrackSpline();
-
 
 };
