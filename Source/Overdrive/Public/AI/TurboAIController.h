@@ -54,7 +54,7 @@ public:
     const TArray<UBifrostAction*>& GetActions() const;
 
     // =========================================================================
-    // SPLINE & POSITION
+    // SPLINE
     // =========================================================================
 
     UFUNCTION(BlueprintCallable, Category = "Spline")

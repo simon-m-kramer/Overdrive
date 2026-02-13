@@ -40,6 +40,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetForwardSpeed() const;
 
+	// =========================================================================
+	// PERFORMANCE STATS
+	// =========================================================================
+
+	/** Maximum speed in cm/s */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
+	float MaxSpeedCms = 5000.0f;  // ~180 km/h
+
+	/** Lateral grip as acceleration in cm/s² (cornering capability) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
+	float LateralGripCms2 = 1800.0f;  // ~1.8G
+
+	/** Braking deceleration in cm/s2 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
+	float BrakeDecelerationCms2 = 2000.0f;  // ~2G
+
+	/** Forward acceleration in cm/s2 (approximate average) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
+	float AccelerationCms2 = 800.0f;
+
 protected:
 	UPROPERTY()
 	TObjectPtr<UChaosWheeledVehicleMovementComponent> VehicleMovement;

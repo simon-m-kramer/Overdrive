@@ -40,37 +40,20 @@ public:
     float SteeringGain = 2.0f;
 
     // =========================================================================
-    // SPEED - LIMITS
+    // SPEED - PROFILE
     // =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float MaxSpeedKmh = 240.0f;
+    /** Sample interval for the pre-calculated speed profile (cm) */
+    UPROPERTY(EditAnywhere, Category = "Speed Profile")
+    float SpeedProfileSampleInterval = 100.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float MinCornerSpeedKmh = 90.0f;
-
-    // =========================================================================
-    // SPEED - PHYSICS
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float GripFactor = 2800.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
+    /** Curvature sample range used for speed calculations (cm) */
+    UPROPERTY(EditAnywhere, Category = "Speed Profile")
     float SpeedCurvatureSampleRange = 1000.0f;
 
-    // =========================================================================
-    // SPEED - CORNER SCANNING
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float CornerScanDistance = 5000.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float CornerScanInterval = 200.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control")
-    float DistanceSpeedBuffer = 50.0f;
+    /** Safety margin — multiplier on cornering speed (< 1.0 = more cautious) */
+    UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.0"))
+    float CorneringSpeedSafetyFactor = 0.9f;
 
     // =========================================================================
     // SPEED - INPUT TUNING
@@ -127,7 +110,16 @@ protected:
     // SPEED
     // =========================================================================
 
-    virtual float FindTargetSpeedAhead() const;
     virtual void ApplySpeedControl();
+
+    // =========================================================================
+    // SPEED PROFILE (pre-calculated)
+    // =========================================================================
+
+    void CalculateSpeedProfile();
+    float GetTargetSpeedAtDistance(float Distance) const;
+
+    TArray<float> SpeedProfile;  // target speeds in cm/s at each sample point
+    bool bSpeedProfileReady = false;
 
 };
