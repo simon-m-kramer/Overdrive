@@ -8,10 +8,10 @@
 #include "GameplayTagContainer.h"
 #include "TurboAIController.generated.h"
 
-class UTurboActionBase;
 class ATurboRacingSpline;
-class ATurboVehicle;
+class ATurboVehicle;  // TO DO: Change to TurboAIVehicle
 class UTurboActionStack;
+class UTurboActionBase;
 class UTurboAction_FollowPath;
 
 USTRUCT(BlueprintType)
@@ -73,6 +73,7 @@ public:
     // VEHICLE
     // =========================================================================
 
+    // TO DO: Change to TurboAIVehicle
     UFUNCTION(BlueprintPure, Category = "Vehicle")
     ATurboVehicle* GetControlledVehicle() const { return ControlledVehicle; }
 
@@ -128,11 +129,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
     TSubclassOf<UTurboAction_FollowPath> DefaultActionClass;
 
-    /** Conditional Actions to evaluate each tick, in priority order (first = highest) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
     TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
 
-    /** Actions disabled by personality — these tags will always be blocked */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
     FGameplayTagContainer DisabledActions;
 
@@ -146,8 +145,9 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
     TObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
+    // TO DO: Change to TurboAIVehicle
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
-    TObjectPtr<ATurboVehicle> ControlledVehicle;  // TO DO: Update this to TurboAIVehicle
+    TObjectPtr<ATurboVehicle> ControlledVehicle;
 
 private:
     // Decision making

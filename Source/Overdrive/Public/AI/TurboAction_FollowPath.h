@@ -7,7 +7,7 @@
 #include "TurboAction_FollowPath.generated.h"
 
 class ATurboAIController;
-class ATurboVehicle;
+class ATurboVehicle;  // TO DO: Change to TurboAIVehicle
 class ATurboRacingSpline;
 class USplineComponent;
 
@@ -123,7 +123,7 @@ protected:
     TWeakObjectPtr<ATurboAIController> AIController;
 
     UPROPERTY()
-    TWeakObjectPtr<ATurboVehicle> Vehicle;
+    TWeakObjectPtr<ATurboVehicle> Vehicle;    // TO DO: Change to TurboAIVehicle
 
     UPROPERTY()
     TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;

@@ -6,7 +6,6 @@
 #include "Starter/OverdriveSportsWheelFront.h"
 #include "Starter/OverdriveSportsWheelRear.h"
 #include "Components/BoxComponent.h"
-#include "Components/TurboVehicleDetectionComponent.h"
 
 ATurboVehicle::ATurboVehicle()
 {
@@ -64,8 +63,6 @@ ATurboVehicle::ATurboVehicle()
     DetectionBox->SetGenerateOverlapEvents(false);
     DetectionBox->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
 
-    // Detection Component
-    DetectionComponent = CreateDefaultSubobject<UTurboVehicleDetectionComponent>(TEXT("DetectionComponent"));
 }
 
 void ATurboVehicle::Tick(float DeltaTime)

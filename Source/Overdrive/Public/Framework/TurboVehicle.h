@@ -8,7 +8,8 @@
 class UChaosWheeledVehicleMovementComponent;
 class UStaticMeshComponent;
 class UBoxComponent;
-class UTurboVehicleDetectionComponent;
+
+
 
 UCLASS()
 class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
@@ -41,10 +42,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetForwardSpeed() const;
 
-	// TO DO: move this to TurboAIVehicle
-	UFUNCTION(BlueprintPure, Category = "Vehicle")
-	UTurboVehicleDetectionComponent* GetDetectionComponent() const { return DetectionComponent; }
-
 protected:
 	UPROPERTY()
 	TObjectPtr<UChaosWheeledVehicleMovementComponent> VehicleMovement;
@@ -56,9 +53,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<UBoxComponent> DetectionBox;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
-	TObjectPtr<UTurboVehicleDetectionComponent> DetectionComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> ChassisMesh;
