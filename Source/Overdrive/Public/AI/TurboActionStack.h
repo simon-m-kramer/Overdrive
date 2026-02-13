@@ -47,10 +47,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
 	TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
 
-	/** Actions disabled by personality — these tags will always be blocked */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
-	FGameplayTagContainer DisabledActions;
-
 	// =========================================================================
 	// DEBUG
 	// =========================================================================

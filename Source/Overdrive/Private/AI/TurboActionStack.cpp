@@ -52,7 +52,6 @@ void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context)
 				FString::Printf(TEXT("ACTION PUSHED: %s"), *CDO->ActionName));
 		}
 
-		// Only push one action per evaluation
 		return;
 	}
 }
@@ -62,12 +61,6 @@ bool UTurboActionStack::IsActionBlocked(FGameplayTag ActionTag) const
 	if (!ActionTag.IsValid())
 	{
 		return false;
-	}
-
-	// Disabled by personality
-	if (DisabledActions.HasTag(ActionTag))
-	{
-		return true;
 	}
 
 	// Check if any active action blocks this tag

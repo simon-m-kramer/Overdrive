@@ -102,12 +102,6 @@ public:
     UFUNCTION(BlueprintPure, Category = "Decision Making")
     const FTurboDecisionContext& GetDecisionContext() const { return DecisionContext; }
 
-    UPROPERTY(EditAnywhere, Category = "Decision Making")
-    float StraightCurvatureThreshold = 0.0002f;
-
-    UPROPERTY(EditAnywhere, Category = "Decision Making")
-    float CornerScanDistance = 3000.0f;
-
     // =========================================================================
     // DEBUG
     // =========================================================================
@@ -131,9 +125,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
     TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
-    FGameplayTagContainer DisabledActions;
-
 protected:
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;
@@ -151,7 +142,6 @@ private:
     // Decision making
     FTurboDecisionContext DecisionContext;
     void UpdateDecisionContext();
-    float FindDistanceToNextCorner() const;
 
     // Spline
     float CurrentSplineDistance = 0.0f;

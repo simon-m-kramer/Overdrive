@@ -26,19 +26,11 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    // ActionPriorityList and DisabledActions pass through
-    ActionStack = NewObject<UTurboActionStack>(this);
-    if (ActionStack)
-    {
-        ActionStack->ActionPriorityList = ActionPriorityList;
-        ActionStack->DisabledActions = DisabledActions;
-    }
-
     // Initialize spline and vehicle
     FindRacingSpline();
     ControlledVehicle = Cast<ATurboAIVehicle>(InPawn);
 
-    // Initialize spline distance
+    // Initialize CurrentSplineDistance and PreviousSplineDistance
     if (ControlledVehicle && RacingSplineActor)
     {
         USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
@@ -50,13 +42,19 @@ void ATurboAIController::OnPossess(APawn* InPawn)
         }
     }
 
+    // ActionPriorityList pass through
+    ActionStack = NewObject<UTurboActionStack>(this);
+    if (ActionStack)
+    {
+        ActionStack->ActionPriorityList = ActionPriorityList;
+    }
+
     // Push the default follow path action
     if (DefaultActionClass)
     {
         UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack, DefaultActionClass);
         PushAction(DefaultAction);
     }
-
 }
 
 void ATurboAIController::Tick(float DeltaTime)
@@ -151,27 +149,6 @@ void ATurboAIController::UpdateSplineDistance()
 void ATurboAIController::UpdateDecisionContext()
 {
 
-}
-
-float ATurboAIController::FindDistanceToNextCorner() const
-{
-    if (!RacingSplineActor)
-    {
-        return CornerScanDistance;
-    }
-
-    for (float Ahead = 0.0f; Ahead < CornerScanDistance; Ahead += 200.0f)
-    {
-        float ScanDist = CurrentSplineDistance + Ahead;
-        float Curvature = RacingSplineActor->GetCurvatureAtDistance(ScanDist, 300.0f);
-
-        if (Curvature > StraightCurvatureThreshold)
-        {
-            return Ahead;
-        }
-    }
-
-    return CornerScanDistance;
 }
 
 // =============================================================================
