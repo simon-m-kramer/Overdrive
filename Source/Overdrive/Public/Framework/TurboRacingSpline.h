@@ -36,6 +36,12 @@ public:
     UFUNCTION(BlueprintPure, Category = "Racing Line")
     bool IsRacingLineReady() const { return bRacingLineCalculated; }
 
+    UFUNCTION(BlueprintPure, Category = "Racing Line")
+    float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
+
+    UFUNCTION(BlueprintPure, Category = "Racing Line")
+    float GetMinCurvatureThreshold() const { return MinCurvatureThreshold; }
+
     void DrawDebugRacingLine(UWorld* World) const;
 
     // =========================================================================

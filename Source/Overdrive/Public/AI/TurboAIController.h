@@ -18,7 +18,34 @@ USTRUCT(BlueprintType)
 struct FTurboDecisionContext
 {
     GENERATED_BODY()
-    // TO DO: Add decision making properties
+    
+    // =========================================================================
+    // DETECTION
+    // =========================================================================
+
+    bool bVehicleAhead = false;
+    float DistanceToVehicleAhead = 0.0f;
+    float SpeedOfVehicleAheadCms = 0.0f;
+    float SpeedDifferenceCms = 0.0f;  // positive = I'm faster
+
+    bool bVehicleOnLeft = false;
+    bool bVehicleOnRight = false;
+    bool bVehicleBehind = false;
+
+    // =========================================================================
+    // VEHICLE STATE
+    // =========================================================================
+
+    float CurrentSpeedCms = 0.0f;
+    float CurrentSplineDistance = 0.0f;
+
+    // =========================================================================
+    // TRACK ANALYSIS
+    // =========================================================================
+
+    float DistanceToNextCorner = 0.0f;
+    float NextCornerCurvature = 0.0f;  // normalized 0-1
+
 };
 
 UCLASS()
@@ -58,16 +85,16 @@ public:
     // =========================================================================
 
     UFUNCTION(BlueprintCallable, Category = "Spline")
-    void FindRacingSpline();
+    void FindRacingSpline();  // Called on BeginPlay
 
     UFUNCTION(BlueprintPure, Category = "Spline")
-    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
+    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }  // This is the wrapper class around the spline
 
     UFUNCTION(BlueprintPure, Category = "Spline")
-    float GetCurrentSplineDistance() const { return CurrentSplineDistance; }
+    float GetCurrentSplineDistance() const { return CurrentSplineDistance; }  // Current position on the spline
 
     UFUNCTION(BlueprintCallable, Category = "Spline")
-    void UpdateSplineDistance();
+    void UpdateSplineDistance();  // Called every tick
 
     // =========================================================================
     // VEHICLE

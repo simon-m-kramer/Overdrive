@@ -61,7 +61,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Detection|Forward")
-    float ForwardDetectionRange = 5000.0f;
+    float ForwardDetectionRange = 3000.0f;
 
     /** Half-width of forward detection box (lateral coverage) */
     UPROPERTY(EditAnywhere, Category = "Detection|Forward")
@@ -76,7 +76,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Detection|Behind")
-    float BehindDetectionRange = 3000.0f;
+    float BehindDetectionRange = 2000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Detection|Behind")
     float BehindTraceRadius = 150.0f;
@@ -109,7 +109,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
 protected:
     virtual void BeginPlay() override;

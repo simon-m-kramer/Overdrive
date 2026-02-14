@@ -147,7 +147,56 @@ void ATurboAIController::UpdateSplineDistance()
 
 void ATurboAIController::UpdateDecisionContext()
 {
-    // TO DO: Implementation
+    if (!Vehicle || !RacingSplineActor) return;
+
+    UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
+    if (!Detection) return;
+
+    // Detection data
+    DecisionContext.bVehicleAhead = Detection->IsCarAhead();
+    DecisionContext.DistanceToVehicleAhead = Detection->GetDistanceToCarAhead();
+    DecisionContext.bVehicleOnLeft = Detection->IsCarOnLeft();
+    DecisionContext.bVehicleOnRight = Detection->IsCarOnRight();
+    DecisionContext.bVehicleBehind = Detection->IsCarBehind();
+
+    // Speed comparison
+    DecisionContext.CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
+    DecisionContext.CurrentSplineDistance = CurrentSplineDistance;
+
+    ATurboVehicle* Ahead = Detection->GetCarAhead();
+    if (Ahead)
+    {
+        DecisionContext.SpeedOfVehicleAheadCms = FMath::Abs(Ahead->GetForwardSpeed());
+        DecisionContext.SpeedDifferenceCms = DecisionContext.CurrentSpeedCms - DecisionContext.SpeedOfVehicleAheadCms;
+    }
+    else
+    {
+        DecisionContext.SpeedOfVehicleAheadCms = 0.0f;
+        DecisionContext.SpeedDifferenceCms = 0.0f;
+    }
+
+    // Track analysis — scan ahead for next corner
+    DecisionContext.DistanceToNextCorner = 0.0f;
+    DecisionContext.NextCornerCurvature = 0.0f;
+
+    if (RacingSplineActor->IsRacingLineReady())
+    {
+        const float ScanStep = 200.0f;
+        const float ScanMax = 10000.0f;
+
+        for (float Look = ScanStep; Look < ScanMax; Look += ScanStep)
+        {
+            const float Curvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance + Look, 400.0f);
+            const float Normalized = Curvature / FMath::Max(RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
+
+            if (Normalized > RacingSplineActor->GetMinCurvatureThreshold())
+            {
+                DecisionContext.DistanceToNextCorner = Look;
+                DecisionContext.NextCornerCurvature = Normalized;
+                break;
+            }
+        }
+    }
 }
 
 // =============================================================================
