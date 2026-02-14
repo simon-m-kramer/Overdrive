@@ -25,7 +25,7 @@ public:
 
 	/** Lateral offset away from the adjacent car (cm) */
 	UPROPERTY(EditAnywhere, Category = "Yield")
-	float YieldLateralOffset = 200.0f;
+	float YieldLateralOffset = 300.0f;
 
 	/** Minimum normalized curvature to trigger yielding (only yield in curves) */
 	UPROPERTY(EditAnywhere, Category = "Yield", meta = (ClampMin = "0.0", ClampMax = "1.0"))

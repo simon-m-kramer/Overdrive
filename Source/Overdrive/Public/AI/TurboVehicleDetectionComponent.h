@@ -87,11 +87,11 @@ public:
 
     /** How far sideways the side box extends */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionWidth = 200.0f;
+    float SideDetectionWidth = 600.0f;
 
     /** Length of side box along car's forward axis (roughly car length) */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionLength = 400.0f;
+    float SideDetectionLength = 800.0f;  // This is double car length
 
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
     float SideDetectionHeight = 100.0f;
@@ -109,7 +109,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
 protected:
     virtual void BeginPlay() override;
