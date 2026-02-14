@@ -135,7 +135,12 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 
     const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
     const float CurrentDistance = AIController->GetCurrentSplineDistance();
-    const float TargetSpeedCms = GetTargetSpeedAtDistance(CurrentDistance);
+
+    // Target from speed profile, capped by car ahead
+    const float ProfileSpeed = GetTargetSpeedAtDistance(CurrentDistance);
+    const float FollowLimit = GetFollowSpeedLimit();
+    const float TargetSpeedCms = FMath::Min(ProfileSpeed, FollowLimit);
+
     const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
 
     float FinalThrottle = 0.0f;
@@ -165,6 +170,37 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
     Vehicle->SetThrottleInput(FinalThrottle);
     Vehicle->SetBrakeInput(FinalBrake);
     Vehicle->SetHandbrakeInput(false);
+}
+
+float UTurboAction_FollowPath::GetFollowSpeedLimit() const
+{
+    if (!AIController.IsValid()) return MAX_FLT;
+
+    const FTurboDecisionContext& Context = AIController->GetDecisionContext();
+
+    if (!Context.bVehicleAhead) return MAX_FLT;
+
+    const float Distance = Context.DistanceToVehicleAhead;
+    const float TheirSpeed = Context.SpeedOfVehicleAheadCms;
+
+    // Beyond reaction distance — no limit
+    if (Distance > FollowReactionDistance) return MAX_FLT;
+
+    // Emergency — brake hard
+    if (Distance < FollowEmergencyDistance)
+    {
+        return TheirSpeed * 0.5f;
+    }
+
+    // Scale between reaction distance and min distance
+    // At reaction distance: no limit
+    // At min distance: match their speed minus a margin
+    const float T = FMath::Clamp((FollowReactionDistance - Distance) / (FollowReactionDistance - FollowMinDistance), 0.0f, 1.0f);
+
+    const float MatchSpeed = TheirSpeed - FollowSpeedMarginCms;
+    const float OurMaxSpeed = Vehicle.IsValid() ? Vehicle->MaxSpeedCms : MAX_FLT;
+
+    return FMath::Lerp(OurMaxSpeed, MatchSpeed, T);
 }
 
 // =============================================================================

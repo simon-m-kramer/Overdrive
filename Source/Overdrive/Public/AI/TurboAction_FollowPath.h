@@ -38,7 +38,7 @@ public:
 
     /** Safety margin — multiplier on cornering speed (< 1.0 = more cautious; > 1.0 = more aggressive) */
     UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.0"))
-    float CorneringSpeedSafetyFactor = 1.1f;
+    float CorneringSpeedSafetyFactor = 1.0f;
 
     // =========================================================================
     // STEERING CONTROL
@@ -71,6 +71,26 @@ public:
     UPROPERTY(EditAnywhere, Category = "Speed")
     float CoastThrottleInput = 0.15f;
 
+    // =========================================================================
+    // FOLLOW DISTANCE
+    // =========================================================================
+
+    /** Distance at which we start slowing down for a car ahead (cm) */
+    UPROPERTY(EditAnywhere, Category = "Follow Distance")
+    float FollowReactionDistance = 3000.0f;
+
+    /** Minimum safe following distance (cm) — match their speed at this distance */
+    UPROPERTY(EditAnywhere, Category = "Follow Distance")
+    float FollowMinDistance = 500.0f;
+
+    /** Below this distance, actively brake harder than the car ahead (cm) */
+    UPROPERTY(EditAnywhere, Category = "Follow Distance")
+    float FollowEmergencyDistance = 250.0f;
+
+    /** How much slower than the car ahead to go when at min distance (cm/s) */
+    UPROPERTY(EditAnywhere, Category = "Follow Distance")
+    float FollowSpeedMarginCms = 100.0f;
+
 protected:
     // =========================================================================
     // REFERENCES
@@ -94,6 +114,7 @@ protected:
     virtual FVector GetTargetPoint();
     float CalculateSteering(const FVector& TargetPoint, float DeltaTime);
     virtual void ApplySpeedControl(float DeltaTime);
+    float GetFollowSpeedLimit() const;
 
     // =========================================================================
     // SPEED PROFILE (pre-calculated)
