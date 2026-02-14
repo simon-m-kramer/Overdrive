@@ -36,12 +36,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "Speed Profile")
     float SpeedCurvatureSampleRange = 1000.0f;
 
-    /** Safety margin — multiplier on cornering speed (< 1.0 = more cautious) */
+    /** Safety margin — multiplier on cornering speed (< 1.0 = more cautious; > 1.0 = more aggressive) */
     UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.0"))
-    float CorneringSpeedSafetyFactor = 0.9f;
+    float CorneringSpeedSafetyFactor = 1.1f;
 
     // =========================================================================
-    // STEERING
+    // STEERING CONTROL
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Steering")
@@ -57,7 +57,7 @@ public:
     float LookaheadSpeedFactor = 0.5f;
 
     // =========================================================================
-    // SPEED
+    // SPEED CONTROL
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Speed")
