@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AI/TurboActionBase.h"
+#include "Framework/TurboPIDController.h"
 #include "TurboAction_FollowPath.generated.h"
 
 class ATurboAIController;
@@ -40,47 +41,34 @@ public:
     float CorneringSpeedSafetyFactor = 0.9f;
 
     // =========================================================================
-    // STEERING CONTROL
+    // STEERING
     // =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Lookahead")
+    UPROPERTY(EditAnywhere, Category = "Steering")
+    FTurboPIDController SteeringPID;
+    
+    UPROPERTY(EditAnywhere, Category = "Steering")
     float MinLookaheadDistance = 800.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Lookahead")
+    UPROPERTY(EditAnywhere, Category = "Steering")
     float MaxLookaheadDistance = 2500.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Lookahead")
+    UPROPERTY(EditAnywhere, Category = "Steering")
     float LookaheadSpeedFactor = 0.5f;
 
-    UPROPERTY(EditAnywhere, Category = "Turbo AI|Steering")
-    float SteeringGain = 2.0f;
-
     // =========================================================================
-    // SPEED CONTROL
+    // SPEED
     // =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float CoastingThresholdKmh = 5.0f;
+    UPROPERTY(EditAnywhere, Category = "Speed")
+    FTurboPIDController SpeedPID;
 
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float BrakeProportionalGain = 0.05f;
+    /** Deadband in cm/s — within this range, coast instead of correcting */
+    UPROPERTY(EditAnywhere, Category = "Speed")
+    float CoastingThresholdCms = 140.0f;  // ~5 km/h
 
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float ThrottleProportionalGain = 0.03f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float MinThrottleInput = 0.2f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float MinBrakeInput = 0.1f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float MaxThrottleInput = 1.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
-    float MaxBrakeInput = 1.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Speed Control|Tuning")
+    /** Throttle applied when coasting within the deadband */
+    UPROPERTY(EditAnywhere, Category = "Speed")
     float CoastThrottleInput = 0.15f;
 
 protected:
@@ -104,8 +92,8 @@ protected:
     USplineComponent* GetSpline() const;
     float GetLookaheadDistance() const;
     virtual FVector GetTargetPoint();
-    float CalculateSteering(const FVector& TargetPoint);
-    virtual void ApplySpeedControl();
+    float CalculateSteering(const FVector& TargetPoint, float DeltaTime);
+    virtual void ApplySpeedControl(float DeltaTime);
 
     // =========================================================================
     // SPEED PROFILE (pre-calculated)
@@ -115,9 +103,5 @@ protected:
     float GetTargetSpeedAtDistance(float Distance) const;
     TArray<float> SpeedProfile;  // target speeds in cm/s at each sample point
     bool bSpeedProfileReady = false;
-
-    /*
-    float FindTargetSpeedAhead();  // Alternative to calculate speed profile
-    */
 
 };

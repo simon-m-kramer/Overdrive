@@ -63,7 +63,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Racing Line|Smoothing")
-    int32 SmoothingPasses = 5;
+    int32 SmoothingPasses = 0;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line|Smoothing")
     int32 SmoothingWindowMin = 15;

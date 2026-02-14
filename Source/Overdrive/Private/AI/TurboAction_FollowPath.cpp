@@ -14,6 +14,18 @@ UTurboAction_FollowPath::UTurboAction_FollowPath()
 {
     ActionName = TEXT("FollowPath");
     ActionTag = TurboGameplayTags::Action_FollowPath;
+
+    SteeringPID.Kp = 2.0f;    // similar to your old SteeringGain
+    SteeringPID.Ki = 0.0f;    // start with zero, add if car drifts persistently
+    SteeringPID.Kd = 0.5f;    // dampens oscillation — this is the big improvement
+    SteeringPID.OutputMin = -1.0f;
+    SteeringPID.OutputMax = 1.0f;
+
+    SpeedPID.Kp = 0.01f;      // gentle — error is in cm/s, output is 0-1
+    SpeedPID.Ki = 0.001f;      // slowly corrects persistent speed offset
+    SpeedPID.Kd = 0.005f;      // smooths throttle/brake transitions
+    SpeedPID.OutputMin = -1.0f; // full brake
+    SpeedPID.OutputMax = 1.0f;  // full throttle
 }
 
 void UTurboAction_FollowPath::Start(bool bFirstTime)
@@ -28,6 +40,10 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
     }
 
     CalculateSpeedProfile();
+
+    // Reset PID state so old integral/derivative don't carry over
+    SteeringPID.Reset();
+    SpeedPID.Reset();
 }
 
 void UTurboAction_FollowPath::Update(float DeltaTime)
@@ -37,16 +53,12 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
         return;
     }
 
-    FVector TargetPoint = GetTargetPoint();
-    float SteeringInput = CalculateSteering(TargetPoint);
-    Vehicle->SetSteeringInput(SteeringInput);
-
-    ApplySpeedControl();
+    Vehicle->SetSteeringInput(CalculateSteering(GetTargetPoint(), DeltaTime));
+    ApplySpeedControl(DeltaTime);
 }
 
-
 // =============================================================================
-// STEERING CONTROL
+// STEERING AND STEERING CONTROL
 // =============================================================================
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
@@ -99,53 +111,55 @@ FVector UTurboAction_FollowPath::GetTargetPoint()
     return Spline->GetLocationAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 }
 
-float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint)
+float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint, float DeltaTime)
 {
     if (!Vehicle.IsValid())
     {
         return 0.0f;
     }
 
-    FVector VehicleLocation = Vehicle->GetActorLocation();
-    FVector VehicleRight = Vehicle->GetActorRightVector();
-    FVector ToTarget = (TargetPoint - VehicleLocation).GetSafeNormal();
+    const FVector VehicleLocation = Vehicle->GetActorLocation();
+    const FVector VehicleForward = Vehicle->GetActorForwardVector();
+    const FVector VehicleRight = Vehicle->GetActorRightVector();
+    const FVector ToTarget = (TargetPoint - VehicleLocation).GetSafeNormal();
 
-    float DotRight = FVector::DotProduct(ToTarget, VehicleRight);
+    // Lateral error: positive = target is to the right
+    const float LateralError = FVector::DotProduct(ToTarget, VehicleRight);
 
-    return FMath::Clamp(DotRight * SteeringGain, -1.0f, 1.0f);
+    return SteeringPID.Update(LateralError, DeltaTime);
 }
 
-// =============================================================================
-// SPEED CONTROL
-// =============================================================================
-
-void UTurboAction_FollowPath::ApplySpeedControl()
+void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 {
     if (!Vehicle.IsValid() || !AIController.IsValid()) return;
 
     const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
     const float CurrentDistance = AIController->GetCurrentSplineDistance();
     const float TargetSpeedCms = GetTargetSpeedAtDistance(CurrentDistance);
-
-    // Convert to km/h for the P-controller (keeps existing tuning values valid)
-    const float CurrentSpeed = CurrentSpeedCms * 0.036f;
-    const float TargetSpeed = TargetSpeedCms * 0.036f;
-    const float SpeedError = TargetSpeed - CurrentSpeed;
+    const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
 
     float FinalThrottle = 0.0f;
     float FinalBrake = 0.0f;
 
-    if (SpeedError > CoastingThresholdKmh)
+    if (FMath::Abs(SpeedError) < CoastingThresholdCms)
     {
-        FinalThrottle = FMath::Clamp(SpeedError * ThrottleProportionalGain, MinThrottleInput, MaxThrottleInput);
-    }
-    else if (SpeedError < -CoastingThresholdKmh)
-    {
-        FinalBrake = FMath::Clamp(-SpeedError * BrakeProportionalGain, MinBrakeInput, MaxBrakeInput);
+        // Within deadband — coast to avoid oscillation
+        FinalThrottle = CoastThrottleInput;
+        // Don't reset PID here — let it maintain state for smooth transitions
     }
     else
     {
-        FinalThrottle = CoastThrottleInput;
+        // PID output: positive = need to go faster, negative = need to slow down
+        const float PIDOutput = SpeedPID.Update(SpeedError, DeltaTime);
+
+        if (PIDOutput > 0.0f)
+        {
+            FinalThrottle = PIDOutput;
+        }
+        else
+        {
+            FinalBrake = -PIDOutput;
+        }
     }
 
     Vehicle->SetThrottleInput(FinalThrottle);
