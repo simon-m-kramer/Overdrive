@@ -18,7 +18,7 @@ USTRUCT(BlueprintType)
 struct FTurboDecisionContext
 {
     GENERATED_BODY()
-    
+
     // =========================================================================
     // DETECTION
     // =========================================================================
@@ -38,6 +38,7 @@ struct FTurboDecisionContext
 
     float CurrentSpeedCms = 0.0f;
     float CurrentSplineDistance = 0.0f;
+    float TargetSpeedCms = 0.0f;  // from speed profile, ignoring follow cap
 
     // =========================================================================
     // TRACK ANALYSIS
@@ -45,9 +46,6 @@ struct FTurboDecisionContext
 
     float DistanceToNextCorner = 0.0f;
     float NextCornerCurvature = 0.0f;  // normalized 0-1
-
-    /** Speed we want to go from the speed profile (ignoring follow cap) */
-    float TargetSpeedCms = 0.0f;
 };
 
 UCLASS()
