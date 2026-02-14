@@ -46,6 +46,8 @@ struct FTurboDecisionContext
     float DistanceToNextCorner = 0.0f;
     float NextCornerCurvature = 0.0f;  // normalized 0-1
 
+    /** Speed we want to go from the speed profile (ignoring follow cap) */
+    float TargetSpeedCms = 0.0f;
 };
 
 UCLASS()

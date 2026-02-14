@@ -91,6 +91,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "Follow Distance")
     float FollowSpeedMarginCms = 100.0f;
 
+    // =========================================================================
+    // SPEED PROFILE
+    // =========================================================================
+
+    float GetTargetSpeedAtDistance(float Distance) const;
+
 protected:
     // =========================================================================
     // REFERENCES
@@ -121,7 +127,6 @@ protected:
     // =========================================================================
 
     void CalculateSpeedProfile();
-    float GetTargetSpeedAtDistance(float Distance) const;
     TArray<float> SpeedProfile;  // target speeds in cm/s at each sample point
     bool bSpeedProfileReady = false;
 

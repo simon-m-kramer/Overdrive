@@ -197,6 +197,23 @@ void ATurboAIController::UpdateDecisionContext()
             }
         }
     }
+
+    // Target speed from the active action's speed profile
+    DecisionContext.TargetSpeedCms = 0.0f;
+    if (ActionStack)
+    {
+        // Find the follow path action (it's always at the bottom of the stack)
+        for (UBifrostAction* Action : ActionStack->GetActions())
+        {
+            UTurboAction_FollowPath* FollowAction = Cast<UTurboAction_FollowPath>(Action);
+            if (FollowAction)
+            {
+                DecisionContext.TargetSpeedCms = FollowAction->GetTargetSpeedAtDistance(CurrentSplineDistance);
+                break;
+            }
+        }
+    }
+
 }
 
 // =============================================================================
