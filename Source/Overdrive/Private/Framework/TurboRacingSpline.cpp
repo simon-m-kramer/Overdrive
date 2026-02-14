@@ -138,6 +138,9 @@ void ATurboRacingSpline::SmoothRacingLine()
     if (PreCalculatedOffsets.Num() == 0 || MaxTrackCurvature < KINDA_SMALL_NUMBER)
         return;
 
+    // Store the raw offsets — straights will use these directly
+    TArray<float> RawOffsets = PreCalculatedOffsets;
+
     for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
     {
         TArray<float> SmoothedOffsets;
@@ -149,12 +152,15 @@ void ATurboRacingSpline::SmoothRacingLine()
             const float Curvature = GetCurvatureAtDistance(Dist, CurvatureSampleRange);
             const float NormalizedCurvature = Curvature / MaxTrackCurvature;
 
-            float T = FMath::Clamp(NormalizedCurvature / MinCurvatureThreshold, 0.0f, 1.0f);
+            // How much smoothing to apply: 0 on straights, 1 in curves
+            const float SmoothBlend = FMath::Clamp(
+                NormalizedCurvature / MinCurvatureThreshold, 0.0f, 1.0f);
+
             int32 AdaptiveWindow = FMath::RoundToInt(
                 FMath::Lerp(
                     static_cast<float>(SmoothingWindowMax),
                     static_cast<float>(SmoothingWindowMin),
-                    T));
+                    SmoothBlend));
 
             float Sum = 0.0f;
             float WeightSum = 0.0f;
@@ -172,7 +178,10 @@ void ATurboRacingSpline::SmoothRacingLine()
                 WeightSum += Weight;
             }
 
-            SmoothedOffsets.Add(Sum / WeightSum);
+            const float SmoothedValue = Sum / WeightSum;
+
+            // Blend: straight = keep raw, curve = use smoothed
+            SmoothedOffsets.Add(FMath::Lerp(RawOffsets[i], SmoothedValue, SmoothBlend));
         }
 
         PreCalculatedOffsets = MoveTemp(SmoothedOffsets);
