@@ -46,6 +46,8 @@ struct FTurboDecisionContext
 
     float DistanceToNextCorner = 0.0f;
     float NextCornerCurvature = 0.0f;  // normalized 0-1
+    float CurrentCurvature = 0.0f;  // normalized 0-1 at current position
+
 };
 
 UCLASS()

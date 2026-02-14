@@ -214,6 +214,10 @@ void ATurboAIController::UpdateDecisionContext()
         }
     }
 
+    // CurrentCurvature
+    const float RawCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, 400.0f);
+    DecisionContext.CurrentCurvature = RawCurvature / FMath::Max(RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
+
 }
 
 // =============================================================================
