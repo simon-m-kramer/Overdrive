@@ -18,7 +18,6 @@ public:
     ATurboRacingSpline();
 
     USplineComponent* GetSplineComponent() const { return Spline; }
-
     const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
     // =========================================================================
@@ -86,6 +85,8 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float RacingLineSampleInterval = 100.0f;
+
+
 
 protected:
     virtual void BeginPlay() override;
