@@ -30,6 +30,8 @@ public:
     UFUNCTION(BlueprintPure, Category = "Racing Line")
     float GetRacingLineOffset(float Distance) const;
 
+    void SmoothOffsets(int32 Passes);
+
     UFUNCTION(BlueprintPure, Category = "Racing Line")
     FVector GetPointOnRacingLine(float Distance) const;
 
@@ -67,6 +69,9 @@ public:
     // =========================================================================
     // RACING LINE CONFIGURATION
     // =========================================================================
+
+    UPROPERTY(EditAnywhere, Category = "Racing Line")
+    int32 RacingLineSmoothingPasses = 4;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float MinCurvatureThreshold = 0.05f;
