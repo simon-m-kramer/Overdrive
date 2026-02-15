@@ -30,8 +30,6 @@ public:
     UFUNCTION(BlueprintPure, Category = "Racing Line")
     float GetRacingLineOffset(float Distance) const;
 
-    void SmoothOffsets(int32 Passes);
-
     UFUNCTION(BlueprintPure, Category = "Racing Line")
     FVector GetPointOnRacingLine(float Distance) const;
 
