@@ -9,15 +9,15 @@
  * Geometric racing line optimizer.
  *
  * Given a sampled centerline and a track width, computes a minimum-curvature
- * racing line using iterative midpoint relaxation.  The result is a set of
- * world-space points that can be fed into a spline, interpolated with
- * Catmull-Rom, or used directly as a point array.
+ * racing line using iterative relaxation.  The result is a set of world-space
+ * points that can be fed into a spline, interpolated with Catmull-Rom, or
+ * used directly as a point array.
  *
  * Usage:
  *   FTurboRacingLineOptimizer Optimizer;
  *   Optimizer.TrackWidth      = 1200.0f;
  *   Optimizer.NumSamples      = 400;
- *   Optimizer.Iterations      = 300;
+ *   Optimizer.Iterations      = 500;
  *   Optimizer.Optimize(CenterlineSplinePoints);
  *   const TArray<FVector>& Line = Optimizer.GetRacingLine();
  */
@@ -26,7 +26,7 @@ struct FTurboRacingLineOptimizer
 {
 	GENERATED_BODY()
 
-	// -- Parameters ------------------------------------------------------
+	// -- Parameters -------------------------------------------------------------
 
 	/** Full track width in cm. Each side extends TrackWidth/2 from center. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line")
@@ -36,27 +36,18 @@ struct FTurboRacingLineOptimizer
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line", meta = (ClampMin = "20", ClampMax = "5000"))
 	int32 NumSamples = 400;
 
-	/** Number of relaxation iterations. 200-400 is typically sufficient. */
+	/** Number of relaxation iterations. More = smoother, diminishing returns past ~500. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line", meta = (ClampMin = "1"))
-	int32 Iterations = 300;
+	int32 Iterations = 500;
 
 	/**
-	 * Relaxation step size in (0, 1).  Controls how aggressively each point
-	 * moves toward the midpoint of its neighbors per iteration.
-	 * 0.5 is a safe default; values in [0.3, 0.7] all converge reliably.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line", meta = (ClampMin = "0.1", ClampMax = "0.9"))
-	float StepSize = 0.5f;
-
-	/**
-	 * Centerline regularization blend factor in [0, 1].
-	 * 0  = pure smoothing (aggressive corner cutting).
-	 * >0 = each iteration blends slightly toward the centerline, preventing
-	 *      the line from hugging inner walls on long sweeping curves.
-	 * Values around 0.01-0.05 are typical.
+	 * Centerline regularization weight in [0, 1].
+	 * 0  = pure curvature minimization (aggressive corner cutting).
+	 * >0 = penalizes deviation from the centerline to prevent the line from
+	 *      hugging inner walls on long sweeping curves.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float CenterlineBias = 0.0f;
+	float CenterlineBias = 0.000001f;
 
 	/**
 	 * Track boundary margin in cm.  The optimizer keeps the racing line at
@@ -66,13 +57,13 @@ struct FTurboRacingLineOptimizer
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line", meta = (ClampMin = "0.0"))
 	float BoundaryMargin = 50.0f;
 
-	// -- Interface -------------------------------------------------------
+	// -- Interface -------------------------------------------------------------
 
 	/**
 	 * Run the optimizer.
 	 *
 	 * @param CenterlinePoints  Ordered world-space points that describe the
-	 *                          track centerline (must form a closed loop  -
+	 *                          track centerline (must form a closed loop —
 	 *                          first and last point should be near-identical
 	 *                          or the array is treated as wrapping).
 	 */
@@ -84,7 +75,7 @@ struct FTurboRacingLineOptimizer
 	/** The alpha values in [0,1] per sample (0 = inner edge, 1 = outer edge). */
 	const TArray<float>& GetAlphas() const { return Alphas; }
 
-	// -- Utility ---------------------------------------------------------
+	// -- Utility -------------------------------------------------------------
 
 	/**
 	 * Evaluate the racing line at an arbitrary fractional index using
@@ -111,9 +102,7 @@ private:
 	/** Rebuild the world-space racing line from current alphas. */
 	void RebuildLine();
 
-
-
-	// -- Data ------------------------------------------------------------
+	// -- Data -------------------------------------------------------------
 
 	TArray<FVector> InnerBoundary;
 	TArray<FVector> OuterBoundary;
