@@ -109,7 +109,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
+    bool bDrawDebug = false;
 
 protected:
     virtual void BeginPlay() override;
