@@ -6,11 +6,13 @@
 #include "LandscapeSplinesComponent.h"
 #include "LandscapeSplineControlPoint.h"
 #include "LandscapeSplineSegment.h"
+#include "Framework/TurboRacingLine.h"
 
 
 ATurboRaceTrackGenerator::ATurboRaceTrackGenerator()
 {
-
+    RacingLine = CreateDefaultSubobject<UTurboRacingLine>(TEXT("RacingLine"));
+    RacingLine->CenterlineSpline = Spline;
 }
 
 void ATurboRaceTrackGenerator::BeginPlay()

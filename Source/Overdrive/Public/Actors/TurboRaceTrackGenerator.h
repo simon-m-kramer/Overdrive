@@ -6,7 +6,7 @@
 #include "Framework/TurboRacingSpline.h"
 #include "TurboRaceTrackGenerator.generated.h"
 
-
+class UTurboRacingLine;
 
 UCLASS()
 class OVERDRIVE_API ATurboRaceTrackGenerator : public ATurboRacingSpline
@@ -19,11 +19,13 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-    // Use AActor here to make it easier to pick in the viewport
     UPROPERTY(EditAnywhere, Category = "Setup")
     AActor* SourceLandscapeSpline;
 
     UFUNCTION(CallInEditor, Category = "Setup")
     void CopyFromLandscapeSpline();
+
+	UPROPERTY(EditAnywhere, Category = "Setup")
+	TObjectPtr<UTurboRacingLine> RacingLine;
 
 };
