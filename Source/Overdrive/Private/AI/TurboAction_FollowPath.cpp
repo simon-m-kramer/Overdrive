@@ -231,6 +231,7 @@ void UTurboAction_FollowPath::CalculateSpeedProfile()
     // ---- Pass 1: Cornering speed limits ----
     // v = sqrt(grip * radius) = sqrt(grip / curvature)
 
+    /*
     for (int32 i = 0; i < NumSamples; i++)
     {
         const float Dist = i * SpeedProfileSampleInterval;
@@ -240,6 +241,33 @@ void UTurboAction_FollowPath::CalculateSpeedProfile()
         if (Curvature > KINDA_SMALL_NUMBER)
         {
             const float CorneringSpeed = FMath::Sqrt(Grip / Curvature)
+                * CorneringSpeedSafetyFactor;
+            SpeedProfile[i] = FMath::Min(MaxSpeed, CorneringSpeed);
+        }
+        else
+        {
+            SpeedProfile[i] = MaxSpeed;
+        }
+    }
+    */
+
+    for (int32 i = 0; i < NumSamples; i++)
+    {
+        const float Dist = i * SpeedProfileSampleInterval;
+        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(
+            Dist, SpeedCurvatureSampleRange);
+
+        // Look ahead to detect exit — if curvature is dropping, use the lower value
+        const float AheadCurvature = RacingSplineActor->GetCurvatureAtDistance(
+            Dist + ExitLookahead, SpeedCurvatureSampleRange);
+
+        const float EffectiveCurvature = (AheadCurvature < Curvature)
+            ? FMath::Lerp(Curvature, AheadCurvature, ExitAnticipation)
+            : Curvature;
+
+        if (EffectiveCurvature > KINDA_SMALL_NUMBER)
+        {
+            const float CorneringSpeed = FMath::Sqrt(Grip / EffectiveCurvature)
                 * CorneringSpeedSafetyFactor;
             SpeedProfile[i] = FMath::Min(MaxSpeed, CorneringSpeed);
         }

@@ -40,6 +40,12 @@ public:
     UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.0"))
     float CorneringSpeedSafetyFactor = 1.25f;
 
+    UPROPERTY(EditAnywhere, Category = "Speed Profile")
+    float ExitLookahead = 500.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+    float ExitAnticipation = 1.0f;
+
     // =========================================================================
     // STEERING CONTROL
     // =========================================================================
