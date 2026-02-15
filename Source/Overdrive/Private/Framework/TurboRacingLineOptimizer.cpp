@@ -132,7 +132,7 @@ void FTurboRacingLineOptimizer::Optimize(const TArray<FVector>& CenterlinePoints
 
 		// Lateral direction: perpendicular in the XY plane.
 		// Convention: "right" is the outer boundary, "left" is inner.
-		// (This is arbitrary — the optimizer doesn't care about the label,
+		// (This is arbitrary  -  the optimizer doesn't care about the label,
 		//  only that inner and outer are on opposite sides.)
 		FVector Lateral = FVector(-Tangent.Y, Tangent.X, 0.0f).GetSafeNormal();
 
@@ -153,66 +153,56 @@ void FTurboRacingLineOptimizer::Optimize(const TArray<FVector>& CenterlinePoints
 	}
 	RebuildLine();
 
-	// 4. Iterative relaxation.
-	//    For each point, try nudging alpha in both directions and pick the
-	//    value that minimizes local squared curvature (at I-1, I, I+1).
-	const float StepSize = 0.01f;  // Alpha nudge per probe.
-	const float MinAlpha = 0.0f;
-	const float MaxAlpha = 1.0f;
+	// 4. Iterative midpoint relaxation (Jacobi-style).
+	//
+	//    For each point, compute the midpoint of its two neighbors on the
+	//    current racing line. Moving toward that midpoint reduces local
+	//    curvature (straightens the line). We project the result back into
+	//    alpha space and clamp to [0,1] to stay on the track.
+	//
+	//    All alphas are read from the previous iteration and written to a
+	//    scratch buffer, so updates are simultaneous — this prevents bias
+	//    toward one direction of traversal and lets entry/exit points
+	//    coordinate with the apex naturally.
+
+	TArray<float> NewAlphas;
+	NewAlphas.SetNum(N);
 
 	for (int32 Iter = 0; Iter < Iterations; ++Iter)
 	{
 		for (int32 I = 0; I < N; ++I)
 		{
-			const float OriginalAlpha = Alphas[I];
+			const int32 PrevIdx = (I - 1 + N) % N;
+			const int32 NextIdx = (I + 1) % N;
 
-			// Cost = squared curvature at I only.
-			// Each point optimizes its own curvature; neighbors handle theirs
-			// on their own pass (Gauss-Seidel style).
-			auto LocalCost = [&]() -> float
-				{
-					float Cost = ComputeSquaredCurvature(I);
+			// Midpoint of neighbors in world space.
+			const FVector Midpoint = (RacingLine[PrevIdx] + RacingLine[NextIdx]) * 0.5f;
 
-					// Centerline regularization.
-					if (CenterlineBias > 0.0f)
-					{
-						const float Dev = Alphas[I] - 0.5f;
-						Cost += CenterlineBias * Dev * Dev;
-					}
-					return Cost;
-				};
+			// Blend current position toward midpoint.
+			const FVector Target = FMath::Lerp(RacingLine[I], Midpoint, StepSize);
 
-			// Evaluate current cost.
-			const float CostCenter = LocalCost();
+			// Project back into alpha space along this point's inner->outer axis.
+			const FVector InnerToOuter = OuterBoundary[I] - InnerBoundary[I];
+			const float AxisLenSq = InnerToOuter.SizeSquared();
 
-			// Probe left (toward inner boundary).
-			const float AlphaLeft = FMath::Clamp(OriginalAlpha - StepSize, MinAlpha, MaxAlpha);
-			Alphas[I] = AlphaLeft;
-			RacingLine[I] = FMath::Lerp(InnerBoundary[I], OuterBoundary[I], AlphaLeft);
-			const float CostLeft = LocalCost();
-
-			// Probe right (toward outer boundary).
-			const float AlphaRight = FMath::Clamp(OriginalAlpha + StepSize, MinAlpha, MaxAlpha);
-			Alphas[I] = AlphaRight;
-			RacingLine[I] = FMath::Lerp(InnerBoundary[I], OuterBoundary[I], AlphaRight);
-			const float CostRight = LocalCost();
-
-			// Pick the best.
-			if (CostLeft < CostCenter && CostLeft <= CostRight)
+			float NewAlpha = 0.5f; // fallback if degenerate
+			if (AxisLenSq > KINDA_SMALL_NUMBER)
 			{
-				Alphas[I] = AlphaLeft;
-			}
-			else if (CostRight < CostCenter)
-			{
-				Alphas[I] = AlphaRight;
-			}
-			else
-			{
-				Alphas[I] = OriginalAlpha;
+				NewAlpha = FVector::DotProduct(Target - InnerBoundary[I], InnerToOuter) / AxisLenSq;
 			}
 
-			RacingLine[I] = FMath::Lerp(InnerBoundary[I], OuterBoundary[I], Alphas[I]);
+			// Centerline regularization.
+			if (CenterlineBias > 0.0f)
+			{
+				NewAlpha = FMath::Lerp(NewAlpha, 0.5f, CenterlineBias);
+			}
+
+			NewAlphas[I] = FMath::Clamp(NewAlpha, 0.0f, 1.0f);
 		}
+
+		// Simultaneous update.
+		Alphas = NewAlphas;
+		RebuildLine();
 	}
 }
 
