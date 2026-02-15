@@ -17,7 +17,7 @@ UTurboAction_FollowPath::UTurboAction_FollowPath()
 
     SteeringPID.Kp = 2.0f;    // similar to your old SteeringGain
     SteeringPID.Ki = 0.0f;    // start with zero, add if car drifts persistently
-    SteeringPID.Kd = 0.5f;    // dampens oscillation — this is the big improvement, was 0.05f
+    SteeringPID.Kd = 0.4f;    // dampens oscillation — this is the big improvement, was 0.05f
     SteeringPID.OutputMin = -1.0f;
     SteeringPID.OutputMax = 1.0f;
 
