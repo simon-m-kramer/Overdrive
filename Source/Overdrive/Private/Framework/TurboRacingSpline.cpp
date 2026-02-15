@@ -58,9 +58,6 @@ void ATurboRacingSpline::CalculateRacingLine()
         PreCalculatedOffsets.Add(Offset);
     }
 
-    // ---- Pass 3: Smooth the offsets ----
-    SmoothOffsets(RacingLineSmoothingPasses);
-
     bRacingLineCalculated = true;
 }
 
@@ -122,7 +119,7 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
         if (FMath::Abs(TurnDir) > 0.0f)
         {
             // Scan backward to find where the previous curve ended
-            float DistFromPrevCurve = Look; // fallback: assume straight starts at current pos
+            float DistFromPrevCurve = Look;
             for (float Back = LookaheadStepSize; Back < RacingLineLookahead;
                 Back += LookaheadStepSize)
             {
@@ -134,7 +131,16 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
             }
 
             const float StraightLength = DistFromPrevCurve + Look;
-            const float Proximity = DistFromPrevCurve / FMath::Max(StraightLength, RacingLineSampleInterval);
+
+            float Proximity;
+            if (StraightLength < MinStraightForFade)
+            {
+                Proximity = 1.0f;
+            }
+            else
+            {
+                Proximity = DistFromPrevCurve / FMath::Max(StraightLength, RacingLineSampleInterval);
+            }
 
             // Outside = opposite of turn direction
             return -TurnDir * MaxOffset * Proximity;
@@ -144,46 +150,6 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
     }
 
     return 0.0f;
-}
-
-void ATurboRacingSpline::SmoothOffsets(int32 Passes)
-{
-    const int32 Num = PreCalculatedOffsets.Num();
-    if (Num < 3) return;
-
-    const bool bClosed = Spline->IsClosedLoop();
-    const float MaxOffset = (TrackWidth * 0.5f) * TrackWidthUsage;
-    const float DeltaThreshold = MaxOffset * 0.5f;
-
-    TArray<float> Smoothed;
-    Smoothed.SetNum(Num);
-
-    for (int32 Pass = 0; Pass < Passes; ++Pass)
-    {
-        for (int32 i = 0; i < Num; ++i)
-        {
-            const int32 Prev = bClosed ? (i - 1 + Num) % Num : FMath::Max(i - 1, 0);
-            const int32 Next = bClosed ? (i + 1) % Num : FMath::Min(i + 1, Num - 1);
-
-            const float DeltaPrev = FMath::Abs(PreCalculatedOffsets[i] - PreCalculatedOffsets[Prev]);
-            const float DeltaNext = FMath::Abs(PreCalculatedOffsets[i] - PreCalculatedOffsets[Next]);
-            const float MaxDelta = FMath::Max(DeltaPrev, DeltaNext);
-
-            const bool bSignFlip = (PreCalculatedOffsets[Prev] * PreCalculatedOffsets[Next]) < 0.0f;
-            if (bSignFlip)
-            {
-                Smoothed[i] = PreCalculatedOffsets[Prev] * 0.25f
-                    + PreCalculatedOffsets[i] * 0.50f
-                    + PreCalculatedOffsets[Next] * 0.25f;
-            }
-            else
-            {
-                Smoothed[i] = PreCalculatedOffsets[i];
-            }
-        }
-
-        PreCalculatedOffsets = Smoothed;
-    }
 }
 
 // =============================================================================

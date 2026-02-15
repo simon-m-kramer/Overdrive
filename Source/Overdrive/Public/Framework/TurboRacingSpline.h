@@ -71,7 +71,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    int32 RacingLineSmoothingPasses = 4;
+    float MinStraightForFade = 800.0f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float MinCurvatureThreshold = 0.05f;
