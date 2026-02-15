@@ -59,10 +59,10 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
-    float TrackWidth = 1200.0f;
+    float TrackWidth = 1000.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-    float TrackWidthUsage = 0.85f;
+    float TrackWidthUsage = 0.80f;
 
     // =========================================================================
     // RACING LINE CONFIGURATION
