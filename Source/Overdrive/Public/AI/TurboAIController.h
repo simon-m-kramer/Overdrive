@@ -139,7 +139,7 @@ public:
     bool bDrawDebug = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowLapTiming = true;
+    bool bShowLapTiming = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bShowDecisionContext = false;
