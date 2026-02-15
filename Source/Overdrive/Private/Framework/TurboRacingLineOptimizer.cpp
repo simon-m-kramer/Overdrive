@@ -166,12 +166,14 @@ void FTurboRacingLineOptimizer::Optimize(const TArray<FVector>& CenterlinePoints
 		{
 			const float OriginalAlpha = Alphas[I];
 
-			// Cost = squared curvature at I only.
-			// Each point optimizes its own curvature; neighbors handle theirs
-			// on their own pass (Gauss-Seidel style).
+			// Cost = sum of squared curvature at I-1, I, I+1.
 			auto LocalCost = [&]() -> float
 				{
-					float Cost = ComputeSquaredCurvature(I);
+					const int32 Prev = (I - 1 + N) % N;
+					const int32 Next = (I + 1) % N;
+					float Cost = ComputeSquaredCurvature(Prev)
+						+ ComputeSquaredCurvature(I)
+						+ ComputeSquaredCurvature(Next);
 
 					// Centerline regularization.
 					if (CenterlineBias > 0.0f)

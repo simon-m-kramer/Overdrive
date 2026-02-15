@@ -47,7 +47,7 @@ struct FTurboRacingLineOptimizer
 	 *      hugging inner walls on long sweeping curves.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Racing Line", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float CenterlineBias = 0.000001f;
+	float CenterlineBias = 0.02f;
 
 	/**
 	 * Track boundary margin in cm.  The optimizer keeps the racing line at
