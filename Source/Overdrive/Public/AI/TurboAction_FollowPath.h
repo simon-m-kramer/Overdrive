@@ -34,11 +34,11 @@ public:
 
     /** Curvature sample range used for speed calculations (cm) */
     UPROPERTY(EditAnywhere, Category = "Speed Profile")
-    float SpeedCurvatureSampleRange = 300.0f;
+    float SpeedCurvatureSampleRange = 100.0f;
 
     /** Safety margin — multiplier on cornering speed (< 1.0 = more cautious; > 1.0 = more aggressive) */
     UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.0"))
-    float CorneringSpeedSafetyFactor = 1.2f;
+    float CorneringSpeedSafetyFactor = 1.25f;
 
     // =========================================================================
     // STEERING CONTROL
