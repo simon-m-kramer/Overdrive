@@ -58,6 +58,9 @@ void ATurboRacingSpline::CalculateRacingLine()
         PreCalculatedOffsets.Add(Offset);
     }
 
+    // ---- Pass 3: Smoothing ----
+    SmoothRacingLine();
+
     bRacingLineCalculated = true;
 }
 
@@ -128,6 +131,61 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
     }
 
     return 0.0f;
+}
+
+void ATurboRacingSpline::SmoothRacingLine()
+{
+    if (PreCalculatedOffsets.Num() == 0 || MaxTrackCurvature < KINDA_SMALL_NUMBER)
+        return;
+
+    // Store the raw offsets — straights will use these directly
+    TArray<float> RawOffsets = PreCalculatedOffsets;
+
+    for (int32 Pass = 0; Pass < SmoothingPasses; Pass++)
+    {
+        TArray<float> SmoothedOffsets;
+        SmoothedOffsets.Reserve(PreCalculatedOffsets.Num());
+
+        for (int32 i = 0; i < PreCalculatedOffsets.Num(); i++)
+        {
+            const float Dist = i * RacingLineSampleInterval;
+            const float Curvature = GetCurvatureAtDistance(Dist, CurvatureSampleRange);
+            const float NormalizedCurvature = Curvature / MaxTrackCurvature;
+
+            // How much smoothing to apply: 0 on straights, 1 in curves
+            const float SmoothBlend = FMath::Clamp(
+                NormalizedCurvature / MinCurvatureThreshold, 0.0f, 1.0f);
+
+            int32 AdaptiveWindow = FMath::RoundToInt(
+                FMath::Lerp(
+                    static_cast<float>(SmoothingWindowMax),
+                    static_cast<float>(SmoothingWindowMin),
+                    SmoothBlend));
+
+            float Sum = 0.0f;
+            float WeightSum = 0.0f;
+
+            for (int32 j = -AdaptiveWindow; j <= AdaptiveWindow; j++)
+            {
+                const int32 Index = (i + j + PreCalculatedOffsets.Num())
+                    % PreCalculatedOffsets.Num();
+
+                float Weight = 1.0f - (FMath::Abs(j)
+                    / static_cast<float>(AdaptiveWindow + 1));
+                Weight = Weight * Weight;
+
+                Sum += PreCalculatedOffsets[Index] * Weight;
+                WeightSum += Weight;
+            }
+
+            const float SmoothedValue = Sum / WeightSum;
+
+            // Blend: straight = keep raw, curve = use smoothed
+            SmoothedOffsets.Add(FMath::Lerp(RawOffsets[i], SmoothedValue, SmoothBlend));
+        }
+
+        PreCalculatedOffsets = MoveTemp(SmoothedOffsets);
+    }
 }
 
 // =============================================================================
