@@ -85,7 +85,7 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
         }
     }
 
-    // ----- On a straight: look ahead, position to the outside of the next curve -----
+    // ----- On a straight: position fully to the outside of the next curve -----
     for (float Look = LookaheadStepSize; Look < RacingLineLookahead;
         Look += LookaheadStepSize)
     {
@@ -118,35 +118,10 @@ float ATurboRacingSpline::CalculateIdealOffset(float Distance) const
 
         if (FMath::Abs(TurnDir) > 0.0f)
         {
-            // Scan backward to find where the previous curve ended
-            float DistFromPrevCurve = Look;
-            for (float Back = LookaheadStepSize; Back < RacingLineLookahead;
-                Back += LookaheadStepSize)
-            {
-                if (GetNormalizedCurvature(Distance - Back) >= MinCurvatureThreshold)
-                {
-                    DistFromPrevCurve = Back;
-                    break;
-                }
-            }
-
-            const float StraightLength = DistFromPrevCurve + Look;
-
-            float Proximity;
-            if (StraightLength < MinStraightForFade)
-            {
-                Proximity = 1.0f;
-            }
-            else
-            {
-                Proximity = DistFromPrevCurve / FMath::Max(StraightLength, RacingLineSampleInterval);
-            }
-
-            // Outside = opposite of turn direction
-            return -TurnDir * MaxOffset * Proximity;
+            return -TurnDir * MaxOffset;
         }
 
-        break;  // only react to the first curve found
+        break;
     }
 
     return 0.0f;

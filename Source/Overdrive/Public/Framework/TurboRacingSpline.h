@@ -69,9 +69,6 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float MinStraightForFade = 800.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
     float MinCurvatureThreshold = 0.05f;
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
@@ -88,8 +85,6 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Racing Line")
     float RacingLineSampleInterval = 100.0f;
-
-
 
 protected:
     virtual void BeginPlay() override;
