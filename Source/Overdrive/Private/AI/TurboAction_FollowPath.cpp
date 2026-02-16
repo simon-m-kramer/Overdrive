@@ -20,9 +20,9 @@ UTurboAction_FollowPath::UTurboAction_FollowPath()
 	SteeringPID.OutputMin = -1.0f;
 	SteeringPID.OutputMax = 1.0f;
 
-	SpeedPID.Kp = 0.01f;
-	SpeedPID.Ki = 0.001f;
-	SpeedPID.Kd = 0.005f;
+	SpeedPID.Kp = 0.03f;
+	SpeedPID.Ki = 0.003f;
+	SpeedPID.Kd = 0.015f;
 	SpeedPID.OutputMin = -1.0f;
 	SpeedPID.OutputMax = 1.0f;
 }
@@ -219,16 +219,9 @@ void UTurboAction_FollowPath::CalculateSpeedProfile()
 		const float Curvature = RacingSplineActor->GetCurvatureAtDistance(
 			Dist, SpeedCurvatureSampleRange);
 
-		const float AheadCurvature = RacingSplineActor->GetCurvatureAtDistance(
-			Dist + ExitLookahead, SpeedCurvatureSampleRange);
-
-		const float EffectiveCurvature = (AheadCurvature < Curvature)
-			? FMath::Lerp(Curvature, AheadCurvature, ExitAnticipation)
-			: Curvature;
-
-		if (EffectiveCurvature > KINDA_SMALL_NUMBER)
+		if (Curvature > KINDA_SMALL_NUMBER)
 		{
-			const float CorneringSpeed = FMath::Sqrt(Grip / EffectiveCurvature)
+			const float CorneringSpeed = FMath::Sqrt(Grip / Curvature)
 				* CorneringSpeedSafetyFactor;
 			SpeedProfile[i] = FMath::Min(MaxSpeed, CorneringSpeed);
 		}
@@ -279,9 +272,12 @@ void UTurboAction_FollowPath::CalculateSpeedProfile()
 			for (int32 i = 0; i < NumSamples; i++)
 			{
 				const int32 PrevIndex = (i - 1 + NumSamples) % NumSamples;
+				const bool bExitingCorner = SpeedProfile[i] > SpeedProfile[PrevIndex];
+				const float EffectiveAccel = bExitingCorner
+					? Accel * ExitAccelerationBoost : Accel;
 				const float AccelLimit = FMath::Sqrt(
 					SpeedProfile[PrevIndex] * SpeedProfile[PrevIndex]
-					+ 2.0f * Accel * Ds);
+					+ 2.0f * EffectiveAccel * Ds);
 				SpeedProfile[i] = FMath::Min(SpeedProfile[i], AccelLimit);
 			}
 		}
@@ -290,9 +286,12 @@ void UTurboAction_FollowPath::CalculateSpeedProfile()
 	{
 		for (int32 i = 1; i < NumSamples; i++)
 		{
+			const bool bExitingCorner = SpeedProfile[i] > SpeedProfile[i - 1];
+			const float EffectiveAccel = bExitingCorner
+				? Accel * ExitAccelerationBoost : Accel;
 			const float AccelLimit = FMath::Sqrt(
 				SpeedProfile[i - 1] * SpeedProfile[i - 1]
-				+ 2.0f * Accel * Ds);
+				+ 2.0f * EffectiveAccel * Ds);
 			SpeedProfile[i] = FMath::Min(SpeedProfile[i], AccelLimit);
 		}
 	}

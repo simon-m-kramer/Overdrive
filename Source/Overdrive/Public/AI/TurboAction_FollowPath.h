@@ -34,19 +34,14 @@ public:
 
 	/** Curvature sample range used for speed calculations (cm) */
 	UPROPERTY(EditAnywhere, Category = "Speed Profile")
-	float SpeedCurvatureSampleRange = 100.0f;
+	float SpeedCurvatureSampleRange = 2000.0f;
 
 	/** Safety margin — multiplier on cornering speed (< 1.0 = cautious, > 1.0 = aggressive) */
 	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.5"))
-	float CorneringSpeedSafetyFactor = 1.0f;
+	float CorneringSpeedSafetyFactor = 1.2f;
 
-	/** How far ahead to look for decreasing curvature (corner exit detection) */
-	UPROPERTY(EditAnywhere, Category = "Speed Profile")
-	float ExitLookahead = 2500.0f;
-
-	/** How much to anticipate the exit (0 = ignore, 1 = fully use ahead curvature) */
-	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float ExitAnticipation = 1.0f;
+	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "1.0", ClampMax = "2.0"))
+	float ExitAccelerationBoost = 2.0f;
 
 	// =========================================================================
 	// STEERING
@@ -73,11 +68,11 @@ public:
 
 	/** Deadband in cm/s — within this range, coast instead of correcting */
 	UPROPERTY(EditAnywhere, Category = "Speed")
-	float CoastingThresholdCms = 140.0f;
+	float CoastingThresholdCms = 50.0f;
 
 	/** Throttle applied when coasting within the deadband */
 	UPROPERTY(EditAnywhere, Category = "Speed")
-	float CoastThrottleInput = 0.15f;
+	float CoastThrottleInput = 0.25f;
 
 	// =========================================================================
 	// FOLLOW DISTANCE
