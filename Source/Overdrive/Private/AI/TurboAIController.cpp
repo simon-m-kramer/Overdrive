@@ -179,22 +179,21 @@ void ATurboAIController::UpdateDecisionContext()
     DecisionContext.DistanceToNextCorner = 0.0f;
     DecisionContext.NextCornerCurvature = 0.0f;
 
-    if (RacingSplineActor->IsRacingLineReady())
+    const float ScanStep = 200.0f;
+    const float ScanMax = 10000.0f;
+
+    for (float Look = ScanStep; Look < ScanMax; Look += ScanStep)
     {
-        const float ScanStep = 200.0f;
-        const float ScanMax = 10000.0f;
+        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(
+            CurrentSplineDistance + Look, 400.0f);
+        const float Normalized = Curvature / FMath::Max(
+            RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
 
-        for (float Look = ScanStep; Look < ScanMax; Look += ScanStep)
+        if (Normalized > RacingSplineActor->GetMinCurvatureThreshold())
         {
-            const float Curvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance + Look, 400.0f);
-            const float Normalized = Curvature / FMath::Max(RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
-
-            if (Normalized > RacingSplineActor->GetMinCurvatureThreshold())
-            {
-                DecisionContext.DistanceToNextCorner = Look;
-                DecisionContext.NextCornerCurvature = Normalized;
-                break;
-            }
+            DecisionContext.DistanceToNextCorner = Look;
+            DecisionContext.NextCornerCurvature = Normalized;
+            break;
         }
     }
 
@@ -226,20 +225,12 @@ void ATurboAIController::UpdateDecisionContext()
 
 void ATurboAIController::UpdateLapTiming(float DeltaTime)
 {
-    if (!RacingSplineActor)
-    {
-        return;
-    }
+    if (!RacingSplineActor) return;
 
-    USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
-    if (!Spline || !Spline->IsClosedLoop())
-    {
-        return;
-    }
+    if (!RacingSplineActor->IsClosedLoop()) return;
 
-    float SplineLength = Spline->GetSplineLength();
+    const float SplineLength = RacingSplineActor->GetSplineLength();
 
-    // Detect lap completion: distance wrapped from high to low
     bool bCrossedFinishLine = (PreviousSplineDistance > SplineLength * 0.9f) &&
         (CurrentSplineDistance < SplineLength * 0.1f);
 
@@ -247,7 +238,6 @@ void ATurboAIController::UpdateLapTiming(float DeltaTime)
     {
         if (bLapTimingStarted)
         {
-            // Completed a lap
             LastLapTime = CurrentLapTime;
 
             if (BestLapTime <= 0.0f || CurrentLapTime < BestLapTime)
@@ -258,7 +248,6 @@ void ATurboAIController::UpdateLapTiming(float DeltaTime)
             LapCount++;
         }
 
-        // Start/restart lap timer
         CurrentLapTime = 0.0f;
         bLapTimingStarted = true;
     }

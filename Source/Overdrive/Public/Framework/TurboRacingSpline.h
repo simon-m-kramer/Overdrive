@@ -12,95 +12,82 @@ class USplineComponent;
 UCLASS()
 class OVERDRIVE_API ATurboRacingSpline : public AActor
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    ATurboRacingSpline();
+	ATurboRacingSpline();
 
-    USplineComponent* GetSplineComponent() const { return Spline; }
-    const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
+	USplineComponent* GetSplineComponent() const { return Spline; }
+	const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
-    // =========================================================================
-    // RACING LINE
-    // =========================================================================
+	// =========================================================================
+	// SPLINE QUERIES
+	// =========================================================================
 
-    UFUNCTION(BlueprintCallable, Category = "Racing Line")
-    void CalculateRacingLine();
+	/** Get world-space location on the racing line at a given distance */
+	UFUNCTION(BlueprintPure, Category = "Racing Line")
+	FVector GetLocationAtDistance(float Distance) const;
 
-    UFUNCTION(BlueprintPure, Category = "Racing Line")
-    float GetRacingLineOffset(float Distance) const;
+	/** Get world-space direction (tangent) at a given distance */
+	UFUNCTION(BlueprintPure, Category = "Racing Line")
+	FVector GetDirectionAtDistance(float Distance) const;
 
-    UFUNCTION(BlueprintPure, Category = "Racing Line")
-    FVector GetPointOnRacingLine(float Distance) const;
+	/** Get the total spline length */
+	UFUNCTION(BlueprintPure, Category = "Racing Line")
+	float GetSplineLength() const;
 
-    UFUNCTION(BlueprintPure, Category = "Racing Line")
-    bool IsRacingLineReady() const { return bRacingLineCalculated; }
+	/** Get whether the spline is a closed loop */
+	UFUNCTION(BlueprintPure, Category = "Racing Line")
+	bool IsClosedLoop() const;
 
-    UFUNCTION(BlueprintPure, Category = "Racing Line")
-    float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
+	// =========================================================================
+	// CURVATURE ANALYSIS
+	// =========================================================================
 
-    UFUNCTION(BlueprintPure, Category = "Racing Line")
-    float GetMinCurvatureThreshold() const { return MinCurvatureThreshold; }
+	UFUNCTION(BlueprintPure, Category = "Curvature")
+	float GetCurvatureAtDistance(float Distance, float SampleRange = 300.0f) const;
 
-    void DrawDebugRacingLine(UWorld* World) const;
+	UFUNCTION(BlueprintPure, Category = "Curvature")
+	float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
 
-    // =========================================================================
-    // CURVATURE ANALYSIS
-    // =========================================================================
+	float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
+	float GetMinCurvatureThreshold() const { return MinCurvatureThreshold; }
 
-    UFUNCTION(BlueprintPure, Category = "Curvature")
-    float GetCurvatureAtDistance(float Distance, float SampleRange = 300.0f) const;
+	// =========================================================================
+	// TRACK CONFIGURATION
+	// =========================================================================
 
-    UFUNCTION(BlueprintPure, Category = "Curvature")
-    float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
+	float TrackWidth = 1200.0f;
 
-    // =========================================================================
-    // TRACK CONFIGURATION
-    // =========================================================================
+	// =========================================================================
+	// CURVATURE CONFIGURATION
+	// =========================================================================
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
-    float TrackWidth = 1000.0f;
+	UPROPERTY(EditAnywhere, Category = "Curvature")
+	float CurvatureSampleRange = 400.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-    float TrackWidthUsage = 0.80f;
+	UPROPERTY(EditAnywhere, Category = "Curvature", meta = (ClampMin = "0.01", ClampMax = "0.5"))
+	float MinCurvatureThreshold = 0.05f;
 
-    // =========================================================================
-    // RACING LINE CONFIGURATION
-    // =========================================================================
+	// =========================================================================
+	// DEBUG
+	// =========================================================================
 
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float MinCurvatureThreshold = 0.05f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float CurvatureSampleRange = 400.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float RacingLineLookahead = 15000.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float LookaheadStepSize = 200.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float TurnSignLookahead = 200.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Racing Line")
-    float RacingLineSampleInterval = 100.0f;
+	void DrawDebugRacingLine(UWorld* World) const;
 
 protected:
-    virtual void BeginPlay() override;
+	virtual void BeginPlay() override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-    TObjectPtr<USplineComponent> Spline;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
+	TObjectPtr<USplineComponent> Spline;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
-    FGameplayTagContainer GameplayTags;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
+	FGameplayTagContainer GameplayTags;
 
 private:
-    float CalculateIdealOffset(float Distance) const;
-    float WrapDistance(float Distance) const;
+	float WrapDistance(float Distance) const;
+	void CalculateMaxCurvature();
 
-    TArray<float> PreCalculatedOffsets;
-    float MaxTrackCurvature = 0.0f;
-    bool bRacingLineCalculated = false;
-
+	float MaxTrackCurvature = 0.0f;
 };
