@@ -2,12 +2,12 @@
 
 
 #include "AI/TurboAction_FollowPath.h"
+#include "AI/TurboActionStack.h"
 #include "AI/TurboAIController.h"
 #include "AI/TurboAIVehicle.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
-#include "AI/TurboActionStack.h"
 
 UTurboAction_FollowPath::UTurboAction_FollowPath()
 {
@@ -38,7 +38,7 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 		RacingSplineActor = AIController->GetRacingSplineActor();
 	}
 
-	CalculateSpeedProfile();
+	SpeedProfile.Calculate(RacingSplineActor.Get(), Vehicle.Get());
 
 	SteeringPID.Reset();
 	SpeedPID.Reset();
@@ -56,7 +56,7 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 }
 
 // =============================================================================
-// STEERING
+// STEERING CONTROL
 // =============================================================================
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
@@ -188,145 +188,21 @@ float UTurboAction_FollowPath::GetFollowSpeedLimit() const
 	return FMath::Lerp(OurMaxSpeed, MatchSpeed, T);
 }
 
-// =============================================================================
-// SPEED PROFILE
-// =============================================================================
-
-void UTurboAction_FollowPath::CalculateSpeedProfile()
-{
-	bSpeedProfileReady = false;
-
-	if (!RacingSplineActor.IsValid() || !Vehicle.IsValid()) return;
-
-	const float SplineLength = RacingSplineActor->GetSplineLength();
-	const int32 NumSamples = FMath::CeilToInt(SplineLength / SpeedProfileSampleInterval);
-
-	if (NumSamples <= 0) return;
-
-	const float MaxSpeed = Vehicle->MaxSpeedCms;
-	const float Grip = Vehicle->LateralGripCms2;
-	const float BrakeDecel = Vehicle->BrakeDecelerationCms2;
-	const float Accel = Vehicle->AccelerationCms2;
-
-	SpeedProfile.SetNum(NumSamples);
-
-	// ---- Pass 1: Cornering speed limits ----
-	// v = sqrt(grip / curvature), with exit anticipation
-
-	for (int32 i = 0; i < NumSamples; i++)
-	{
-		const float Dist = i * SpeedProfileSampleInterval;
-		const float Curvature = RacingSplineActor->GetCurvatureAtDistance(
-			Dist, SpeedCurvatureSampleRange);
-
-		if (Curvature > KINDA_SMALL_NUMBER)
-		{
-			const float CorneringSpeed = FMath::Sqrt(Grip / Curvature)
-				* CorneringSpeedSafetyFactor;
-			SpeedProfile[i] = FMath::Min(MaxSpeed, CorneringSpeed);
-		}
-		else
-		{
-			SpeedProfile[i] = MaxSpeed;
-		}
-	}
-
-	// ---- Pass 2: Braking pass (reverse) ----
-	// v = sqrt(v_next² + 2 * brakeDecel * distance)
-
-	const bool bClosedLoop = RacingSplineActor->IsClosedLoop();
-	const float Ds = SpeedProfileSampleInterval;
-
-	if (bClosedLoop)
-	{
-		for (int32 Lap = 0; Lap < 2; Lap++)
-		{
-			for (int32 i = NumSamples - 1; i >= 0; i--)
-			{
-				const int32 NextIndex = (i + 1) % NumSamples;
-				const float BrakeLimit = FMath::Sqrt(
-					SpeedProfile[NextIndex] * SpeedProfile[NextIndex]
-					+ 2.0f * BrakeDecel * Ds);
-				SpeedProfile[i] = FMath::Min(SpeedProfile[i], BrakeLimit);
-			}
-		}
-	}
-	else
-	{
-		for (int32 i = NumSamples - 2; i >= 0; i--)
-		{
-			const float BrakeLimit = FMath::Sqrt(
-				SpeedProfile[i + 1] * SpeedProfile[i + 1]
-				+ 2.0f * BrakeDecel * Ds);
-			SpeedProfile[i] = FMath::Min(SpeedProfile[i], BrakeLimit);
-		}
-	}
-
-	// ---- Pass 3: Acceleration pass (forward) ----
-	// v = sqrt(v_prev² + 2 * accel * distance)
-
-	if (bClosedLoop)
-	{
-		for (int32 Lap = 0; Lap < 2; Lap++)
-		{
-			for (int32 i = 0; i < NumSamples; i++)
-			{
-				const int32 PrevIndex = (i - 1 + NumSamples) % NumSamples;
-				const bool bExitingCorner = SpeedProfile[i] > SpeedProfile[PrevIndex];
-				const float EffectiveAccel = bExitingCorner
-					? Accel * ExitAccelerationBoost : Accel;
-				const float AccelLimit = FMath::Sqrt(
-					SpeedProfile[PrevIndex] * SpeedProfile[PrevIndex]
-					+ 2.0f * EffectiveAccel * Ds);
-				SpeedProfile[i] = FMath::Min(SpeedProfile[i], AccelLimit);
-			}
-		}
-	}
-	else
-	{
-		for (int32 i = 1; i < NumSamples; i++)
-		{
-			const bool bExitingCorner = SpeedProfile[i] > SpeedProfile[i - 1];
-			const float EffectiveAccel = bExitingCorner
-				? Accel * ExitAccelerationBoost : Accel;
-			const float AccelLimit = FMath::Sqrt(
-				SpeedProfile[i - 1] * SpeedProfile[i - 1]
-				+ 2.0f * EffectiveAccel * Ds);
-			SpeedProfile[i] = FMath::Min(SpeedProfile[i], AccelLimit);
-		}
-	}
-
-	bSpeedProfileReady = true;
-}
-
 float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const
 {
-	if (!bSpeedProfileReady || SpeedProfile.Num() == 0 || !Vehicle.IsValid())
+	if (!RacingSplineActor.IsValid() || !Vehicle.IsValid())
 	{
 		return Vehicle.IsValid() ? Vehicle->MaxSpeedCms : 0.0f;
 	}
 
-	if (RacingSplineActor.IsValid())
+	if (!SpeedProfile.IsReady())
 	{
-		const float SplineLength = RacingSplineActor->GetSplineLength();
-
-		if (RacingSplineActor->IsClosedLoop())
-		{
-			Distance = FMath::Fmod(Distance, SplineLength);
-			if (Distance < 0.0f) Distance += SplineLength;
-		}
-		else
-		{
-			Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);
-		}
+		return Vehicle->MaxSpeedCms;
 	}
 
-	const float IndexFloat = Distance / SpeedProfileSampleInterval;
-	const int32 Index = FMath::Clamp(FMath::FloorToInt(IndexFloat), 0, SpeedProfile.Num() - 1);
-	const int32 NextIndex = (Index + 1) % SpeedProfile.Num();
-	const float Alpha = IndexFloat - FMath::FloorToInt(IndexFloat);
-
-	return FMath::Lerp(SpeedProfile[Index], SpeedProfile[NextIndex], Alpha);
+	return SpeedProfile.GetTargetSpeed(
+		Distance,
+		RacingSplineActor->GetSplineLength(),
+		RacingSplineActor->IsClosedLoop());
 }
-
 

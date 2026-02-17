@@ -89,14 +89,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Spline")
     void FindRacingSpline();  // Called on BeginPlay
 
-    UFUNCTION(BlueprintPure, Category = "Spline")
-    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }  // This is the wrapper class around the spline
-
-    UFUNCTION(BlueprintPure, Category = "Spline")
-    float GetCurrentSplineDistance() const { return CurrentSplineDistance; }  // Current position on the spline
-
     UFUNCTION(BlueprintCallable, Category = "Spline")
     void UpdateSplineDistance();  // Called every tick
+
+    UFUNCTION(BlueprintPure, Category = "Spline")
+    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
+
+    UFUNCTION(BlueprintPure, Category = "Spline")
+    float GetCurrentSplineDistance() const { return CurrentSplineDistance; }
 
     // =========================================================================
     // VEHICLE
@@ -162,7 +162,7 @@ protected:
     TObjectPtr<UTurboActionStack> ActionStack;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-    TObjectPtr<ATurboRacingSpline> RacingSplineActor;
+    TObjectPtr<ATurboRacingSpline> RacingSplineActor;  // TODO: Rename this to RacingSpline
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
     TObjectPtr<ATurboAIVehicle> Vehicle;

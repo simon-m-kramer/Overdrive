@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AI/TurboActionBase.h"
 #include "Framework/TurboPIDController.h"
+#include "Framework/TurboSpeedProfile.h"
 #include "TurboAction_FollowPath.generated.h"
 
 class ATurboAIController;
@@ -28,23 +29,11 @@ public:
 	// SPEED PROFILE
 	// =========================================================================
 
-	/** Sample interval for the pre-calculated speed profile (cm) */
 	UPROPERTY(EditAnywhere, Category = "Speed Profile")
-	float SpeedProfileSampleInterval = 100.0f;
-
-	/** Curvature sample range used for speed calculations (cm) */
-	UPROPERTY(EditAnywhere, Category = "Speed Profile")
-	float SpeedCurvatureSampleRange = 500.0f;
-
-	/** Safety margin — multiplier on cornering speed (< 1.0 = cautious, > 1.0 = aggressive) */
-	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.5"))
-	float CorneringSpeedSafetyFactor = 1.2f;
-
-	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "1.0", ClampMax = "2.0"))
-	float ExitAccelerationBoost = 2.0f;
+	FTurboSpeedProfile SpeedProfile;
 
 	// =========================================================================
-	// STEERING
+	// STEERING CONTROL
 	// =========================================================================
 
 	UPROPERTY(EditAnywhere, Category = "Steering")
@@ -74,6 +63,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	float CoastThrottleInput = 0.25f;
 
+	float GetTargetSpeedAtDistance(float Distance) const;
+
 	// =========================================================================
 	// FOLLOW DISTANCE
 	// =========================================================================
@@ -93,12 +84,6 @@ public:
 	/** How much slower than the car ahead to go when at min distance (cm/s) */
 	UPROPERTY(EditAnywhere, Category = "Follow Distance")
 	float FollowSpeedMarginCms = 100.0f;
-
-	// =========================================================================
-	// SPEED PROFILE QUERY
-	// =========================================================================
-
-	float GetTargetSpeedAtDistance(float Distance) const;
 
 protected:
 	// =========================================================================
@@ -125,11 +110,4 @@ protected:
 	virtual void ApplySpeedControl(float DeltaTime);
 	float GetFollowSpeedLimit() const;
 
-	// =========================================================================
-	// SPEED PROFILE (pre-calculated)
-	// =========================================================================
-
-	void CalculateSpeedProfile();
-	TArray<float> SpeedProfile;
-	bool bSpeedProfileReady = false;
 };
