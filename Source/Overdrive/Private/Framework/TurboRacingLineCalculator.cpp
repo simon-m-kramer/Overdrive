@@ -68,9 +68,11 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 		FVector TangentDir = CenterlineSpline->GetDirectionAtDistanceAlongSpline(
 			DistanceCm, ESplineCoordinateSpace::World);
 
-		// For a 2D (flat) track, the perpendicular is the tangent rotated 90 degrees
-		// around the Z axis: (-Y, X, 0).
-		FVector Perp(-TangentDir.Y, TangentDir.X, 0.0f);
+		// The track-perpendicular direction lies in the road surface plane,
+		// pointing across the track. For a flat or elevated (but not banked)
+		// track, this is simply Tangent x WorldUp, which gives us a horizontal
+		// vector perpendicular to the driving direction regardless of slope.
+		FVector Perp = FVector::CrossProduct(TangentDir, FVector::UpVector);
 		Perp.Normalize();
 
 		Nodes[i].CenterPos = PosCm * CmToM;  // Convert to meters
