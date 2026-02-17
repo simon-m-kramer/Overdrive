@@ -38,7 +38,7 @@ public:
 
 	/** Safety margin — multiplier on cornering speed (< 1.0 = cautious, > 1.0 = aggressive) */
 	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.5"))
-	float CorneringSpeedSafetyFactor = 1.1f;
+	float CorneringSpeedSafetyFactor = 1.2f;
 
 	UPROPERTY(EditAnywhere, Category = "Speed Profile", meta = (ClampMin = "1.0", ClampMax = "2.0"))
 	float ExitAccelerationBoost = 2.0f;
