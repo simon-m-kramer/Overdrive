@@ -136,7 +136,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = true;
+    bool bDrawDebug = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bShowLapTiming = true;

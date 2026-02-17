@@ -306,6 +306,12 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 			}
 		}
 	}
+
+	// Mark dirty so the editor knows to save the computed spline
+	Modify();
+	RacingLineSpline->Modify();
+	MarkPackageDirty();
+
 }
 
 TArray<FVector> ATurboRacingLineCalculator::GetRacingLinePositions() const

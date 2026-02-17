@@ -48,7 +48,7 @@ public:
 	/** Half the track width in cm. Nodes cannot move further than this
 	 *  from the centerline in either direction. */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Track", meta = (ClampMin = "50.0", Units = "cm"))
-	float HalfTrackWidth = 600.0f;
+	float HalfTrackWidth = 500.0f;
 
 	/** Whether the track is a closed loop. */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Track")

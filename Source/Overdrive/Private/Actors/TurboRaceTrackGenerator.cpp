@@ -1,5 +1,6 @@
 // Copyright Simon Kramer.All Rights Reserved.
 
+/*
 #include "Actors/TurboRaceTrackGenerator.h"
 #include "Components/SplineComponent.h"
 #include "LandscapeSplineActor.h"
@@ -97,6 +98,6 @@ void ATurboRaceTrackGenerator::CopyFromLandscapeSpline()
         UE_LOG(LogTemp, Log, TEXT("Successfully copied %d points. Loop: %s"), Points.Num(), bIsLoop ? TEXT("Yes") : TEXT("No"));
     }
 }
-
+*/
 
 

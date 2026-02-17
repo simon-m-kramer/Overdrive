@@ -3,21 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Framework/TurboRacingLineCalculator.h"
 #include "GameplayTagContainer.h"
 #include "TurboRacingSpline.generated.h"
 
-class USplineComponent;
-
 UCLASS()
-class OVERDRIVE_API ATurboRacingSpline : public AActor
+class OVERDRIVE_API ATurboRacingSpline : public ATurboRacingLineCalculator
 {
 	GENERATED_BODY()
 
 public:
 	ATurboRacingSpline();
 
-	USplineComponent* GetSplineComponent() const { return Spline; }
+	/** Returns the racing line spline (used by AI for driving and position tracking) */
+	USplineComponent* GetSplineComponent() const;
+
 	const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
 	// =========================================================================
@@ -32,13 +32,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	FVector GetDirectionAtDistance(float Distance) const;
 
-	/** Get the total spline length */
+	/** Get the total racing line length */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	float GetSplineLength() const;
 
-	/** Get whether the spline is a closed loop */
+	/** Get whether the track is a closed loop */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	bool IsClosedLoop() const;
+
+	/** Get full track width (derived from calculator's HalfTrackWidth) */
+	UFUNCTION(BlueprintPure, Category = "Racing Line")
+	float GetTrackWidth() const { return HalfTrackWidth * 2.0f; }
 
 	// =========================================================================
 	// CURVATURE ANALYSIS
@@ -52,13 +56,6 @@ public:
 
 	float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
 	float GetMinCurvatureThreshold() const { return MinCurvatureThreshold; }
-
-	// =========================================================================
-	// TRACK CONFIGURATION
-	// =========================================================================
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track")
-	float TrackWidth = 1200.0f;
 
 	// =========================================================================
 	// CURVATURE CONFIGURATION
@@ -78,9 +75,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-	TObjectPtr<USplineComponent> Spline;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
 	FGameplayTagContainer GameplayTags;

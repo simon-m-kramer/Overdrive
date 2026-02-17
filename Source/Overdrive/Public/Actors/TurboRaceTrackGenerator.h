@@ -1,5 +1,6 @@
 // Copyright Simon Kramer.All Rights Reserved.
 
+/*
 #pragma once
 
 #include "CoreMinimal.h"
@@ -27,3 +28,4 @@ protected:
     void CopyFromLandscapeSpline();
 
 };
+*/

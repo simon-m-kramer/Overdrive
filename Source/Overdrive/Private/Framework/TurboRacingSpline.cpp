@@ -8,11 +8,6 @@
 
 ATurboRacingSpline::ATurboRacingSpline()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
-	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("RacingSpline"));
-	SetRootComponent(Spline);
-
 	GameplayTags.AddTag(TurboGameplayTags::Track_MainSpline);
 }
 
@@ -24,33 +19,42 @@ void ATurboRacingSpline::BeginPlay()
 }
 
 // =============================================================================
+// SPLINE ACCESS
+// =============================================================================
+
+USplineComponent* ATurboRacingSpline::GetSplineComponent() const
+{
+	return RacingLineSpline;
+}
+
+// =============================================================================
 // SPLINE QUERIES
 // =============================================================================
 
 FVector ATurboRacingSpline::GetLocationAtDistance(float Distance) const
 {
-	if (!Spline) return FVector::ZeroVector;
+	if (!RacingLineSpline) return FVector::ZeroVector;
 
 	Distance = WrapDistance(Distance);
-	return Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+	return RacingLineSpline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
 }
 
 FVector ATurboRacingSpline::GetDirectionAtDistance(float Distance) const
 {
-	if (!Spline) return FVector::ForwardVector;
+	if (!RacingLineSpline) return FVector::ForwardVector;
 
 	Distance = WrapDistance(Distance);
-	return Spline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+	return RacingLineSpline->GetDirectionAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
 }
 
 float ATurboRacingSpline::GetSplineLength() const
 {
-	return Spline ? Spline->GetSplineLength() : 0.0f;
+	return RacingLineSpline ? RacingLineSpline->GetSplineLength() : 0.0f;
 }
 
 bool ATurboRacingSpline::IsClosedLoop() const
 {
-	return Spline ? Spline->IsClosedLoop() : false;
+	return bClosedLoop;
 }
 
 // =============================================================================
@@ -59,14 +63,14 @@ bool ATurboRacingSpline::IsClosedLoop() const
 
 void ATurboRacingSpline::CalculateMaxCurvature()
 {
-	if (!Spline) return;
+	if (!RacingLineSpline) return;
 
-	const float SplineLength = Spline->GetSplineLength();
+	const float Length = RacingLineSpline->GetSplineLength();
 	const float SampleInterval = 100.0f;
 
 	MaxTrackCurvature = 0.0f;
 
-	for (float Dist = 0.0f; Dist < SplineLength; Dist += SampleInterval)
+	for (float Dist = 0.0f; Dist < Length; Dist += SampleInterval)
 	{
 		const float Curvature = GetCurvatureAtDistance(Dist, CurvatureSampleRange);
 		MaxTrackCurvature = FMath::Max(MaxTrackCurvature, Curvature);
@@ -75,15 +79,17 @@ void ATurboRacingSpline::CalculateMaxCurvature()
 
 float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRange) const
 {
-	if (!Spline) return 0.0f;
+	if (!RacingLineSpline) return 0.0f;
 
 	const float HalfRange = SampleRange * 0.5f;
 
 	const float DistA = WrapDistance(Distance - HalfRange);
 	const float DistB = WrapDistance(Distance + HalfRange);
 
-	const FVector TangentA = Spline->GetDirectionAtDistanceAlongSpline(DistA, ESplineCoordinateSpace::World);
-	const FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(DistB, ESplineCoordinateSpace::World);
+	const FVector TangentA = RacingLineSpline->GetDirectionAtDistanceAlongSpline(
+		DistA, ESplineCoordinateSpace::World);
+	const FVector TangentB = RacingLineSpline->GetDirectionAtDistanceAlongSpline(
+		DistB, ESplineCoordinateSpace::World);
 
 	const float Dot = FVector::DotProduct(TangentA, TangentB);
 	const float Angle = FMath::Acos(FMath::Clamp(Dot, -1.0f, 1.0f));
@@ -93,15 +99,15 @@ float ATurboRacingSpline::GetCurvatureAtDistance(float Distance, float SampleRan
 
 float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance) const
 {
-	if (!Spline) return 0.0f;
+	if (!RacingLineSpline) return 0.0f;
 
 	const float HalfRange = InLookaheadDistance * 0.5f;
 
-	const FVector TangentA = Spline->GetDirectionAtDistanceAlongSpline(
+	const FVector TangentA = RacingLineSpline->GetDirectionAtDistanceAlongSpline(
 		WrapDistance(Distance - HalfRange), ESplineCoordinateSpace::World);
-	const FVector TangentB = Spline->GetDirectionAtDistanceAlongSpline(
+	const FVector TangentB = RacingLineSpline->GetDirectionAtDistanceAlongSpline(
 		WrapDistance(Distance + HalfRange), ESplineCoordinateSpace::World);
-	const FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(
+	const FVector Up = RacingLineSpline->GetUpVectorAtDistanceAlongSpline(
 		WrapDistance(Distance), ESplineCoordinateSpace::World);
 
 	const FVector Cross = FVector::CrossProduct(TangentA, TangentB);
@@ -121,19 +127,19 @@ float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance)
 
 float ATurboRacingSpline::WrapDistance(float Distance) const
 {
-	if (!Spline) return Distance;
+	if (!RacingLineSpline) return Distance;
 
-	const float SplineLength = Spline->GetSplineLength();
-	if (SplineLength <= KINDA_SMALL_NUMBER) return 0.0f;
+	const float Length = RacingLineSpline->GetSplineLength();
+	if (Length <= KINDA_SMALL_NUMBER) return 0.0f;
 
-	if (Spline->IsClosedLoop())
+	if (bClosedLoop)
 	{
-		Distance = FMath::Fmod(Distance, SplineLength);
-		if (Distance < 0.0f) Distance += SplineLength;
+		Distance = FMath::Fmod(Distance, Length);
+		if (Distance < 0.0f) Distance += Length;
 	}
 	else
 	{
-		Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);
+		Distance = FMath::Clamp(Distance, 0.0f, Length - KINDA_SMALL_NUMBER);
 	}
 
 	return Distance;
@@ -145,26 +151,24 @@ float ATurboRacingSpline::WrapDistance(float Distance) const
 
 void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
 {
-	if (!Spline || !World) return;
+	if (!RacingLineSpline || !World) return;
 
-	const float SplineLength = Spline->GetSplineLength();
+	const float Length = RacingLineSpline->GetSplineLength();
 	const float DrawInterval = 100.0f;
-	const float DebugHeight = 20.0f;
+	const float DebugHeight = 2.0f;
 
 	FVector PreviousPoint = FVector::ZeroVector;
 	bool bFirstPoint = true;
 
-	for (float Dist = 0.0f; Dist < SplineLength; Dist += DrawInterval)
+	for (float Dist = 0.0f; Dist < Length; Dist += DrawInterval)
 	{
 		const FVector Point = GetLocationAtDistance(Dist) + FVector(0.0f, 0.0f, DebugHeight);
 
-		// Color by curvature
 		const float Curvature = GetCurvatureAtDistance(Dist, CurvatureSampleRange);
 		const float NormalizedCurvature = (MaxTrackCurvature > KINDA_SMALL_NUMBER)
 			? FMath::Clamp(Curvature / MaxTrackCurvature, 0.0f, 1.0f)
 			: 0.0f;
 
-		// Green = straight, Yellow = mid curve, Red = tight curve
 		const FColor PointColor = FColor::MakeRedToGreenColorFromScalar(1.0f - NormalizedCurvature);
 
 		DrawDebugPoint(World, Point, 8.0f, PointColor, false, 0.0f);
@@ -181,6 +185,6 @@ void ATurboRacingSpline::DrawDebugRacingLine(UWorld* World) const
 	if (IsClosedLoop() && !bFirstPoint)
 	{
 		const FVector FirstPoint = GetLocationAtDistance(0.0f) + FVector(0.0f, 0.0f, DebugHeight);
-		DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Green, false, 0.0f, 0, 2.0f);
+		DrawDebugLine(World, PreviousPoint, FirstPoint, FColor::Green, false, 0.0f, 0, 1.0f);
 	}
 }
