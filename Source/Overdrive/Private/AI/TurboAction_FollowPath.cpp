@@ -36,9 +36,8 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 	{
 		Vehicle = AIController->GetVehicle();
 		RacingSplineActor = AIController->GetRacingSplineActor();
+		SpeedProfile.Calculate(RacingSplineActor.Get(), Vehicle.Get());
 	}
-
-	SpeedProfile.Calculate(RacingSplineActor.Get(), Vehicle.Get());
 
 	SteeringPID.Reset();
 	SpeedPID.Reset();
