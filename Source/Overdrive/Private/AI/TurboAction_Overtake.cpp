@@ -13,8 +13,8 @@ UTurboAction_Overtake::UTurboAction_Overtake()
 	ActionName = TEXT("Overtake");
 	ActionTag = TurboGameplayTags::Action_Overtake;
 
-	// Block itself - prevent double-pushing
 	BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
+	BlocksTags.AddTag(TurboGameplayTags::Action_FollowSafe);
 }
 
 // =============================================================================
