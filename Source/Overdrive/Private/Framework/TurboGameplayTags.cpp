@@ -10,6 +10,7 @@ namespace TurboGameplayTags
 
 	// Actions
 	UE_DEFINE_GAMEPLAY_TAG(Action_FollowPath, "Action.FollowPath");
+	UE_DEFINE_GAMEPLAY_TAG(Action_FollowSafe, "Action.FollowSafe");
 	UE_DEFINE_GAMEPLAY_TAG(Action_Overtake, "Action.Overtake");
 	UE_DEFINE_GAMEPLAY_TAG(Action_Yield, "Action.Yield");
 

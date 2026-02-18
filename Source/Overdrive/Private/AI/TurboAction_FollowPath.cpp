@@ -126,10 +126,7 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 
 	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-
-	const float ProfileSpeed = GetTargetSpeedAtDistance(CurrentDistance);
-	const float FollowLimit = GetFollowSpeedLimit();
-	const float TargetSpeedCms = FMath::Min(ProfileSpeed, FollowLimit);
+	const float TargetSpeedCms = GetTargetSpeedAtDistance(CurrentDistance);
 
 	const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
 
@@ -157,34 +154,6 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 	Vehicle->SetThrottleInput(FinalThrottle);
 	Vehicle->SetBrakeInput(FinalBrake);
 	Vehicle->SetHandbrakeInput(false);
-}
-
-float UTurboAction_FollowPath::GetFollowSpeedLimit() const
-{
-	if (!AIController.IsValid()) return MAX_FLT;
-
-	const FTurboDecisionContext& Context = AIController->GetDecisionContext();
-
-	if (!Context.bVehicleAhead) return MAX_FLT;
-
-	const float Distance = Context.DistanceToVehicleAhead;
-	const float TheirSpeed = Context.SpeedOfVehicleAheadCms;
-
-	if (Distance > FollowReactionDistance) return MAX_FLT;
-
-	if (Distance < FollowEmergencyDistance)
-	{
-		return TheirSpeed * 0.5f;
-	}
-
-	const float T = FMath::Clamp(
-		(FollowReactionDistance - Distance) / (FollowReactionDistance - FollowMinDistance),
-		0.0f, 1.0f);
-
-	const float MatchSpeed = TheirSpeed - FollowSpeedMarginCms;
-	const float OurMaxSpeed = Vehicle.IsValid() ? Vehicle->MaxSpeedCms : MAX_FLT;
-
-	return FMath::Lerp(OurMaxSpeed, MatchSpeed, T);
 }
 
 float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const

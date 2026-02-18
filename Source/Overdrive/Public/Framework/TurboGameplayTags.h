@@ -9,6 +9,7 @@ namespace TurboGameplayTags
 
 	// Actions
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_FollowPath);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_FollowSafe);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Overtake);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Action_Yield);
 
