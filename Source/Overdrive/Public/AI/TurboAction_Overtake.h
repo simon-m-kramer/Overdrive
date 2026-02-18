@@ -34,7 +34,7 @@ public:
 
 	/** Minimum straight distance ahead needed to attempt a pass (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float MinStraightNeeded = 5000.0f;
+	float MinStraightNeeded = 2000.0f;
 
 	// =========================================================================
 	// OVERTAKE BEHAVIOR
