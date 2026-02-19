@@ -20,8 +20,10 @@ public class Overdrive : ModuleRules
 			"Slate",
 			"Bifrost",
 			"Landscape",
-			"GameplayTags"
-		});
+			"GameplayTags",
+            "CommonUI",
+			"CommonInput"
+        });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Overdrive",

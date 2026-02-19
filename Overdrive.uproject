@@ -13,7 +13,8 @@
 				"UMG",
 				"ChaosVehicles",
 				"AIModule",
-				"Bifrost"
+				"Bifrost",
+				"CommonUI"
 			]
 		}
 	],
