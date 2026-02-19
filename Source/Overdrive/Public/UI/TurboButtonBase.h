@@ -26,4 +26,11 @@ protected:
 	TObjectPtr<UCommonTextBlock> ButtonText;
 
 	virtual void SynchronizeProperties() override;
+	virtual void NativeOnCurrentTextStyleChanged() override;
+	virtual void NativeOnHovered() override;
+	virtual void NativeOnUnhovered() override;
+
+private:
+
+
 };
