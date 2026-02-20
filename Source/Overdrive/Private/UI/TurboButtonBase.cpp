@@ -5,22 +5,36 @@
 #include "CommonTextBlock.h"
 #include "Components/Image.h"
 
+void UTurboButtonBase::SetButtonText(FText InText)
+{
+    ButtonLabel = InText;
+    if (ButtonText)
+    {
+        ButtonText->SetText(InText);
+    }
+}
+
 void UTurboButtonBase::SynchronizeProperties()
 {
     Super::SynchronizeProperties();
 
-    if (ButtonText && !ButtonLabel.IsEmpty())
-    {
-        ButtonText->SetText(ButtonLabel);
-    }
-
+    SetButtonText(ButtonLabel);
 }
 
 void UTurboButtonBase::NativeOnCurrentTextStyleChanged()
 {
     Super::NativeOnCurrentTextStyleChanged();
-    // Common UI calls this when button state changes — 
-    // good place to update visuals if you use CommonUI styles later
+
+    // This links the text style to the ButtonText
+    if (ButtonText)
+    {
+        TSubclassOf<UCommonTextStyle> CurrentStyle = GetCurrentTextStyleClass();
+
+        if (CurrentStyle)
+        {
+            ButtonText->SetStyle(CurrentStyle);
+        }
+    }
 }
 
 void UTurboButtonBase::NativeOnHovered()

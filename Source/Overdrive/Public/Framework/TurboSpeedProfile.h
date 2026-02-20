@@ -27,11 +27,11 @@ struct OVERDRIVE_API FTurboSpeedProfile
 
 	/** Safety margin — multiplier on cornering speed (< 1.0 = cautious, > 1.0 = aggressive) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed Profile", meta = (ClampMin = "0.5", ClampMax = "1.5"))
-	float CorneringSpeedSafetyFactor = 1.3f;
+	float CorneringSpeedSafetyFactor = 1.2f;
 
 	/** Acceleration boost when exiting corners (curvature decreasing) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed Profile", meta = (ClampMin = "1.0", ClampMax = "2.0"))
-	float ExitAccelerationBoost = 2.0f;
+	float ExitAccelerationBoost = 1.5f;
 
 	// =========================================================================
 	// METHODS

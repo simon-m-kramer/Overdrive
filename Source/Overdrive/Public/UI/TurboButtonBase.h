@@ -18,6 +18,9 @@ class OVERDRIVE_API UTurboButtonBase : public UCommonButtonBase
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable, Category = "Button")
+	void SetButtonText(FText InText);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button")
 	FText ButtonLabel;
 
