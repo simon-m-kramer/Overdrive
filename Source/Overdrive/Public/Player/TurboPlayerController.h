@@ -8,6 +8,7 @@
 
 class UInputMappingContext;
 class ATurboPlayerVehicle;
+class UTurboHUDWidget;
 
 UCLASS()
 class OVERDRIVE_API ATurboPlayerController : public APlayerController
@@ -18,8 +19,14 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     TArray<TObjectPtr<UInputMappingContext>> InputMappingContexts;
 
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<UTurboHUDWidget> HUDWidgetClass;
+
     UPROPERTY()
     TObjectPtr<ATurboPlayerVehicle> PlayerVehicle;
+
+    UPROPERTY()
+    TObjectPtr<UTurboHUDWidget> HUDWidget;
 
     virtual void BeginPlay() override;
     virtual void OnPossess(APawn* InPawn) override;

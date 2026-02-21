@@ -95,6 +95,21 @@ float ATurboVehicle::GetForwardSpeed() const
     return VehicleMovement->GetForwardSpeed();
 }
 
+int32 ATurboVehicle::GetCurrentGear() const
+{
+    return VehicleMovement->GetCurrentGear();
+}
+
+float ATurboVehicle::GetEngineRPM() const
+{
+    return VehicleMovement->GetEngineRotationSpeed();
+}
+
+float ATurboVehicle::GetMaxEngineRPM() const
+{
+    return VehicleMovement->EngineSetup.MaxRPM;
+}
+
 void ATurboVehicle::SetupWheels()
 {
     VehicleMovement->bLegacyWheelFrictionPosition = true;

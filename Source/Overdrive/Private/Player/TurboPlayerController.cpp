@@ -3,6 +3,7 @@
 
 #include "Player/TurboPlayerController.h"
 #include "Player/TurboPlayerVehicle.h"
+#include "UI/TurboHUDWidget.h"
 #include "EnhancedInputSubsystems.h"
 
 void ATurboPlayerController::BeginPlay()
@@ -19,11 +20,19 @@ void ATurboPlayerController::BeginPlay()
             }
         }
     }
+
+    if (HUDWidgetClass && IsLocalController())
+    {
+        HUDWidget = CreateWidget<UTurboHUDWidget>(this, HUDWidgetClass);
+        if (HUDWidget)
+        {
+            HUDWidget->AddToViewport();
+        }
+    }
 }
 
 void ATurboPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
-
     PlayerVehicle = Cast<ATurboPlayerVehicle>(InPawn);
 }

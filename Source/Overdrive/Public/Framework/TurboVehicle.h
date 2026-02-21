@@ -40,6 +40,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetForwardSpeed() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	int32 GetCurrentGear() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	float GetEngineRPM() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Vehicle")
+	float GetMaxEngineRPM() const;
+
 	// =========================================================================
 	// PERFORMANCE STATS
 	// =========================================================================
