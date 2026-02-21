@@ -10,7 +10,6 @@ class UStaticMeshComponent;
 class UBoxComponent;
 
 
-
 UCLASS()
 class OVERDRIVE_API ATurboVehicle : public AWheeledVehiclePawn
 {
@@ -48,6 +47,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetMaxEngineRPM() const;
+
+
 
 	// =========================================================================
 	// PERFORMANCE STATS
@@ -98,6 +99,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> WheelRR;
+
+
 
 
 

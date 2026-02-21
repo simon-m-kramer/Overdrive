@@ -85,6 +85,7 @@ void ATurboVehicle::SetHandbrakeInput(bool bEngaged)
     VehicleMovement->SetHandbrakeInput(bEngaged);
 }
 
+
 float ATurboVehicle::GetSpeedKmh() const
 {
     return FMath::Abs(VehicleMovement->GetForwardSpeed()) * 0.036f;
@@ -109,6 +110,7 @@ float ATurboVehicle::GetMaxEngineRPM() const
 {
     return VehicleMovement->EngineSetup.MaxRPM;
 }
+
 
 void ATurboVehicle::SetupWheels()
 {

@@ -19,6 +19,9 @@ class OVERDRIVE_API ATurboGameMode : public AGameModeBase
 public:
 	ATurboGameMode();
 
+	UFUNCTION(BlueprintPure, Category = "Race")
+	UTurboRaceManager* GetRaceManager() const { return RaceManager; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Race")
 	TObjectPtr<UTurboRaceManager> RaceManager;

@@ -87,10 +87,10 @@ public:
     // =========================================================================
 
     UFUNCTION(BlueprintCallable, Category = "Spline")
-    void FindRacingSpline();  // Called on BeginPlay
+    void FindRacingSpline();
 
     UFUNCTION(BlueprintCallable, Category = "Spline")
-    void UpdateSplineDistance();  // Called every tick
+    void UpdateSplineDistance();
 
     UFUNCTION(BlueprintPure, Category = "Spline")
     ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
@@ -106,25 +106,6 @@ public:
     ATurboAIVehicle* GetVehicle() const { return Vehicle; }
 
     // =========================================================================
-    // LAP TIMING
-    // =========================================================================
-
-    UFUNCTION(BlueprintPure, Category = "Lap Timing")
-    float GetCurrentLapTime() const { return CurrentLapTime; }
-
-    UFUNCTION(BlueprintPure, Category = "Lap Timing")
-    float GetLastLapTime() const { return LastLapTime; }
-
-    UFUNCTION(BlueprintPure, Category = "Lap Timing")
-    float GetBestLapTime() const { return BestLapTime; }
-
-    UFUNCTION(BlueprintPure, Category = "Lap Timing")
-    int32 GetLapCount() const { return LapCount; }
-
-    UFUNCTION(BlueprintCallable, Category = "Lap Timing")
-    void ResetLapTiming();
-
-    // =========================================================================
     // DECISION MAKING
     // =========================================================================
 
@@ -134,12 +115,6 @@ public:
     // =========================================================================
     // DEBUG
     // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bDrawDebug = false;
-
-    UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowLapTiming = false;
 
     UPROPERTY(EditAnywhere, Category = "Debug")
     bool bShowDecisionContext = false;
@@ -175,15 +150,5 @@ private:
     // Spline
     float CurrentSplineDistance = 0.0f;
     float PreviousSplineDistance = 0.0f;
-
-    // Lap timing
-    void UpdateLapTiming(float DeltaTime);
-    FString FormatLapTime(float TimeSeconds) const;
-    float CurrentLapTime = 0.0f;
-    float LastLapTime = 0.0f;
-    float BestLapTime = 0.0f;
-    int32 LapCount = 0;
-    bool bLapTimingStarted = false;
-
 
 };
