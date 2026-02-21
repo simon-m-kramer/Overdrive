@@ -81,7 +81,7 @@ public:
     // =========================================================================
 
     UPROPERTY(EditAnywhere, Category = "Race|Debug")
-    bool bDrawDebug = false;
+    bool bDrawDebug = true;
 
 private:
     void CollectVehicles();

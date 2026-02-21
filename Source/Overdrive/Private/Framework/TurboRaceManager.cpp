@@ -16,6 +16,7 @@ void UTurboRaceManager::BeginPlay()
 {
     Super::BeginPlay();
 
+    // TO DO: Change that to find by tag
     // Find the racing spline
     for (TActorIterator<ATurboRacingSpline> It(GetWorld()); It; ++It)
     {
@@ -67,7 +68,7 @@ void UTurboRaceManager::CollectVehicles()
 
         FRaceEntry Entry;
         Entry.Vehicle = Vehicle;
-        Entry.CurrentLap = 1;
+        Entry.CurrentLap = 0;  // simple fix to have it count properly
         Entry.Placement = Entries.Num() + 1;
 
         // Initialize spline distance
