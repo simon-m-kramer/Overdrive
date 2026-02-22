@@ -10,6 +10,9 @@ class ATurboVehicle;
 class ATurboRacingSpline;
 class USplineComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVehicleFinished, ATurboVehicle*, Vehicle);
+
+
 USTRUCT(BlueprintType)
 struct FRaceEntry
 {
@@ -54,12 +57,15 @@ public:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UPROPERTY(BlueprintAssignable, Category = "Race")
+	FOnVehicleFinished OnVehicleFinished;
+
 	// =========================================================================
 	// CONFIGURATION
 	// =========================================================================
 
 	UPROPERTY(EditAnywhere, Category = "Race")
-	int32 TotalLaps = 3;
+	int32 TotalLaps = 1;
 
 	// =========================================================================
 	// QUERIES

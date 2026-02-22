@@ -161,6 +161,11 @@ void UTurboRaceManager::DetectLapCompletion(FRaceEntry& Entry, float InSplineLen
 		Entry.bLapTimingStarted = true;
 		Entry.CurrentLap++;
 
+		if (Entry.CurrentLap > TotalLaps && Entry.Vehicle.IsValid())
+		{
+			OnVehicleFinished.Broadcast(Entry.Vehicle.Get());
+		}
+
 		if (bDrawDebug)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("RaceManager: %s completed lap %d"),
