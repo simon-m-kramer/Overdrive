@@ -11,7 +11,6 @@
 #include "Framework/TurboRaceManager.h"
 #include "Framework/TurboGameMode.h"
 #include "AI/TurboAIController.h"
-#include "ChaosWheeledVehicleMovementComponent.h"
 
 
 void ATurboPlayerController::BeginPlay()
@@ -129,6 +128,12 @@ void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
         ResultWidget->AddToViewport(100);
         ResultWidget->ActivateWidget();
     }
+
+    // Hide Player HUD
+    if (HUDWidget)
+    {
+        HUDWidget->SetVisibility(ESlateVisibility::Collapsed);
+    }
 }
 
 void ATurboPlayerController::HandOffToAI()
@@ -142,12 +147,6 @@ void ATurboPlayerController::HandOffToAI()
 
     // Disable auto-management so UnPossess doesn't snap the camera away
     this->bAutoManageActiveCameraTarget = false;
-
-    //if (PlayerVehicle->GetVehicleMovementComponent())
-    //{
-    //    PlayerVehicle->GetVehicleMovementComponent()->SetThrottleInput(1.0f);
-    //    PlayerVehicle->GetVehicleMovementComponent()->SetBrakeInput(0.0f);
-    //}
 
     UnPossess();
 
