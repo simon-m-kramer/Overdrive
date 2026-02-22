@@ -8,6 +8,7 @@
 class UChaosWheeledVehicleMovementComponent;
 class UStaticMeshComponent;
 class UBoxComponent;
+class UTurboVehicleDetectionComponent;
 
 
 UCLASS()
@@ -48,7 +49,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Vehicle")
 	float GetMaxEngineRPM() const;
 
+	UFUNCTION(BlueprintPure, Category = "Vehicle")
+	UTurboVehicleDetectionComponent* GetDetectionComponent() const { return DetectionComponent; }
 
+	UFUNCTION(BlueprintPure, Category = "Vehicle")
+	UChaosWheeledVehicleMovementComponent* GetVehicleMovementComponent() const { return VehicleMovement; }
 
 	// =========================================================================
 	// PERFORMANCE STATS
@@ -70,6 +75,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
 	float AccelerationCms2 = 800.0f;
 
+
 protected:
 	UPROPERTY()
 	TObjectPtr<UChaosWheeledVehicleMovementComponent> VehicleMovement;
@@ -81,6 +87,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
 	TObjectPtr<UBoxComponent> DetectionBox;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<UTurboVehicleDetectionComponent> DetectionComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStaticMeshComponent> ChassisMesh;

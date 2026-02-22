@@ -7,7 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
-#include "AI/TurboAIVehicle.h"
+#include "Framework/TurboVehicle.h"
 #include "AI/TurboAction_FollowPath.h"
 #include "Components/SplineComponent.h"
 #include "AI/TurboVehicleDetectionComponent.h"
@@ -28,7 +28,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
 
     // Initialize spline and vehicle
     FindRacingSpline();
-    Vehicle = Cast<ATurboAIVehicle>(InPawn);
+    Vehicle = Cast<ATurboVehicle>(InPawn);
 
     // Initialize CurrentSplineDistance and PreviousSplineDistance
     if (Vehicle && RacingSplineActor)
@@ -156,10 +156,8 @@ void ATurboAIController::UpdateDecisionContext()
 
     for (float Look = ScanStep; Look < ScanMax; Look += ScanStep)
     {
-        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(
-            CurrentSplineDistance + Look, 400.0f);
-        const float Normalized = Curvature / FMath::Max(
-            RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
+        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance + Look, 400.0f);
+        const float Normalized = Curvature / FMath::Max(RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
 
         if (Normalized > RacingSplineActor->GetMinCurvatureThreshold())
         {

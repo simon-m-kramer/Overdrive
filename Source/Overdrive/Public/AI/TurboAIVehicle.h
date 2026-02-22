@@ -6,7 +6,6 @@
 #include "Framework/TurboVehicle.h"
 #include "TurboAIVehicle.generated.h"
 
-class UTurboVehicleDetectionComponent;
 
 /**
  * 
@@ -20,13 +19,7 @@ class OVERDRIVE_API ATurboAIVehicle : public ATurboVehicle
 public:
 	ATurboAIVehicle();
 
-	UFUNCTION(BlueprintPure, Category = "Vehicle")
-	UTurboVehicleDetectionComponent* GetDetectionComponent() const { return DetectionComponent; }
-
 protected:
 	virtual void PossessedBy(AController* NewController) override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
-	TObjectPtr<UTurboVehicleDetectionComponent> DetectionComponent;
 
 };

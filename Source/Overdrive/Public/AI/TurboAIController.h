@@ -9,7 +9,7 @@
 #include "TurboAIController.generated.h"
 
 class ATurboRacingSpline;
-class ATurboAIVehicle;
+class ATurboVehicle;
 class UTurboActionStack;
 class UTurboActionBase;
 class UTurboAction_FollowPath;
@@ -103,7 +103,7 @@ public:
     // =========================================================================
 
     UFUNCTION(BlueprintPure, Category = "Vehicle")
-    ATurboAIVehicle* GetVehicle() const { return Vehicle; }
+    ATurboVehicle* GetVehicle() const { return Vehicle; }
 
     // =========================================================================
     // DECISION MAKING
@@ -140,7 +140,7 @@ protected:
     TObjectPtr<ATurboRacingSpline> RacingSplineActor;  // TODO: Rename this to RacingSpline
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
-    TObjectPtr<ATurboAIVehicle> Vehicle;
+    TObjectPtr<ATurboVehicle> Vehicle;
 
 private:
     // Decision making

@@ -11,6 +11,8 @@
 #include "Framework/TurboRaceManager.h"
 #include "Framework/TurboGameMode.h"
 #include "AI/TurboAIController.h"
+#include "ChaosWheeledVehicleMovementComponent.h"
+
 
 void ATurboPlayerController::BeginPlay()
 {
@@ -98,11 +100,6 @@ void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
         return;
     }
 
-    if (!RaceResultClass || !IsLocalController())
-    {
-        return;
-    }
-
     ATurboGameMode* GameMode = Cast<ATurboGameMode>(GetWorld()->GetAuthGameMode());
     if (!GameMode || !GameMode->GetRaceManager())
     {
@@ -111,7 +108,14 @@ void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
 
     UTurboRaceManager* RaceManager = GameMode->GetRaceManager();
 
-    // Hand off to AI before showing results
+    // Unbind so it doesn't fire again
+    RaceManager->OnVehicleFinished.RemoveDynamic(this, &ATurboPlayerController::OnVehicleFinished);
+
+    if (!RaceResultClass || !IsLocalController())
+    {
+        return;
+    }
+
     HandOffToAI();
 
     UTurboRaceResultWidget* ResultWidget = CreateWidget<UTurboRaceResultWidget>(this, RaceResultClass);
@@ -138,6 +142,12 @@ void ATurboPlayerController::HandOffToAI()
 
     // Disable auto-management so UnPossess doesn't snap the camera away
     this->bAutoManageActiveCameraTarget = false;
+
+    //if (PlayerVehicle->GetVehicleMovementComponent())
+    //{
+    //    PlayerVehicle->GetVehicleMovementComponent()->SetThrottleInput(1.0f);
+    //    PlayerVehicle->GetVehicleMovementComponent()->SetBrakeInput(0.0f);
+    //}
 
     UnPossess();
 

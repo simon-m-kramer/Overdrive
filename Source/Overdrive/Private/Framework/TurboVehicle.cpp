@@ -6,6 +6,8 @@
 #include "Starter/OverdriveSportsWheelFront.h"
 #include "Starter/OverdriveSportsWheelRear.h"
 #include "Components/BoxComponent.h"
+#include "AI/TurboVehicleDetectionComponent.h"
+
 
 ATurboVehicle::ATurboVehicle()
 {
@@ -62,6 +64,10 @@ ATurboVehicle::ATurboVehicle()
     DetectionBox->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
     DetectionBox->SetGenerateOverlapEvents(false);
     DetectionBox->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+
+    // Detection Component
+    DetectionComponent = CreateDefaultSubobject<UTurboVehicleDetectionComponent>(TEXT("DetectionComponent"));
+
 
 }
 
