@@ -10,11 +10,13 @@
 #include "UI/TurboRaceResultWidget.h"
 #include "Framework/TurboRaceManager.h"
 #include "Framework/TurboGameMode.h"
+#include "AI/TurboAIController.h"
 
 void ATurboPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
+    // Setup Input Mapping Context
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
     {
         for (UInputMappingContext* Context : InputMappingContexts)
@@ -26,6 +28,11 @@ void ATurboPlayerController::BeginPlay()
         }
     }
 
+    // Mouse Settings
+    SetShowMouseCursor(false);
+    SetInputMode(FInputModeGameOnly());
+
+    // Create Pause Menu Instance
     if (HUDWidgetClass && IsLocalController())
     {
         HUDWidget = CreateWidget<UTurboHUDWidget>(this, HUDWidgetClass);
@@ -35,6 +42,7 @@ void ATurboPlayerController::BeginPlay()
         }
     }
 
+    // Bind Race Result Screen to Race Manager Delegate
     if (ATurboGameMode* GameMode = Cast<ATurboGameMode>(GetWorld()->GetAuthGameMode()))
     {
         if (UTurboRaceManager* RaceManager = GameMode->GetRaceManager())
@@ -103,6 +111,9 @@ void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
 
     UTurboRaceManager* RaceManager = GameMode->GetRaceManager();
 
+    // Hand off to AI before showing results
+    HandOffToAI();
+
     UTurboRaceResultWidget* ResultWidget = CreateWidget<UTurboRaceResultWidget>(this, RaceResultClass);
     if (ResultWidget)
     {
@@ -114,4 +125,31 @@ void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
         ResultWidget->AddToViewport(100);
         ResultWidget->ActivateWidget();
     }
+}
+
+void ATurboPlayerController::HandOffToAI()
+{
+    if (!PlayerVehicle || !PostRaceAIClass)
+    {
+        return;
+    }
+
+    APawn* VehiclePawn = PlayerVehicle;
+
+    // Disable auto-management so UnPossess doesn't snap the camera away
+    this->bAutoManageActiveCameraTarget = false;
+
+    UnPossess();
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    ATurboAIController* AIController = GetWorld()->SpawnActor<ATurboAIController>(PostRaceAIClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+    if (AIController)
+    {
+        AIController->Possess(VehiclePawn);
+    }
+
+    // Keep the camera following the vehicle
+    SetViewTargetWithBlend(VehiclePawn, 0.0f);
 }

@@ -38,7 +38,7 @@ void UTurboRaceResultWidget::SetResult(int32 Position, int32 TotalEntries, float
 {
 	if (Txt_Position)
 	{
-		Txt_Position->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Position, TotalEntries)));
+		Txt_Position->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Position, TotalEntries)));
 	}
 
 	if (Txt_BestLapTime)

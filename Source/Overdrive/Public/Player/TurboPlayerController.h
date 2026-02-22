@@ -12,6 +12,8 @@ class UTurboHUDWidget;
 class UTurboPauseMenuWidget;
 class UInputAction;
 class UTurboRaceResultWidget;
+class ATurboAIController;
+
 
 UCLASS()
 class OVERDRIVE_API ATurboPlayerController : public APlayerController
@@ -22,6 +24,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     TArray<TObjectPtr<UInputMappingContext>> InputMappingContexts;
 
+    UPROPERTY(EditAnywhere, Category = "Input")
+    TObjectPtr<UInputAction> PauseAction;
+
     UPROPERTY(EditAnywhere, Category = "UI")
     TSubclassOf<UTurboHUDWidget> HUDWidgetClass;
 
@@ -31,8 +36,10 @@ protected:
     UPROPERTY(EditAnywhere, Category = "UI")
     TSubclassOf<UTurboRaceResultWidget> RaceResultClass;
 
-    UPROPERTY(EditAnywhere, Category = "Input")
-    TObjectPtr<UInputAction> PauseAction;
+    UPROPERTY(EditAnywhere, Category = "AI")
+    TSubclassOf<ATurboAIController> PostRaceAIClass;
+
+
 
     UPROPERTY()
     TObjectPtr<ATurboPlayerVehicle> PlayerVehicle;
@@ -47,8 +54,8 @@ protected:
     virtual void OnPossess(APawn* InPawn) override;
     virtual void SetupInputComponent() override;
 
-    UFUNCTION()
     void TogglePauseMenu();
+    void HandOffToAI();
 
     UFUNCTION()
     void OnVehicleFinished(ATurboVehicle* Vehicle);
