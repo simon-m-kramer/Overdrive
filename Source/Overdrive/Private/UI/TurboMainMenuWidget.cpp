@@ -11,9 +11,9 @@ void UTurboMainMenuWidget::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	if (StartButton)
+	if (Btn_Start)
 	{
-		StartButton->OnClicked().AddUObject(this, &ThisClass::OnStartClicked);
+		Btn_Start->OnClicked().AddUObject(this, &ThisClass::OnStartClicked);
 	}
 
 	if (Btn_LevelSelect)
@@ -21,17 +21,17 @@ void UTurboMainMenuWidget::NativeOnActivated()
 		Btn_LevelSelect->OnClicked().AddUObject(this, &ThisClass::OnLevelSelectClicked);
 	}
 
-	if (QuitButton)
+	if (Btn_Quit)
 	{
-		QuitButton->OnClicked().AddUObject(this, &ThisClass::OnQuitClicked);
+		Btn_Quit->OnClicked().AddUObject(this, &ThisClass::OnQuitClicked);
 	}
 }
 
 void UTurboMainMenuWidget::NativeOnDeactivated()
 {
-	if (StartButton)
+	if (Btn_Start)
 	{
-		StartButton->OnClicked().RemoveAll(this);
+		Btn_Start->OnClicked().RemoveAll(this);
 	}
 
 	if (Btn_LevelSelect)
@@ -39,9 +39,9 @@ void UTurboMainMenuWidget::NativeOnDeactivated()
 		Btn_LevelSelect->OnClicked().RemoveAll(this);
 	}
 
-	if (QuitButton)
+	if (Btn_Quit)
 	{
-		QuitButton->OnClicked().RemoveAll(this);
+		Btn_Quit->OnClicked().RemoveAll(this);
 	}
 
 	Super::NativeOnDeactivated();

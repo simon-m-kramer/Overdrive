@@ -145,18 +145,33 @@ void ATurboPlayerController::HandOffToAI()
 
     APawn* VehiclePawn = PlayerVehicle;
 
+    // Cache the vehicle's current velocity before unpossessing
+    FVector SavedVelocity = VehiclePawn->GetVelocity();
+    FVector SavedAngularVelocity = FVector::ZeroVector;
+    if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(VehiclePawn->GetRootComponent()))
+    {
+        SavedAngularVelocity = PrimComp->GetPhysicsAngularVelocityInDegrees();
+    }
+
     // Disable auto-management so UnPossess doesn't snap the camera away
     this->bAutoManageActiveCameraTarget = false;
 
     UnPossess();
 
+    // Spawn new AI controller and have it possess the car
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
     ATurboAIController* AIController = GetWorld()->SpawnActor<ATurboAIController>(PostRaceAIClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
     if (AIController)
     {
         AIController->Possess(VehiclePawn);
+    }
+
+    // Restore the velocity that got wiped during the possession swap
+    if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(VehiclePawn->GetRootComponent()))
+    {
+        PrimComp->SetPhysicsLinearVelocity(SavedVelocity);
+        PrimComp->SetPhysicsAngularVelocityInDegrees(SavedAngularVelocity);
     }
 
     // Keep the camera following the vehicle

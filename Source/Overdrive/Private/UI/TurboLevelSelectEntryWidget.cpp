@@ -4,6 +4,7 @@
 #include "UI/TurboLevelSelectEntryWidget.h"
 #include "CommonTextBlock.h"
 #include "Components/Image.h"
+#include "Components/Border.h"
 #include "Engine/Texture2D.h"
 
 void UTurboLevelSelectEntryWidget::SetEntry(const FTurboLevelEntry& InEntry)
@@ -24,3 +25,28 @@ void UTurboLevelSelectEntryWidget::SetEntry(const FTurboLevelEntry& InEntry)
 		}
 	}
 }
+
+void UTurboLevelSelectEntryWidget::NativeOnSelected(bool bBroadcast)
+{
+	Super::NativeOnSelected(bBroadcast);
+
+}
+
+void UTurboLevelSelectEntryWidget::NativeOnDeselected(bool bBroadcast)
+{
+	Super::NativeOnDeselected(bBroadcast);
+
+}
+
+void UTurboLevelSelectEntryWidget::NativeOnHovered()
+{
+	Super::NativeOnHovered();
+
+}
+
+void UTurboLevelSelectEntryWidget::NativeOnUnhovered()
+{
+	Super::NativeOnUnhovered();
+
+}
+

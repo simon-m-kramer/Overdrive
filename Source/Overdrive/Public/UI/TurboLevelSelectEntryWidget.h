@@ -9,6 +9,7 @@
 
 class UCommonTextBlock;
 class UImage;
+class UBorder;
 
 UCLASS()
 class OVERDRIVE_API UTurboLevelSelectEntryWidget : public UCommonButtonBase
@@ -25,6 +26,11 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_Preview;
+
+	virtual void NativeOnSelected(bool bBroadcast) override;
+	virtual void NativeOnDeselected(bool bBroadcast) override;
+	virtual void NativeOnHovered() override;
+	virtual void NativeOnUnhovered() override;
 
 private:
 	FTurboLevelEntry Entry;

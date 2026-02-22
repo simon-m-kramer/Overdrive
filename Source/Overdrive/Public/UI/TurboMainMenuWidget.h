@@ -19,13 +19,13 @@ protected:
 	virtual void NativeOnDeactivated() override;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UCommonButtonBase> StartButton;
+	TObjectPtr<UCommonButtonBase> Btn_Start;
 
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonButtonBase> Btn_LevelSelect;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UCommonButtonBase> QuitButton;
+	TObjectPtr<UCommonButtonBase> Btn_Quit;
 
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UTurboLevelSelectWidget> LevelSelectClass;
