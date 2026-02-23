@@ -20,6 +20,10 @@ class OVERDRIVE_API ATurboPlayerController : public APlayerController
 {
     GENERATED_BODY()
 
+public:
+    UFUNCTION()
+    void TogglePauseMenu();
+
 protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     TArray<TObjectPtr<UInputMappingContext>> InputMappingContexts;
@@ -39,8 +43,6 @@ protected:
     UPROPERTY(EditAnywhere, Category = "AI")
     TSubclassOf<ATurboAIController> PostRaceAIClass;
 
-
-
     UPROPERTY()
     TObjectPtr<ATurboPlayerVehicle> PlayerVehicle;
 
@@ -54,9 +56,10 @@ protected:
     virtual void OnPossess(APawn* InPawn) override;
     virtual void SetupInputComponent() override;
 
-    void TogglePauseMenu();
     void HandOffToAI();
 
     UFUNCTION()
     void OnVehicleFinished(ATurboVehicle* Vehicle);
+
+
 };

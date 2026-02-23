@@ -11,11 +11,14 @@
 #include "Framework/TurboRaceManager.h"
 #include "Framework/TurboGameMode.h"
 #include "AI/TurboAIController.h"
+#include "Kismet/GameplayStatics.h"
 
 
 void ATurboPlayerController::BeginPlay()
 {
     Super::BeginPlay();
+
+    bShouldPerformFullTickWhenPaused = true;
 
     // Setup Input Mapping Context
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
@@ -75,22 +78,41 @@ void ATurboPlayerController::OnPossess(APawn* InPawn)
 
 void ATurboPlayerController::TogglePauseMenu()
 {
+    // Unpausing
     if (PauseMenuWidget && PauseMenuWidget->IsActivated())
     {
         PauseMenuWidget->DeactivateWidget();
+        SetInputMode(FInputModeGameOnly());
+        bShowMouseCursor = false;
+        SetPause(false);
+        PauseMenuWidget->HideMenu();
         return;
     }
 
-    if (PauseMenuClass && IsLocalController())
+    // Pausing
+    if (IsLocalController())
     {
-        PauseMenuWidget = CreateWidget<UTurboPauseMenuWidget>(this, PauseMenuClass);
+        if (!PauseMenuWidget && PauseMenuClass)
+        {
+            PauseMenuWidget = CreateWidget<UTurboPauseMenuWidget>(this, PauseMenuClass);
+            if (PauseMenuWidget)
+            {
+                PauseMenuWidget->AddToViewport(100);
+            }
+        }
+
         if (PauseMenuWidget)
         {
-            PauseMenuWidget->AddToViewport(100); // Above HUD
             PauseMenuWidget->ActivateWidget();
+            SetInputMode(FInputModeGameAndUI());
+            bShowMouseCursor = true;
+            SetPause(true);
+            PauseMenuWidget->ShowMenu();
         }
     }
 }
+
+
 
 void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
 {
@@ -177,3 +199,4 @@ void ATurboPlayerController::HandOffToAI()
     // Keep the camera following the vehicle
     SetViewTargetWithBlend(VehiclePawn, 0.0f);
 }
+
