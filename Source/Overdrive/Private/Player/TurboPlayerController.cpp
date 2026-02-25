@@ -142,12 +142,8 @@ void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
     UTurboRaceResultWidget* ResultWidget = CreateWidget<UTurboRaceResultWidget>(this, RaceResultClass);
     if (ResultWidget)
     {
-        ResultWidget->SetResult(
-            RaceManager->GetPlacement(Vehicle),
-            RaceManager->GetEntryCount(),
-            RaceManager->GetBestLapTime(Vehicle)
-        );
         ResultWidget->AddToViewport(100);
+        ResultWidget->SetResult(RaceManager, Vehicle);
         ResultWidget->ActivateWidget();
     }
 

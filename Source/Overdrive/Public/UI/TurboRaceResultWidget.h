@@ -8,6 +8,10 @@
 
 class UCommonTextBlock;
 class UCommonButtonBase;
+class UVerticalBox;
+class UTurboStandingsEntryWidget;
+class UTurboRaceManager;
+class ATurboVehicle;
 
 UCLASS()
 class OVERDRIVE_API UTurboRaceResultWidget : public UCommonActivatableWidget
@@ -15,20 +19,26 @@ class OVERDRIVE_API UTurboRaceResultWidget : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 public:
-	void SetResult(int32 Position, int32 TotalEntries, float BestLapTime);
+	void SetResult(UTurboRaceManager* RaceManager, ATurboVehicle* PlayerVehicle);
 
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonTextBlock> Txt_Position;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonTextBlock> Txt_BestLapTime;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UVerticalBox> VBox_Results;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonButtonBase> Btn_MainMenu;
+
+	UPROPERTY(EditAnywhere, Category = "Race Result")
+	TSubclassOf<UTurboStandingsEntryWidget> EntryWidgetClass;
 
 private:
 	UFUNCTION()

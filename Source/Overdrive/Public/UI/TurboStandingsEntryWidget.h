@@ -14,7 +14,7 @@ class OVERDRIVE_API UTurboStandingsEntryWidget : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetEntry(int32 Position, const FString& DriverName, bool bIsPlayer);
+	void SetEntry(int32 Position, const FString& DriverName, bool bIsPlayer, float BestLapTime = -1.0f);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
@@ -22,4 +22,7 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Txt_DriverName;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UCommonTextBlock> Txt_BestLapTime;
 };

@@ -29,7 +29,6 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 	// ---- Pass 1: Cornering speed limits ----
 	// v = sqrt(grip / curvature)
 
-
 	for (int32 i = 0; i < NumSamples; i++)
 	{
 		const float Dist = i * SampleInterval;
