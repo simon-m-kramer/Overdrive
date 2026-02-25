@@ -28,7 +28,6 @@ ATurboRacingLineCalculator::ATurboRacingLineCalculator()
 void ATurboRacingLineCalculator::CalculateRacingLine()
 {
 	CachedPositions.Empty();
-	CachedCurvatures.Empty();
 
 	if (!CenterlineSpline)
 	{
@@ -45,9 +44,7 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 		return;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("RacingLine: %d nodes over %.0f cm (spacing %.0f cm). Running %d iterations..."), NumNodes, SplineLengthCm, NodeSpacing, Iterations);
-
-	// --- Step 1: Sample centerline and set up nodes -------------------------
+	// --- Step 1: Sample centerline and initialize nodes -------------------------
 	//
 	// All simulation is done in meters internally to avoid headaches
 	// with the spring constants. Converting back to cm at the end.
@@ -64,14 +61,10 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 		FVector PosCm = CenterlineSpline->GetLocationAtDistanceAlongSpline(DistanceCm, ESplineCoordinateSpace::World);
 		FVector TangentDir = CenterlineSpline->GetDirectionAtDistanceAlongSpline(DistanceCm, ESplineCoordinateSpace::World);
 
-		// The track-perpendicular direction lies in the road surface plane,
-		// pointing across the track. For a flat or elevated (but not banked)
-		// track, this is simply Tangent x WorldUp, which gives us a horizontal
-		// vector perpendicular to the driving direction regardless of slope.
 		FVector Perp = FVector::CrossProduct(TangentDir, FVector::UpVector);
 		Perp.Normalize();
 
-		Nodes[i].CenterPos = PosCm * CmToM;  // Convert to meters
+		Nodes[i].CenterPos = PosCm * CmToM;
 		Nodes[i].Perpendicular = Perp;
 		Nodes[i].Offset = 0.0f;
 		Nodes[i].Velocity = 0.0f;
@@ -178,63 +171,9 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 				Nodes[i].Velocity = FMath::Max(Nodes[i].Velocity, 0.0f);
 			}
 		}
-
-		// Log convergence every 10% of iterations
-		if (Iter > 0 && Iter % FMath::Max(1, Iterations / 10) == 0)
-		{
-			float MaxForce = 0.0f;
-			float MaxVelocity = 0.0f;
-			for (int32 i = 0; i < NumNodes; ++i)
-			{
-				MaxForce = FMath::Max(MaxForce, Forces[i].Size());
-				MaxVelocity = FMath::Max(MaxVelocity, FMath::Abs(Nodes[i].Velocity));
-			}
-			UE_LOG(LogTemp, Log, TEXT("  Iter %d/%d: MaxForce=%.6f  MaxVelocity=%.6f"), Iter, Iterations, MaxForce, MaxVelocity);
-		}
 	}
 
-	// --- Step 3: Compute curvatures -----------------------------------------
-	//
-	// The curvature at each node tells us the tightest the path bends there.
-	// This is useful later for calculating max cornering speed.
-	//   curvature = |rHat_CN x rHat_CP| / |r_CN|    (eq. 9 from the document)
-
-	CachedCurvatures.SetNum(NumNodes);
-
-	for (int32 i = 0; i < NumNodes; ++i)
-	{
-		int32 Prev = bClosedLoop ? (i - 1 + NumNodes) % NumNodes : FMath::Max(0, i - 1);
-		int32 Next = bClosedLoop ? (i + 1) % NumNodes : FMath::Min(NumNodes - 1, i + 1);
-
-		if (Prev == i || Next == i)
-		{
-			CachedCurvatures[i] = 0.0f;
-			continue;
-		}
-
-		const FVector PP = Nodes[Prev].GetPosition();
-		const FVector PC = Nodes[i].GetPosition();
-		const FVector PN = Nodes[Next].GetPosition();
-
-		const FVector R_CP = (PP - PC).GetSafeNormal();
-		const FVector R_CN = PN - PC;
-		const float LenCN = R_CN.Size();
-
-		if (LenCN < KINDA_SMALL_NUMBER)
-		{
-			CachedCurvatures[i] = 0.0f;
-			continue;
-		}
-
-		const FVector R_CN_Hat = R_CN / LenCN;
-		const FVector Cross = FVector::CrossProduct(R_CN_Hat, R_CP);
-
-		// Curvature in 1/meters, convert to 1/cm for output
-		const float CurvatureM = Cross.Size() / LenCN;
-		CachedCurvatures[i] = CurvatureM * CmToM;  // 1/m * (m/cm) = 1/cm
-	}
-
-	// --- Step 4: Convert results back to cm and build output spline ---------
+	// --- Step 3: Convert results back to cm and build output spline ---------
 
 	CachedPositions.SetNum(NumNodes);
 
@@ -252,9 +191,8 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 	RacingLineSpline->SetClosedLoop(bClosedLoop, false);
 	RacingLineSpline->UpdateSpline();
 
-	UE_LOG(LogTemp, Log, TEXT("RacingLine: Calculation complete. %d output points."), NumNodes);
+	// --- Step 4: Mark dirty so the editor saves the computed spline
 
-	// --- Step 5: Mark dirty so the editor saves the computed spline
 	Modify();
 	RacingLineSpline->Modify();
 	MarkPackageDirty();
@@ -263,9 +201,4 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 TArray<FVector> ATurboRacingLineCalculator::GetRacingLinePositions() const
 {
 	return CachedPositions;
-}
-
-TArray<float> ATurboRacingLineCalculator::GetCurvatures() const
-{
-	return CachedCurvatures;
 }

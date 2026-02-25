@@ -147,31 +147,10 @@ void ATurboAIController::UpdateDecisionContext()
         DecisionContext.SpeedDifferenceCms = 0.0f;
     }
 
-    // Track analysis — scan ahead for next corner
-    DecisionContext.DistanceToNextCorner = 0.0f;
-    DecisionContext.NextCornerCurvature = 0.0f;
-
-    const float ScanStep = 200.0f;
-    const float ScanMax = 10000.0f;
-
-    for (float Look = ScanStep; Look < ScanMax; Look += ScanStep)
-    {
-        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance + Look, 400.0f);
-        const float Normalized = Curvature / FMath::Max(RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
-
-        if (Normalized > RacingSplineActor->GetMinCurvatureThreshold())
-        {
-            DecisionContext.DistanceToNextCorner = Look;
-            DecisionContext.NextCornerCurvature = Normalized;
-            break;
-        }
-    }
-
     // Target speed from the active action's speed profile
     DecisionContext.TargetSpeedCms = 0.0f;
     if (ActionStack)
     {
-        // Find the follow path action (it's always at the bottom of the stack)
         for (UBifrostAction* Action : ActionStack->GetActions())
         {
             UTurboAction_FollowPath* FollowAction = Cast<UTurboAction_FollowPath>(Action);
@@ -182,11 +161,6 @@ void ATurboAIController::UpdateDecisionContext()
             }
         }
     }
-
-    // CurrentCurvature
-    const float RawCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, 400.0f);
-    DecisionContext.CurrentCurvature = RawCurvature / FMath::Max(RacingSplineActor->GetMaxTrackCurvature(), KINDA_SMALL_NUMBER);
-
 }
 
 // =============================================================================

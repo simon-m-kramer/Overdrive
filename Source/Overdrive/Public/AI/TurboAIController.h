@@ -26,7 +26,7 @@ struct FTurboDecisionContext
     bool bVehicleAhead = false;
     float DistanceToVehicleAhead = 0.0f;
     float SpeedOfVehicleAheadCms = 0.0f;
-    float SpeedDifferenceCms = 0.0f;  // positive = I'm faster
+    float SpeedDifferenceCms = 0.0f;
 
     bool bVehicleOnLeft = false;
     bool bVehicleOnRight = false;
@@ -38,15 +38,15 @@ struct FTurboDecisionContext
 
     float CurrentSpeedCms = 0.0f;
     float CurrentSplineDistance = 0.0f;
-    float TargetSpeedCms = 0.0f;  // from speed profile, ignoring follow cap
+    float TargetSpeedCms = 0.0f;
 
     // =========================================================================
     // TRACK ANALYSIS
     // =========================================================================
 
     float DistanceToNextCorner = 0.0f;
-    float NextCornerCurvature = 0.0f;  // normalized 0-1
-    float CurrentCurvature = 0.0f;  // normalized 0-1 at current position
+    float NextCornerCurvature = 0.0f;
+    float CurrentCurvature = 0.0f;
 
 };
 

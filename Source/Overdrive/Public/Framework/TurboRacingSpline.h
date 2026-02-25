@@ -15,73 +15,41 @@ class OVERDRIVE_API ATurboRacingSpline : public ATurboRacingLineCalculator
 public:
 	ATurboRacingSpline();
 
-	/** Returns the racing line spline (used by AI for driving and position tracking) */
-	USplineComponent* GetSplineComponent() const;
+	USplineComponent* GetSplineComponent() const { return RacingLineSpline; }
 
 	const FGameplayTagContainer& GetGameplayTags() const { return GameplayTags; }
 
-	// =========================================================================
-	// SPLINE QUERIES
-	// =========================================================================
-
-	/** Get world-space location on the racing line at a given distance */
+	/** Converts spline distance into world location */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	FVector GetLocationAtDistance(float Distance) const;
 
-	/** Get world-space direction (tangent) at a given distance */
+	/** Returns the normalized tangent at a given spline distance */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	FVector GetDirectionAtDistance(float Distance) const;
 
-	/** Get the total racing line length */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	float GetSplineLength() const;
 
-	/** Get whether the track is a closed loop */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
-	bool IsClosedLoop() const;
+	bool IsClosedLoop() const { return bClosedLoop; }
 
-	/** Get full track width (derived from calculator's HalfTrackWidth) */
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	float GetTrackWidth() const { return HalfTrackWidth * 2.0f; }
 
-	// =========================================================================
-	// CURVATURE ANALYSIS
-	// =========================================================================
-
+	/** Computes the angle change (in radians) between two tangents and
+	divides by the distance between them (in cm). The return value is radians per cm. */
 	UFUNCTION(BlueprintPure, Category = "Curvature")
 	float GetCurvatureAtDistance(float Distance, float SampleRange = 300.0f) const;
 
 	UFUNCTION(BlueprintPure, Category = "Curvature")
 	float GetTurnSign(float Distance, float InLookaheadDistance = 200.0f) const;
 
-	float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
-	float GetMinCurvatureThreshold() const { return MinCurvatureThreshold; }
-
-	// =========================================================================
-	// CURVATURE CONFIGURATION
-	// =========================================================================
-
-	UPROPERTY(EditAnywhere, Category = "Curvature")
-	float CurvatureSampleRange = 400.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Curvature", meta = (ClampMin = "0.01", ClampMax = "0.5"))
-	float MinCurvatureThreshold = 0.05f;
-
-	// =========================================================================
-	// DEBUG
-	// =========================================================================
-
-	void DrawDebugRacingLine(UWorld* World) const;
-
 protected:
-	virtual void BeginPlay() override;
-
+	/** Used to identify the spline */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Tags")
 	FGameplayTagContainer GameplayTags;
 
 private:
 	float WrapDistance(float Distance) const;
-	void CalculateMaxCurvature();
 
-	float MaxTrackCurvature = 0.0f;
 };

@@ -84,10 +84,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Racing Line")
 	TArray<FVector> GetRacingLinePositions() const;
 
-	/** Get the curvature at each racing line node. Useful for determining max cornering speed. */
-	UFUNCTION(BlueprintCallable, Category = "Racing Line")
-	TArray<float> GetCurvatures() const;
-
 private:
 	/** Internal node representation for the simulation. */
 	struct FSimNode
@@ -105,9 +101,8 @@ private:
 
 	/** Cached results from last calculation (world space, cm). */
 	TArray<FVector> CachedPositions;
-	TArray<float> CachedCurvatures;
 
-	/** Conversion factor: cm -> meters. */
+	/** Conversion factors */
 	static constexpr float CmToM = 0.01f;
 	static constexpr float MToCm = 100.0f;
 };
