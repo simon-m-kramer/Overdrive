@@ -11,6 +11,12 @@ ATurboRacingSpline::ATurboRacingSpline()
 	GameplayTags.AddTag(TurboGameplayTags::Track_MainSpline);
 }
 
+void ATurboRacingSpline::BeginPlay()
+{
+	Super::BeginPlay();
+	CalculateMaxCurvature();
+}
+
 FVector ATurboRacingSpline::GetLocationAtDistance(float Distance) const
 {
 	if (!RacingLineSpline) return FVector::ZeroVector;
@@ -71,6 +77,8 @@ float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance)
 	return (DotUp > 0.0f) ? 1.0f : -1.0f;
 }
 
+
+
 float ATurboRacingSpline::WrapDistance(float Distance) const
 {
 	if (!RacingLineSpline) return Distance;
@@ -89,5 +97,20 @@ float ATurboRacingSpline::WrapDistance(float Distance) const
 	}
 
 	return Distance;
+}
+
+void ATurboRacingSpline::CalculateMaxCurvature(float SampleInterval, float SampleRange)
+{
+	if (!RacingLineSpline) return;
+
+	const float Length = RacingLineSpline->GetSplineLength();
+
+	MaxTrackCurvature = 0.0f;
+
+	for (float Dist = 0.0f; Dist < Length; Dist += SampleInterval)
+	{
+		const float Curvature = GetCurvatureAtDistance(Dist, SampleRange);
+		MaxTrackCurvature = FMath::Max(MaxTrackCurvature, Curvature);
+	}
 }
 
