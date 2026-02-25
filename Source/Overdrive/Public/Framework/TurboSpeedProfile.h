@@ -31,7 +31,7 @@ struct OVERDRIVE_API FTurboSpeedProfile
 
 	/** Acceleration boost when exiting corners (curvature decreasing) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed Profile", meta = (ClampMin = "1.0", ClampMax = "2.0"))
-	float ExitAccelerationBoost = 1.0f;
+	float ExitAccelerationBoost = 2.0f;
 
 	// =========================================================================
 	// METHODS

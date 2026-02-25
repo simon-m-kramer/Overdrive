@@ -61,19 +61,19 @@ public:
 
 	/** Maximum speed in cm/s */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
-	float MaxSpeedCms = 5000.0f;  // ~180 km/h
+	float MaxSpeedCms = 5000.0f;  // 5000 = ~180 km/h, 4166 = 150km/h
 
 	/** Lateral grip as acceleration in cm/s² (cornering capability) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
-	float LateralGripCms2 = 1800.0f;  // ~1.8G
+	float LateralGripCms2 = 2400.0f;  // 1800.0f
 
 	/** Braking deceleration in cm/s2 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
-	float BrakeDecelerationCms2 = 2000.0f;  // ~2G
+	float BrakeDecelerationCms2 = 2000.0f;  // 2000.0f
 
 	/** Forward acceleration in cm/s2 (approximate average) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Performance")
-	float AccelerationCms2 = 800.0f;
+	float AccelerationCms2 = 1200.0f;  // 800.0f
 
 
 protected:
