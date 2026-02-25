@@ -45,7 +45,6 @@ struct FTurboDecisionContext
     // =========================================================================
 
     float DistanceToNextCorner = 0.0f;
-    float NextCornerCurvature = 0.0f;
     float CurrentCurvature = 0.0f;
 
 };
@@ -111,6 +110,18 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Decision Making")
     const FTurboDecisionContext& GetDecisionContext() const { return DecisionContext; }
+
+    UPROPERTY(EditAnywhere, Category = "Track Analysis")
+    float CornerCurvatureThreshold = 0.0001f;  // radians/cm, this value needs calibrated properly according to the scale of the track
+
+    UPROPERTY(EditAnywhere, Category = "Track Analysis")
+    float CornerScanStep = 200.0f;  // cm
+
+    UPROPERTY(EditAnywhere, Category = "Track Analysis")
+    float CornerScanMax = 10000.0f;  // cm
+
+    UPROPERTY(EditAnywhere, Category = "Track Analysis")
+    float CornerScanSampleRange = 400.0f;  // cm
 
     // =========================================================================
     // DEBUG

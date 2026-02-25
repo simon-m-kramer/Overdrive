@@ -161,6 +161,24 @@ void ATurboAIController::UpdateDecisionContext()
             }
         }
     }
+
+    // Track analysis — scan ahead for next corner
+    DecisionContext.DistanceToNextCorner = 0.0f;
+
+    for (float Look = CornerScanStep; Look < CornerScanMax; Look += CornerScanStep)
+    {
+        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance + Look, CornerScanSampleRange);
+
+        if (Curvature > CornerCurvatureThreshold)
+        {
+            DecisionContext.DistanceToNextCorner = Look;
+            break;
+        }
+    }
+
+    // Current curvature at vehicle position
+    DecisionContext.CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, CornerScanSampleRange);
+
 }
 
 // =============================================================================

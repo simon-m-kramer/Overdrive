@@ -23,22 +23,18 @@ UTurboAction_Overtake::UTurboAction_Overtake()
 
 bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) const
 {
-	// Need a car ahead within range
-	if (!Context.bVehicleAhead)
-		return false;
+	// Is a car ahead?
+	if (!Context.bVehicleAhead) return false;
 
-	if (Context.DistanceToVehicleAhead > OvertakeConsiderationDistance)
-		return false;
+	// Are we close enough?
+	if (Context.DistanceToVehicleAhead > OvertakeConsiderationDistance) return false;
 
 	// We must be capable of going faster (profile speed vs their speed)
 	const float PotentialAdvantage = Context.TargetSpeedCms - Context.SpeedOfVehicleAheadCms;
-	if (PotentialAdvantage < MinSpeedAdvantage)
-		return false;
+	if (PotentialAdvantage < MinSpeedAdvantage) return false;
 
-	// Need enough straight road ahead
-	// If DistanceToNextCorner is 0, that means no corner found within scan range - plenty of room
-	if (Context.DistanceToNextCorner > 0.0f && Context.DistanceToNextCorner < MinStraightNeeded)
-		return false;
+	// Is enough straight road ahead?
+	if (Context.DistanceToNextCorner > 0.0f && Context.DistanceToNextCorner < MinStraightNeeded) return false;
 
 	return true;
 }

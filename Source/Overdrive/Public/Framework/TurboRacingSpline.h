@@ -36,7 +36,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	float GetTrackWidth() const { return HalfTrackWidth * 2.0f; }
 
-	/** The highest curvature found anywhere on the track. Used to normalize curvature to 0-1 for the decision context. */
+	/** The highest curvature found anywhere on the track. */
 	float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
 
 	/** Computes the angle change (in radians) between two tangents and divides by the distance between them (in cm). The return value is radians per cm. */

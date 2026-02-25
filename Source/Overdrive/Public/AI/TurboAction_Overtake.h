@@ -26,15 +26,15 @@ public:
 
 	/** How close to the car ahead before considering an overtake (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float OvertakeConsiderationDistance = 2500.0f;
+	float OvertakeConsiderationDistance = 4000.0f;  // 40m
 
 	/** Minimum speed advantage from profile vs car ahead to trigger (cm/s) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float MinSpeedAdvantage = 200.0f;  // 300.0 = ~11 km/h faster
+	float MinSpeedAdvantage = 200.0f;  // ~7 km/h faster
 
 	/** Minimum straight distance ahead needed to attempt a pass (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float MinStraightNeeded = 1500.0f;
+	float MinStraightNeeded = 8000.0f;              // 80m
 
 	// =========================================================================
 	// OVERTAKE BEHAVIOR
@@ -42,15 +42,15 @@ public:
 
 	/** Lateral offset from racing line when passing (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeLateralOffset = 400.0f;
+	float OvertakeLateralOffset = 350.0f;  // 3.5m
 
 	/** Extra speed boost as fraction of max speed during overtake */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeSpeedBoost = 1.05f;
+	float OvertakeSpeedBoost = 1.1f;
 
 	/** How long the overtake can last before aborting (seconds) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeTimeout = 8.0f;
+	float OvertakeTimeout = 6.0f;
 
 	// =========================================================================
 	// COMPLETION
@@ -58,7 +58,7 @@ public:
 
 	/** How far ahead of the overtaken car we need to be to consider the pass complete (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Completion")
-	float ClearanceDistanceAhead = 800.0f;
+	float ClearanceDistanceAhead = 500.0f;
 
 protected:
 	virtual FVector GetTargetPoint() override;

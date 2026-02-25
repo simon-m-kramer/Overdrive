@@ -77,8 +77,6 @@ float ATurboRacingSpline::GetTurnSign(float Distance, float InLookaheadDistance)
 	return (DotUp > 0.0f) ? 1.0f : -1.0f;
 }
 
-
-
 float ATurboRacingSpline::WrapDistance(float Distance) const
 {
 	if (!RacingLineSpline) return Distance;
