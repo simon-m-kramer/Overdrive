@@ -7,6 +7,7 @@
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
+#include "Framework/TurboDrivingProfile.h"
 
 UTurboAction_Overtake::UTurboAction_Overtake()
 {
@@ -141,8 +142,12 @@ FVector UTurboAction_Overtake::GetTargetPoint()
 float UTurboAction_Overtake::GetTargetSpeedAtDistance(float Distance) const
 {
 	const float BaseSpeed = Super::GetTargetSpeedAtDistance(Distance);
-	if (!Vehicle.IsValid()) return BaseSpeed;
-	return FMath::Min(BaseSpeed * OvertakeSpeedBoost, Vehicle->MaxSpeedCms);
+
+	const float MaxSpeed = (AIController.IsValid() && AIController->GetDrivingProfile())
+		? AIController->GetDrivingProfile()->MaxSpeedCms
+		: BaseSpeed;
+
+	return FMath::Min(BaseSpeed * OvertakeSpeedBoost, MaxSpeed);
 }
 
 // =============================================================================

@@ -3,29 +3,32 @@
 
 #include "Framework/TurboSpeedProfile.h"
 #include "Framework/TurboRacingSpline.h"
-#include "Framework/TurboVehicle.h"
+#include "Framework/TurboDrivingProfile.h"
 
-void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurboVehicle* Vehicle)
+void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurboDrivingProfile* Profile)
 {
 	bReady = false;
 	Speeds.Empty();
 
-	if (!Spline || !Vehicle) return;
+	if (!Spline || !Profile) return;
 
 	const float SplineLength = Spline->GetSplineLength();
 	const int32 NumSamples = FMath::CeilToInt(SplineLength / SampleInterval);
 
 	if (NumSamples <= 0) return;
 
-	const float MaxSpeed = Vehicle->MaxSpeedCms;
-	const float Grip = Vehicle->LateralGripCms2;
-	const float BrakeDecel = Vehicle->BrakeDecelerationCms2;
-	const float Accel = Vehicle->AccelerationCms2;
+	const float MaxSpeed = Profile->MaxSpeedCms;
+	const float Grip = Profile->LateralGripCms2;
+	const float BrakeDecel = Profile->BrakeDecelerationCms2;
+	const float Accel = Profile->AccelerationCms2;
+	const float CorneringSpeedSafetyFactor = Profile->CorneringSpeedSafetyFactor;
+	const float ExitAccelerationBoost = Profile->ExitAccelerationBoost;
 
 	Speeds.SetNum(NumSamples);
 
 	// ---- Pass 1: Cornering speed limits ----
 	// v = sqrt(grip / curvature)
+
 
 	for (int32 i = 0; i < NumSamples; i++)
 	{

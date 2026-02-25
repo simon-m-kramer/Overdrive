@@ -8,6 +8,7 @@
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
+#include "Framework/TurboDrivingProfile.h"
 
 UTurboAction_FollowPath::UTurboAction_FollowPath()
 {
@@ -36,7 +37,11 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 	{
 		Vehicle = AIController->GetVehicle();
 		RacingSplineActor = AIController->GetRacingSplineActor();
-		SpeedProfile.Calculate(RacingSplineActor.Get(), Vehicle.Get());
+
+		if (AIController->GetDrivingProfile())
+		{
+			SpeedProfile.Calculate(RacingSplineActor.Get(), AIController->GetDrivingProfile());
+		}
 	}
 
 	SteeringPID.Reset();
@@ -158,19 +163,11 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 
 float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const
 {
-	if (!RacingSplineActor.IsValid() || !Vehicle.IsValid())
+	if (!RacingSplineActor.IsValid() || !SpeedProfile.IsReady())
 	{
-		return Vehicle.IsValid() ? Vehicle->MaxSpeedCms : 0.0f;
+		return (AIController.IsValid() && AIController->GetDrivingProfile()) ? AIController->GetDrivingProfile()->MaxSpeedCms : 0.0f;
 	}
 
-	if (!SpeedProfile.IsReady())
-	{
-		return Vehicle->MaxSpeedCms;
-	}
-
-	return SpeedProfile.GetTargetSpeed(
-		Distance,
-		RacingSplineActor->GetSplineLength(),
-		RacingSplineActor->IsClosedLoop());
+	return SpeedProfile.GetTargetSpeed(Distance, RacingSplineActor->GetSplineLength(), RacingSplineActor->IsClosedLoop());
 }
 

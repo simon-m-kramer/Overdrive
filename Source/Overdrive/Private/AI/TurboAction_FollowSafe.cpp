@@ -6,6 +6,7 @@
 #include "AI/TurboAIVehicle.h"
 #include "Framework/TurboRacingSpline.h"
 #include "Framework/TurboGameplayTags.h"
+#include "Framework/TurboDrivingProfile.h"
 
 UTurboAction_FollowSafe::UTurboAction_FollowSafe()
 {
@@ -115,7 +116,7 @@ float UTurboAction_FollowSafe::GetFollowSpeedLimit() const
 		0.0f, 1.0f);
 
 	const float MatchSpeed = TheirSpeed - FollowSpeedMarginCms;
-	const float OurMaxSpeed = Vehicle.IsValid() ? Vehicle->MaxSpeedCms : MAX_FLT;
+	const float OurMaxSpeed = (AIController.IsValid() && AIController->GetDrivingProfile()) ? AIController->GetDrivingProfile()->MaxSpeedCms : MAX_FLT;
 
 	return FMath::Lerp(OurMaxSpeed, MatchSpeed, T);
 }

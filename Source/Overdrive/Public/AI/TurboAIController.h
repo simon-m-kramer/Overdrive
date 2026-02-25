@@ -104,6 +104,9 @@ public:
     UFUNCTION(BlueprintPure, Category = "Vehicle")
     ATurboVehicle* GetVehicle() const { return Vehicle; }
 
+    UFUNCTION(BlueprintPure, Category = "Vehicle")
+    UTurboDrivingProfile* GetDrivingProfile() const { return DrivingProfile; }
+
     // =========================================================================
     // DECISION MAKING
     // =========================================================================
@@ -139,6 +142,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
     TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
+
+    UPROPERTY(EditAnywhere, Category = "AI Personality")
+    TObjectPtr<UTurboDrivingProfile> DrivingProfile;
 
 protected:
     virtual void BeginPlay() override;
