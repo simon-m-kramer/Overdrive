@@ -91,7 +91,6 @@ void ATurboVehicle::SetHandbrakeInput(bool bEngaged)
     VehicleMovement->SetHandbrakeInput(bEngaged);
 }
 
-
 float ATurboVehicle::GetSpeedKmh() const
 {
     return FMath::Abs(VehicleMovement->GetForwardSpeed()) * 0.036f;
@@ -151,11 +150,11 @@ void ATurboVehicle::SetupEngine()
 
     FRichCurve* TorqueCurve = VehicleMovement->EngineSetup.TorqueCurve.GetRichCurve();
     TorqueCurve->Reset();
-    TorqueCurve->AddKey(0.0f, 0.5f);
-    TorqueCurve->AddKey(0.25f, 0.8f);
-    TorqueCurve->AddKey(0.5f, 1.0f);
-    TorqueCurve->AddKey(0.75f, 0.9f);
-    TorqueCurve->AddKey(1.0f, 0.7f);
+    TorqueCurve->AddKey(1000.0f, 0.5f);
+    TorqueCurve->AddKey(1800.0f, 0.9f);
+    TorqueCurve->AddKey(3500.0f, 1.0f);
+    TorqueCurve->AddKey(6000.0f, 0.8f);
+    TorqueCurve->AddKey(7000.0f, 0.0f);
 }
 
 void ATurboVehicle::SetupTransmission()
