@@ -37,32 +37,12 @@ struct OVERDRIVE_API FTurboSpeedProfile
 	// METHODS
 	// =========================================================================
 
-	/**
-	 * Calculate speed targets from spline curvature and vehicle performance.
-	 * Three-pass algorithm:
-	 *   Pass 1: Cornering speed limits from curvature
-	 *   Pass 2: Braking constraints (reverse propagation)
-	 *   Pass 3: Acceleration constraints (forward propagation, with exit boost)
-	 *
-	 * @param Spline   The racing line to analyze
-	 * @param Vehicle  The vehicle whose performance stats to use
-	 */
 	void Calculate(const ATurboRacingSpline* Spline, const ATurboVehicle* Vehicle);
 
-	/**
-	 * Get interpolated target speed at a given distance along the spline.
-	 *
-	 * @param Distance     Distance along the spline (cm)
-	 * @param SplineLength Total spline length for wrapping (cm)
-	 * @param bClosedLoop  Whether the spline is a closed loop
-	 * @return             Target speed in cm/s
-	 */
 	float GetTargetSpeed(float Distance, float SplineLength, bool bClosedLoop) const;
 
-	/** Whether the profile has been successfully calculated */
 	bool IsReady() const { return bReady; }
 
-	/** Reset the profile (clears all data) */
 	void Reset();
 
 private:

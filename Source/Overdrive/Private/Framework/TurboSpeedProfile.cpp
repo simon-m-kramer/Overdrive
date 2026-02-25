@@ -34,8 +34,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 
 		if (Curvature > KINDA_SMALL_NUMBER)
 		{
-			const float CorneringSpeed = FMath::Sqrt(Grip / Curvature)
-				* CorneringSpeedSafetyFactor;
+			const float CorneringSpeed = FMath::Sqrt(Grip / Curvature) * CorneringSpeedSafetyFactor;
 			Speeds[i] = FMath::Min(MaxSpeed, CorneringSpeed);
 		}
 		else
@@ -44,11 +43,11 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 		}
 	}
 
-	// ---- Pass 2: Braking pass (reverse) ----
+	// ---- Pass 2: Braking pass ----
 	// v = sqrt(v_next² + 2 * brakeDecel * distance)
 
 	const bool bClosedLoop = Spline->IsClosedLoop();
-	const float Ds = SampleInterval;
+	const float Ds = SampleInterval;  // Ds = delta s
 
 	if (bClosedLoop)
 	{
@@ -57,9 +56,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 			for (int32 i = NumSamples - 1; i >= 0; i--)
 			{
 				const int32 NextIndex = (i + 1) % NumSamples;
-				const float BrakeLimit = FMath::Sqrt(
-					Speeds[NextIndex] * Speeds[NextIndex]
-					+ 2.0f * BrakeDecel * Ds);
+				const float BrakeLimit = FMath::Sqrt(Speeds[NextIndex] * Speeds[NextIndex] + 2.0f * BrakeDecel * Ds);
 				Speeds[i] = FMath::Min(Speeds[i], BrakeLimit);
 			}
 		}
@@ -68,16 +65,13 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 	{
 		for (int32 i = NumSamples - 2; i >= 0; i--)
 		{
-			const float BrakeLimit = FMath::Sqrt(
-				Speeds[i + 1] * Speeds[i + 1]
-				+ 2.0f * BrakeDecel * Ds);
+			const float BrakeLimit = FMath::Sqrt(Speeds[i + 1] * Speeds[i + 1] + 2.0f * BrakeDecel * Ds);
 			Speeds[i] = FMath::Min(Speeds[i], BrakeLimit);
 		}
 	}
 
-	// ---- Pass 3: Acceleration pass (forward) ----
+	// ---- Pass 3: Acceleration pass ----
 	// v = sqrt(v_prev² + 2 * accel * distance)
-	// Use higher acceleration rate when exiting corners (curvature decreasing)
 
 	if (bClosedLoop)
 	{
@@ -90,10 +84,8 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 				float EffectiveAccel = Accel;
 				if (ExitAccelerationBoost > 1.0f)
 				{
-					const float CurvHere = Spline->GetCurvatureAtDistance(
-						i * SampleInterval, CurvatureSampleRange);
-					const float CurvPrev = Spline->GetCurvatureAtDistance(
-						PrevIndex * SampleInterval, CurvatureSampleRange);
+					const float CurvHere = Spline->GetCurvatureAtDistance(i * SampleInterval, CurvatureSampleRange);
+					const float CurvPrev = Spline->GetCurvatureAtDistance(PrevIndex * SampleInterval, CurvatureSampleRange);
 
 					if (CurvHere < CurvPrev)
 					{
@@ -101,9 +93,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 					}
 				}
 
-				const float AccelLimit = FMath::Sqrt(
-					Speeds[PrevIndex] * Speeds[PrevIndex]
-					+ 2.0f * EffectiveAccel * Ds);
+				const float AccelLimit = FMath::Sqrt(Speeds[PrevIndex] * Speeds[PrevIndex] + 2.0f * EffectiveAccel * Ds);
 				Speeds[i] = FMath::Min(Speeds[i], AccelLimit);
 			}
 		}
@@ -115,10 +105,8 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 			float EffectiveAccel = Accel;
 			if (ExitAccelerationBoost > 1.0f)
 			{
-				const float CurvHere = Spline->GetCurvatureAtDistance(
-					i * SampleInterval, CurvatureSampleRange);
-				const float CurvPrev = Spline->GetCurvatureAtDistance(
-					(i - 1) * SampleInterval, CurvatureSampleRange);
+				const float CurvHere = Spline->GetCurvatureAtDistance(i * SampleInterval, CurvatureSampleRange);
+				const float CurvPrev = Spline->GetCurvatureAtDistance((i - 1) * SampleInterval, CurvatureSampleRange);
 
 				if (CurvHere < CurvPrev)
 				{
@@ -126,9 +114,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const ATurb
 				}
 			}
 
-			const float AccelLimit = FMath::Sqrt(
-				Speeds[i - 1] * Speeds[i - 1]
-				+ 2.0f * EffectiveAccel * Ds);
+			const float AccelLimit = FMath::Sqrt(Speeds[i - 1] * Speeds[i - 1] + 2.0f * EffectiveAccel * Ds);
 			Speeds[i] = FMath::Min(Speeds[i], AccelLimit);
 		}
 	}
@@ -140,6 +126,7 @@ float FTurboSpeedProfile::GetTargetSpeed(float Distance, float SplineLength, boo
 {
 	if (!bReady || Speeds.Num() == 0) return 0.0f;
 
+	// wrap around
 	if (bClosedLoop)
 	{
 		Distance = FMath::Fmod(Distance, SplineLength);
@@ -150,6 +137,7 @@ float FTurboSpeedProfile::GetTargetSpeed(float Distance, float SplineLength, boo
 		Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);
 	}
 
+	// interpolate
 	const float IndexFloat = Distance / SampleInterval;
 	const int32 Index = FMath::Clamp(FMath::FloorToInt(IndexFloat), 0, Speeds.Num() - 1);
 	const int32 NextIndex = (Index + 1) % Speeds.Num();

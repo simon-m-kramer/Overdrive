@@ -2,7 +2,6 @@
 
 // Drop this actor into your level, edit the CenterlineSpline to match your track,
 // then click "Calculate Racing Line" in the Details panel.
-// The result appears as a green spline (RacingLineSpline) and optional debug lines.
 //
 // The algorithm is based on:
 // "Computer-Controlled Cars in Vamos" by Sam Varner
@@ -10,7 +9,7 @@
 //
 // It models the racing line as a chain of masses on spring-loaded hinges.
 // The springs try to minimize curvature. Nodes are constrained to slide
-// perpendicular to the track (across the road surface).
+// perpendicular to the track.
 
 #pragma once
 
@@ -40,13 +39,11 @@ public:
 
 	// --- Track Parameters ------------------------------------------------
 
-	/** Distance between simulation nodes along the centerline, in cm.
-	 *  Smaller = more accurate but slower. 500-1000 cm is usually good. */
+	/** Distance between simulation nodes along the centerline in cm. */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Track", meta = (ClampMin = "50.0", Units = "cm"))
 	float NodeSpacing = 800.0f;
 
-	/** Half the track width in cm. Nodes cannot move further than this
-	 *  from the centerline in either direction. */
+	/** Half the track width in cm. Nodes cannot move further than this from the centerline in either direction. */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Track", meta = (ClampMin = "50.0", Units = "cm"))
 	float HalfTrackWidth = 600.0f;
 
@@ -55,57 +52,39 @@ public:
 	bool bClosedLoop = true;
 
 	// --- Simulation Parameters ----------------------------------------------
-	// These defaults match the reference document (tuned for meters internally).
-	// You shouldn't need to change them unless you see convergence issues.
+	// These defaults match the reference document
 
-	/** Spring stiffness of the hinges (Nm/rad in internal meter units).
-	 *  Higher = faster convergence but risk of instability. */
+	/** Spring stiffness of the hinges */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Simulation", meta = (ClampMin = "0.01"))
 	float Stiffness = 1.0f;
 
-	/** Velocity damping coefficient (kg/s in internal meter units).
-	 *  Higher = more stable but slower convergence. */
+	/** Velocity damping coefficient */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Simulation", meta = (ClampMin = "0.01"))
 	float Damping = 0.1f;
 
-	/** Number of simulation iterations. 800-2000 is typical. */
+	/** Number of simulation iterations */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Simulation", meta = (ClampMin = "1"))
 	int32 Iterations = 1000;
 
-	/** Simulation time step (dimensionless). */
+	/** Simulation time step */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Simulation", meta = (ClampMin = "0.01"))
 	float DeltaTime = 1.0f;
 
-	/** Node mass (dimensionless). */
+	/** Node mass */
 	UPROPERTY(EditAnywhere, Category = "Racing Line|Simulation", meta = (ClampMin = "0.001"))
 	float Mass = 1.0f;
 
-	// --- Debug Visualization ------------------------------------------------
-
-	UPROPERTY(EditAnywhere, Category = "Racing Line|Debug")
-	bool bDrawDebugLines = true;
-
-	/** How long debug lines persist in seconds. Set to -1 for permanent. */
-	UPROPERTY(EditAnywhere, Category = "Racing Line|Debug")
-	float DebugLineDuration = 60.0f;
-
-	/** Draw the track boundary edges. */
-	UPROPERTY(EditAnywhere, Category = "Racing Line|Debug")
-	bool bDrawTrackBounds = true;
-
 	// --- Actions ------------------------------------------------------------
 
-	/** Run the racing line calculation. Results appear on RacingLineSpline. */
+	/** Run the racing line calculation. */
 	UFUNCTION(CallInEditor, Category = "Racing Line")
 	void CalculateRacingLine();
 
-	/** Get the racing line positions (in world space, cm).
-	 *  Call CalculateRacingLine() first. */
+	/** Get the racing line positions (in world space, cm). Call CalculateRacingLine() first. */
 	UFUNCTION(BlueprintCallable, Category = "Racing Line")
 	TArray<FVector> GetRacingLinePositions() const;
 
-	/** Get the curvature at each racing line node (1/cm).
-	 *  Useful for determining max cornering speed. */
+	/** Get the curvature at each racing line node. Useful for determining max cornering speed. */
 	UFUNCTION(BlueprintCallable, Category = "Racing Line")
 	TArray<float> GetCurvatures() const;
 
@@ -113,10 +92,10 @@ private:
 	/** Internal node representation for the simulation. */
 	struct FSimNode
 	{
-		FVector CenterPos;     // Centerline position (meters, internal)
+		FVector CenterPos;     // Centerline position (meters)
 		FVector Perpendicular; // Track-perpendicular unit vector
 		float Offset;          // Current offset from center along Perpendicular (meters)
-		float Velocity;        // Velocity along Perpendicular (m/s, internal)
+		float Velocity;        // Velocity along Perpendicular (m/s)
 
 		FVector GetPosition() const
 		{
@@ -128,7 +107,7 @@ private:
 	TArray<FVector> CachedPositions;
 	TArray<float> CachedCurvatures;
 
-	/** Conversion factor: Unreal cm -> internal meters. */
+	/** Conversion factor: cm -> meters. */
 	static constexpr float CmToM = 0.01f;
 	static constexpr float MToCm = 100.0f;
 };

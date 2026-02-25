@@ -41,18 +41,16 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 
 	if (NumNodes < 4)
 	{
-		UE_LOG(LogTemp, Error, TEXT("RacingLine: Need at least 4 nodes. Spline length=%.0f cm, spacing=%.0f cm -> %d nodes."),
-			SplineLengthCm, NodeSpacing, NumNodes);
+		UE_LOG(LogTemp, Error, TEXT("RacingLine: Need at least 4 nodes. Spline length=%.0f cm, spacing=%.0f cm -> %d nodes."), SplineLengthCm, NodeSpacing, NumNodes);
 		return;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("RacingLine: %d nodes over %.0f cm (spacing %.0f cm). Running %d iterations..."),
-		NumNodes, SplineLengthCm, NodeSpacing, Iterations);
+	UE_LOG(LogTemp, Log, TEXT("RacingLine: %d nodes over %.0f cm (spacing %.0f cm). Running %d iterations..."), NumNodes, SplineLengthCm, NodeSpacing, Iterations);
 
 	// --- Step 1: Sample centerline and set up nodes -------------------------
 	//
-	// All simulation is done in meters internally to avoid unit-scaling
-	// headaches with the spring constants. We convert back to cm at the end.
+	// All simulation is done in meters internally to avoid headaches
+	// with the spring constants. Converting back to cm at the end.
 
 	const float HalfWidthM = HalfTrackWidth * CmToM;
 
@@ -63,10 +61,8 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 	{
 		const float DistanceCm = (static_cast<float>(i) / NumNodes) * SplineLengthCm;
 
-		FVector PosCm = CenterlineSpline->GetLocationAtDistanceAlongSpline(
-			DistanceCm, ESplineCoordinateSpace::World);
-		FVector TangentDir = CenterlineSpline->GetDirectionAtDistanceAlongSpline(
-			DistanceCm, ESplineCoordinateSpace::World);
+		FVector PosCm = CenterlineSpline->GetLocationAtDistanceAlongSpline(DistanceCm, ESplineCoordinateSpace::World);
+		FVector TangentDir = CenterlineSpline->GetDirectionAtDistanceAlongSpline(DistanceCm, ESplineCoordinateSpace::World);
 
 		// The track-perpendicular direction lies in the road surface plane,
 		// pointing across the track. For a flat or elevated (but not banked)
@@ -86,10 +82,10 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 	// For each triplet of consecutive nodes (Prev, Center, Next), the hinge
 	// at Center produces forces that try to straighten the bend:
 	//
-	//   theta*nHat ~= rHat_CN x rHat_CP     (small-angle approximation)
-	//   F_next = (k / |r_CN|) * (rHat_CN x theta*nHat)
-	//   F_prev = F_next               (by symmetry)
-	//   F_center = -2 * F_next        (Newton's third law)
+	// theta*nHat ~= rHat_CN x rHat_CP     (small-angle approximation)
+	// F_next = (k / |r_CN|) * (rHat_CN x theta*nHat)
+	// F_prev = F_next               (by symmetry)
+	// F_center = -2 * F_next        (Newton's third law)
 	//
 	// CRITICAL SIGN NOTE:
 	// The document's eq. 8 can be misread. The correct derivation gives a
@@ -132,8 +128,8 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 			const FVector PC = Nodes[Center].GetPosition();
 			const FVector PN = Nodes[Next].GetPosition();
 
-			const FVector R_CP = PP - PC;  // Center -> Prev
-			const FVector R_CN = PN - PC;  // Center -> Next
+			const FVector R_CP = PP - PC;
+			const FVector R_CN = PN - PC;
 
 			const float LenCN = R_CN.Size();
 			if (LenCN < KINDA_SMALL_NUMBER)
@@ -193,8 +189,7 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 				MaxForce = FMath::Max(MaxForce, Forces[i].Size());
 				MaxVelocity = FMath::Max(MaxVelocity, FMath::Abs(Nodes[i].Velocity));
 			}
-			UE_LOG(LogTemp, Log, TEXT("  Iter %d/%d: MaxForce=%.6f  MaxVelocity=%.6f"),
-				Iter, Iterations, MaxForce, MaxVelocity);
+			UE_LOG(LogTemp, Log, TEXT("  Iter %d/%d: MaxForce=%.6f  MaxVelocity=%.6f"), Iter, Iterations, MaxForce, MaxVelocity);
 		}
 	}
 
@@ -259,59 +254,10 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 
 	UE_LOG(LogTemp, Log, TEXT("RacingLine: Calculation complete. %d output points."), NumNodes);
 
-	// --- Step 5: Debug visualization ----------------------------------------
-
-	if (bDrawDebugLines && GetWorld())
-	{
-		FlushPersistentDebugLines(GetWorld());
-
-		for (int32 i = 0; i < NumNodes; ++i)
-		{
-			const FVector Pos = CachedPositions[i];
-
-			// Racing line segments (green)
-			if (bClosedLoop || i < NumNodes - 1)
-			{
-				const int32 NextIdx = (i + 1) % NumNodes;
-				DrawDebugLine(GetWorld(), Pos, CachedPositions[NextIdx],
-					FColor::Green, true, DebugLineDuration, 0, 4.0f);
-			}
-
-			// Node dots (red = high curvature, blue = low curvature)
-			const float CurvNorm = FMath::Clamp(CachedCurvatures[i] * MToCm * 500.0f, 0.0f, 1.0f);
-			const FColor NodeColor = FColor::MakeRedToGreenColorFromScalar(1.0f - CurvNorm);
-			DrawDebugPoint(GetWorld(), Pos, 10.0f, NodeColor, true, DebugLineDuration);
-
-			// Track boundary indicators
-			if (bDrawTrackBounds)
-			{
-				const FVector CenterCm = Nodes[i].CenterPos * MToCm;
-				const FVector LeftEdge = CenterCm + HalfTrackWidth * Nodes[i].Perpendicular;
-				const FVector RightEdge = CenterCm - HalfTrackWidth * Nodes[i].Perpendicular;
-				DrawDebugLine(GetWorld(), LeftEdge, RightEdge,
-					FColor(60, 60, 60), true, DebugLineDuration, 0, 1.0f);
-
-				// Left and right edges connected
-				if (bClosedLoop || i < NumNodes - 1)
-				{
-					const int32 NextIdx = (i + 1) % NumNodes;
-					const FVector NextCenterCm = Nodes[NextIdx].CenterPos * MToCm;
-					const FVector NextLeft = NextCenterCm + HalfTrackWidth * Nodes[NextIdx].Perpendicular;
-					const FVector NextRight = NextCenterCm - HalfTrackWidth * Nodes[NextIdx].Perpendicular;
-					DrawDebugLine(GetWorld(), LeftEdge, NextLeft,
-						FColor(40, 40, 40), true, DebugLineDuration, 0, 1.0f);
-					DrawDebugLine(GetWorld(), RightEdge, NextRight,
-						FColor(40, 40, 40), true, DebugLineDuration, 0, 1.0f);
-				}
-			}
-		}
-	}
-
-	// Mark dirty so the editor knows to save the computed spline
+	// --- Step 5: Mark dirty so the editor saves the computed spline
 	Modify();
 	RacingLineSpline->Modify();
 	MarkPackageDirty();
-
 }
 
 TArray<FVector> ATurboRacingLineCalculator::GetRacingLinePositions() const
