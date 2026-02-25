@@ -33,8 +33,8 @@ bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) co
 	const float PotentialAdvantage = Context.TargetSpeedCms - Context.SpeedOfVehicleAheadCms;
 	if (PotentialAdvantage < MinSpeedAdvantage) return false;
 
-	// Is enough straight road ahead?
-	if (Context.DistanceToNextCorner > 0.0f && Context.DistanceToNextCorner < MinStraightNeeded) return false;
+	// No corner found within scan range
+	if (Context.DistanceToNextCorner <= 0.0f || Context.DistanceToNextCorner < MinStraightNeeded) return false;
 
 	return true;
 }
@@ -138,43 +138,11 @@ FVector UTurboAction_Overtake::GetTargetPoint()
 	return BaseTarget + (Right * OvertakeLateralOffset * SideMultiplier);
 }
 
-void UTurboAction_Overtake::ApplySpeedControl(float DeltaTime)
+float UTurboAction_Overtake::GetTargetSpeedAtDistance(float Distance) const
 {
-	if (!Vehicle.IsValid() || !AIController.IsValid()) return;
-
-	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
-	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-
-	// Use speed profile directly - no follow distance cap during overtake
-	const float ProfileSpeed = GetTargetSpeedAtDistance(CurrentDistance);
-	const float TargetSpeedCms = FMath::Min(ProfileSpeed * OvertakeSpeedBoost, Vehicle->MaxSpeedCms);
-
-	const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
-
-	float FinalThrottle = 0.0f;
-	float FinalBrake = 0.0f;
-
-	if (FMath::Abs(SpeedError) < CoastingThresholdCms)
-	{
-		FinalThrottle = CoastThrottleInput;
-	}
-	else
-	{
-		const float PIDOutput = SpeedPID.Update(SpeedError, DeltaTime);
-
-		if (PIDOutput > 0.0f)
-		{
-			FinalThrottle = PIDOutput;
-		}
-		else
-		{
-			FinalBrake = -PIDOutput;
-		}
-	}
-
-	Vehicle->SetThrottleInput(FinalThrottle);
-	Vehicle->SetBrakeInput(FinalBrake);
-	Vehicle->SetHandbrakeInput(false);
+	const float BaseSpeed = Super::GetTargetSpeedAtDistance(Distance);
+	if (!Vehicle.IsValid()) return BaseSpeed;
+	return FMath::Min(BaseSpeed * OvertakeSpeedBoost, Vehicle->MaxSpeedCms);
 }
 
 // =============================================================================

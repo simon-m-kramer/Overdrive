@@ -63,7 +63,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	float CoastThrottleInput = 0.25f;
 
-	float GetTargetSpeedAtDistance(float Distance) const;
+	virtual float GetTargetSpeedAtDistance(float Distance) const;
 
 protected:
 	// =========================================================================

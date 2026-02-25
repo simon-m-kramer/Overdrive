@@ -20,6 +20,8 @@ public:
 	virtual bool IsDone() override;
 	virtual bool CanActivate(const FTurboDecisionContext& Context) const override;
 
+	virtual float GetTargetSpeedAtDistance(float Distance) const override;
+
 	// =========================================================================
 	// OVERTAKE TRIGGER
 	// =========================================================================
@@ -62,7 +64,6 @@ public:
 
 protected:
 	virtual FVector GetTargetPoint() override;
-	virtual void ApplySpeedControl(float DeltaTime) override;
 
 private:
 	EOvertakeSide ChosenSide = EOvertakeSide::Left;
