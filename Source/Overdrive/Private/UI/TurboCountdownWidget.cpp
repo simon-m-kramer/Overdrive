@@ -69,7 +69,8 @@ void UTurboCountdownWidget::OnCountdownUpdated(int32 Count)
 
 void UTurboCountdownWidget::OnRaceStarted()
 {
-	// remove widget, but with a short delay, so that animation can finish
+	// Remove widget, but with a short delay, so that animation can finish
+	// WARNING: If the delay is shorter than the animation, this will cause a crash
 	FTimerHandle RemoveTimer;
 	GetWorld()->GetTimerManager().SetTimer(RemoveTimer, [this](){RemoveFromParent();}, 1.5f, false);
 }
