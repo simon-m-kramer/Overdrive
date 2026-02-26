@@ -42,14 +42,12 @@ void UTurboPauseMenuWidget::OnMainMenuClicked()
 
 void UTurboPauseMenuWidget::ShowMenu()
 {
-	ActivateWidget();  // Call base class
 	SetVisibility(ESlateVisibility::Visible);
 	bIsMenuVisible = true;
 }
 
 void UTurboPauseMenuWidget::HideMenu()
 {
-	DeactivateWidget();  // Call base class
 	SetVisibility(ESlateVisibility::Collapsed);
 	bIsMenuVisible = false;
 }
