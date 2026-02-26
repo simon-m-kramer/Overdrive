@@ -10,6 +10,12 @@ void UTurboCountdownWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	// clear preview text
+	if (Txt_Countdown)
+	{
+		Txt_Countdown->SetText(FText::GetEmpty());
+	}
+
 	if (ATurboGameMode* GameMode = Cast<ATurboGameMode>(GetWorld()->GetAuthGameMode()))
 	{
 		if (UTurboRaceManager* RaceManager = GameMode->GetRaceManager())
@@ -38,6 +44,13 @@ void UTurboCountdownWidget::OnCountdownUpdated(int32 Count)
 {
 	if (Txt_Countdown)
 	{
+		// Stop any in-progress animation
+		if (Anim_Pop)
+		{
+			StopAnimation(Anim_Pop);
+			Txt_Countdown->SetRenderScale(FVector2D(1.0f, 1.0f));
+		}
+
 		if (Count > 0)
 		{
 			Txt_Countdown->SetText(FText::AsNumber(Count));
@@ -46,10 +59,17 @@ void UTurboCountdownWidget::OnCountdownUpdated(int32 Count)
 		{
 			Txt_Countdown->SetText(FText::FromString(TEXT("GO!")));
 		}
+
+		if (Anim_Pop)
+		{
+			PlayAnimation(Anim_Pop);
+		}
 	}
 }
 
 void UTurboCountdownWidget::OnRaceStarted()
 {
-	RemoveFromParent();
+	// remove widget, but with a short delay, so that animation can finish
+	FTimerHandle RemoveTimer;
+	GetWorld()->GetTimerManager().SetTimer(RemoveTimer, [this](){RemoveFromParent();}, 1.5f, false);
 }

@@ -23,6 +23,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Txt_Countdown;
 
+	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
+	TObjectPtr<UWidgetAnimation> Anim_Pop;
+
 private:
 	UFUNCTION()
 	void OnCountdownUpdated(int32 Count);
