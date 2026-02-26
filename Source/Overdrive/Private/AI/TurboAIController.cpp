@@ -74,6 +74,25 @@ void ATurboAIController::Tick(float DeltaTime)
 
 }
 
+void ATurboAIController::SetDrivingProfile(UTurboDrivingProfile* NewProfile)
+{
+    DrivingProfile = NewProfile;
+
+    // Find the FollowPath action and recalculate
+    if (ActionStack)
+    {
+        for (UBifrostAction* Action : ActionStack->GetActions())
+        {
+            UTurboAction_FollowPath* FollowAction = Cast<UTurboAction_FollowPath>(Action);
+            if (FollowAction)
+            {
+                FollowAction->RecalculateSpeedProfile(RacingSplineActor, DrivingProfile);
+                break;
+            }
+        }
+    }
+}
+
 // =============================================================================
 // SPLINE & POSITION
 // =============================================================================

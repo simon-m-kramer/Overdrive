@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Speed Profile")
 	FTurboSpeedProfile SpeedProfile;
 
+	/** This is part of the driver profile swapping process */
+	void RecalculateSpeedProfile(ATurboRacingSpline* Spline, UTurboDrivingProfile* Profile);
+
 	// =========================================================================
 	// STEERING CONTROL
 	// =========================================================================

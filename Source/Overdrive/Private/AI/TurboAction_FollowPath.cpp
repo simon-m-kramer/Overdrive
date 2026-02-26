@@ -59,6 +59,14 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 	ApplySpeedControl(DeltaTime);
 }
 
+void UTurboAction_FollowPath::RecalculateSpeedProfile(ATurboRacingSpline* Spline, UTurboDrivingProfile* Profile)
+{
+	if (Spline && Profile)
+	{
+		SpeedProfile.Calculate(Spline, Profile);
+	}
+}
+
 // =============================================================================
 // STEERING CONTROL
 // =============================================================================

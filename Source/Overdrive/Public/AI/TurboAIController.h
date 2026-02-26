@@ -59,6 +59,9 @@ public:
 
     virtual void Tick(float DeltaTime) override;
 
+    /** This is part of the driver profile swapping process */
+    void SetDrivingProfile(UTurboDrivingProfile* NewProfile);
+
     // =========================================================================
     // ACTION STACK
     // =========================================================================
