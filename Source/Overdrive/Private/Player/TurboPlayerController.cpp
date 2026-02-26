@@ -12,6 +12,7 @@
 #include "Framework/TurboGameMode.h"
 #include "AI/TurboAIController.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/TurboCountdownWidget.h"
 
 
 void ATurboPlayerController::BeginPlay()
@@ -46,14 +47,33 @@ void ATurboPlayerController::BeginPlay()
         }
     }
 
-    // Bind Race Result Screen to Race Manager Delegate
+    // Bind Delegates
     if (ATurboGameMode* GameMode = Cast<ATurboGameMode>(GetWorld()->GetAuthGameMode()))
     {
         if (UTurboRaceManager* RaceManager = GameMode->GetRaceManager())
         {
-            RaceManager->OnVehicleFinished.AddDynamic(this, &ATurboPlayerController::OnVehicleFinished);
+            RaceManager->OnRaceStarted.AddDynamic(this, &ATurboPlayerController::OnRaceStarted);
+            RaceManager->OnVehicleFinished.AddDynamic(this, &ATurboPlayerController::OnVehicleFinished);        
         }
     }
+
+    // Create Countdown Widget
+    if (CountdownClass && IsLocalController())
+    {
+        UTurboCountdownWidget* Countdown = CreateWidget<UTurboCountdownWidget>(this, CountdownClass);
+        if (Countdown)
+        {
+            Countdown->AddToViewport(50);
+        }
+    }
+
+    // Start the game with input disabled, will be enabled once countdown finished
+    if (APawn* VehiclePawn = GetPawn())
+    {
+        VehiclePawn->DisableInput(this);
+    }
+
+
 }
 
 void ATurboPlayerController::SetupInputComponent()
@@ -112,7 +132,13 @@ void ATurboPlayerController::TogglePauseMenu()
     }
 }
 
-
+void ATurboPlayerController::OnRaceStarted()
+{
+    if (APawn* VehiclePawn = GetPawn())
+    {
+        VehiclePawn->EnableInput(this);
+    }
+}
 
 void ATurboPlayerController::OnVehicleFinished(ATurboVehicle* Vehicle)
 {

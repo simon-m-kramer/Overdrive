@@ -29,7 +29,7 @@ public:
 
 	/** Minimum normalized curvature to trigger yielding (only yield in curves) */
 	UPROPERTY(EditAnywhere, Category = "Yield", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float MinCurvatureToYield = 0.001f;  // roughly a 10m radius corner
+	float MinCurvatureToYield = 0.0f;  // 0.001f = roughly a 10m radius corner
 
 protected:
 	virtual FVector GetTargetPoint() override;

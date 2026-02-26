@@ -11,6 +11,7 @@
 #include "AI/TurboAction_FollowPath.h"
 #include "Components/SplineComponent.h"
 #include "AI/TurboVehicleDetectionComponent.h"
+#include "AI/TurboAction_GridStart.h"
 
 ATurboAIController::ATurboAIController()
 {
@@ -54,6 +55,10 @@ void ATurboAIController::OnPossess(APawn* InPawn)
         UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack, DefaultActionClass);
         PushAction(DefaultAction);
     }
+
+    // Hold at grid until race starts
+    UTurboAction_GridStart* GridStart = NewObject<UTurboAction_GridStart>(ActionStack);
+    PushAction(GridStart);
 
 }
 

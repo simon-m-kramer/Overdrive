@@ -11,7 +11,8 @@ class ATurboRacingSpline;
 class USplineComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnVehicleFinished, ATurboVehicle*, Vehicle);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCountdownUpdated, int32, Count);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRaceStarted);
 
 USTRUCT(BlueprintType)
 struct FRaceEntry
@@ -102,6 +103,25 @@ public:
 	static FString FormatLapTime(float TimeSeconds);
 
 	// =========================================================================
+	// COUNTDOWN
+	// =========================================================================
+
+	UFUNCTION(BlueprintCallable, Category = "Race")
+	void StartCountdown();
+
+	UFUNCTION(BlueprintPure, Category = "Race")
+	bool HasRaceStarted() const { return bRaceStarted; }
+
+	UPROPERTY(BlueprintAssignable, Category = "Race")
+	FOnCountdownUpdated OnCountdownUpdated;
+
+	UPROPERTY(BlueprintAssignable, Category = "Race")
+	FOnRaceStarted OnRaceStarted;
+
+	UPROPERTY(EditAnywhere, Category = "Race")
+	int32 CountdownSeconds = 2;
+
+	// =========================================================================
 	// DEBUG
 	// =========================================================================
 
@@ -122,4 +142,10 @@ private:
 	TArray<FRaceEntry> Entries;
 
 	float SplineLength = 0.0f;
+
+	// Countdown
+	void UpdateCountdown();
+	FTimerHandle CountdownTimerHandle;
+	int32 CurrentCount = 0;
+	bool bRaceStarted = false;
 };

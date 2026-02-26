@@ -13,7 +13,7 @@ class UTurboPauseMenuWidget;
 class UInputAction;
 class UTurboRaceResultWidget;
 class ATurboAIController;
-
+class UTurboCountdownWidget;
 
 UCLASS()
 class OVERDRIVE_API ATurboPlayerController : public APlayerController
@@ -40,6 +40,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "UI")
     TSubclassOf<UTurboRaceResultWidget> RaceResultClass;
 
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<UTurboCountdownWidget> CountdownClass;
+
     UPROPERTY(EditAnywhere, Category = "AI")
     TSubclassOf<ATurboAIController> PostRaceAIClass;
 
@@ -60,6 +63,9 @@ protected:
 
     UFUNCTION()
     void OnVehicleFinished(ATurboVehicle* Vehicle);
+
+    UFUNCTION()
+    void OnRaceStarted();
 
 
 };

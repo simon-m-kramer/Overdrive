@@ -25,6 +25,10 @@ void UTurboRaceManager::BeginPlay()
 	}
 
 	CollectVehicles();
+
+	// Delay so PlayerController and widgets are ready
+	FTimerHandle StartTimer;
+	GetWorld()->GetTimerManager().SetTimer(StartTimer, [this](){StartCountdown();}, 0.5f, false);
 }
 
 void UTurboRaceManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -43,7 +47,7 @@ void UTurboRaceManager::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 				FString Name = Entry.Vehicle->VehicleName;
 				GEngine->AddOnScreenDebugMessage(100 + Entry.Placement, 0.0f, FColor::White,
 					FString::Printf(TEXT("P%d: %s | Lap %d/%d | Progress: %.0f"),
-						Entry.Placement, *Name, Entry.CurrentLap, TotalLaps, Entry.TotalProgress));
+					Entry.Placement, *Name, Entry.CurrentLap, TotalLaps, Entry.TotalProgress));
 			}
 		}
 	}
@@ -168,8 +172,7 @@ void UTurboRaceManager::DetectLapCompletion(FRaceEntry& Entry, float InSplineLen
 
 		if (bDrawDebug)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("RaceManager: %s completed lap %d"),
-				*Entry.Vehicle->GetName(), Entry.CurrentLap - 1);
+			UE_LOG(LogTemp, Warning, TEXT("RaceManager: %s completed lap %d"), *Entry.Vehicle->GetName(), Entry.CurrentLap - 1);
 		}
 	}
 
@@ -179,8 +182,7 @@ void UTurboRaceManager::DetectLapCompletion(FRaceEntry& Entry, float InSplineLen
 
 		if (bDrawDebug)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("RaceManager: %s went back a lap to %d"),
-				*Entry.Vehicle->GetName(), Entry.CurrentLap);
+			UE_LOG(LogTemp, Warning, TEXT("RaceManager: %s went back a lap to %d"), *Entry.Vehicle->GetName(), Entry.CurrentLap);
 		}
 	}
 }
@@ -283,5 +285,40 @@ FString UTurboRaceManager::FormatLapTime(float TimeSeconds)
 	const int32 Minutes = FMath::FloorToInt(TimeSeconds / 60.0f);
 	const float Seconds = FMath::Fmod(TimeSeconds, 60.0f);
 	return FString::Printf(TEXT("%d:%06.3f"), Minutes, Seconds);
+}
+
+// =============================================================================
+// COUNTDOWN
+// =============================================================================
+
+void UTurboRaceManager::StartCountdown()
+{
+	CurrentCount = CountdownSeconds;
+	OnCountdownUpdated.Broadcast(CurrentCount);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		CountdownTimerHandle,
+		this,
+		&UTurboRaceManager::UpdateCountdown,
+		0.75f,
+		true
+	);
+}
+
+void UTurboRaceManager::UpdateCountdown()
+{
+	CurrentCount--;
+
+	if (CurrentCount > 0)
+	{
+		OnCountdownUpdated.Broadcast(CurrentCount);
+	}
+	else
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CountdownTimerHandle);
+		OnCountdownUpdated.Broadcast(0); // "GO!"
+		bRaceStarted = true;
+		OnRaceStarted.Broadcast();
+	}
 }
 
