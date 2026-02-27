@@ -1,15 +1,8 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
-// Drop this actor into your level, edit the CenterlineSpline to match your track,
-// then click "Calculate Racing Line" in the Details panel.
-//
 // The algorithm is based on:
 // "Computer-Controlled Cars in Vamos" by Sam Varner
 // https://vamos.sourceforge.net/computer-controlled-cars/node2.html
-//
-// It models the racing line as a chain of masses on spring-loaded hinges.
-// The springs try to minimize curvature. Nodes are constrained to slide
-// perpendicular to the track.
 
 #pragma once
 
@@ -88,10 +81,10 @@ private:
 	/** Internal node representation for the simulation. */
 	struct FSimNode
 	{
-		FVector CenterPos;     // Centerline position (meters)
-		FVector Perpendicular; // Track-perpendicular unit vector
-		float Offset;          // Current offset from center along Perpendicular (meters)
-		float Velocity;        // Velocity along Perpendicular (m/s)
+		FVector CenterPos;
+		FVector Perpendicular;
+		float Offset;
+		float Velocity;
 
 		FVector GetPosition() const
 		{
@@ -99,7 +92,7 @@ private:
 		}
 	};
 
-	/** Cached results from last calculation (world space, cm). */
+	/** Cached results from last calculation. However not used right now, AI queries spline directly */
 	TArray<FVector> CachedPositions;
 
 	/** Conversion factors */

@@ -18,6 +18,8 @@ void UTurboActionStack::RemoveAction(UBifrostAction* InAction)
 	RebuildActiveActionTags();
 }
 
+// CDO is the class default object. Every instance of that class is treated the same.
+// I will change this in future updates. Currently it works, because I only have one instance per AI Controller.
 void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context)
 {
 	for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
