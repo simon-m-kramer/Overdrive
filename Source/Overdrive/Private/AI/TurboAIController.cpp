@@ -79,6 +79,7 @@ void ATurboAIController::Tick(float DeltaTime)
 
 }
 
+// TODO: This is not used right now. Fix bug before using it
 void ATurboAIController::SetDrivingProfile(UTurboDrivingProfile* NewProfile)
 {
     DrivingProfile = NewProfile;
