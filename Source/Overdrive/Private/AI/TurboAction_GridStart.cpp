@@ -7,10 +7,16 @@
 #include "Framework/TurboRaceManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Framework/TurboGameMode.h"
+#include "Framework/TurboGameplayTags.h"
 
 UTurboAction_GridStart::UTurboAction_GridStart()
 {
     ActionName = TEXT("GridStart");
+    ActionTag = TurboGameplayTags::Action_GridStart;
+
+    BlocksTags.AddTag(TurboGameplayTags::Action_GridStart);
+    BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
+    BlocksTags.AddTag(TurboGameplayTags::Action_FollowSafe);
 }
 
 void UTurboAction_GridStart::Start(bool bFirstTime)

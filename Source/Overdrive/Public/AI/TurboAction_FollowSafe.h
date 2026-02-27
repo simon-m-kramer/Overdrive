@@ -23,7 +23,7 @@ public:
 
 	/** Distance at which we start slowing down for a car ahead (cm) */
 	UPROPERTY(EditAnywhere, Category = "Follow Distance")
-	float FollowReactionDistance = 1000.0f;
+	float FollowReactionDistance = 2500.0f;
 
 	/** Minimum safe following distance (cm) — match their speed at this distance */
 	UPROPERTY(EditAnywhere, Category = "Follow Distance")
