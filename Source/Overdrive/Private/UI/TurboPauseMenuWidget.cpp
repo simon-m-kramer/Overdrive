@@ -37,7 +37,7 @@ void UTurboPauseMenuWidget::OnResumeClicked()
 void UTurboPauseMenuWidget::OnMainMenuClicked()
 {
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
-	UGameplayStatics::OpenLevel(GetWorld(), FName("L_MainMenu_Rainy"));
+	UGameplayStatics::OpenLevel(GetWorld(), FName("L_MainMenu"));
 }
 
 void UTurboPauseMenuWidget::ShowMenu()
