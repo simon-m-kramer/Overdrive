@@ -48,7 +48,7 @@ public:
 
 	/** Extra speed boost as fraction of max speed during overtake */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeSpeedBoost = 1.5f;
+	float OvertakeSpeedBoost = 1.1f;
 
 	/** How long the overtake can last before aborting (seconds) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
