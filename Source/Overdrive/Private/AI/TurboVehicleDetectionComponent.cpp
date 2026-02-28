@@ -149,6 +149,8 @@ void UTurboVehicleDetectionComponent::UpdateSideDetection()
 {
     bCarOnLeft = false;
     bCarOnRight = false;
+    CarOnLeft = nullptr;
+    CarOnRight = nullptr;
 
     FVector VehicleLocation = OwnerVehicle->GetActorLocation();
     FVector Forward = OwnerVehicle->GetActorForwardVector();
@@ -158,11 +160,9 @@ void UTurboVehicleDetectionComponent::UpdateSideDetection()
     FCollisionQueryParams QueryParams;
     QueryParams.AddIgnoredActor(OwnerVehicle);
 
-    // Box extent: X = half car length, Y = lateral width, Z = height
     FVector BoxExtent(SideDetectionLength * 0.5f, SideDetectionWidth * 0.5f, SideDetectionHeight * 0.5f);
     FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent);
 
-    // Offset center slightly backward so box doesn't extend far past front bumper
     FVector ForwardShift = Forward * SideDetectionForwardOffset;
 
     // Left side detection
@@ -186,6 +186,7 @@ void UTurboVehicleDetectionComponent::UpdateSideDetection()
             if (HitVehicle && HitVehicle != OwnerVehicle)
             {
                 bCarOnLeft = true;
+                CarOnLeft = HitVehicle;
                 break;
             }
         }
@@ -212,6 +213,7 @@ void UTurboVehicleDetectionComponent::UpdateSideDetection()
             if (HitVehicle && HitVehicle != OwnerVehicle)
             {
                 bCarOnRight = true;
+                CarOnRight = HitVehicle;
                 break;
             }
         }

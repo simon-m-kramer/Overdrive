@@ -52,6 +52,7 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
 	bOvertakeComplete = false;
 	bOvertakeAborted = false;
 	OvertakeTimer = 0.0f;
+	bPulledOut = false;
 
 	// Remember who we're passing
 	if (Vehicle.IsValid())
@@ -91,6 +92,19 @@ void UTurboAction_Overtake::Update(float DeltaTime)
 		return;
 	}
 
+	if (!bPulledOut && OvertakeTarget.IsValid())
+	{
+		const FVector ToTarget = OvertakeTarget->GetActorLocation() - Vehicle->GetActorLocation();
+		const float DistanceToTarget = ToTarget.Size();
+
+		const float TheirSpeed = FMath::Abs(OvertakeTarget->GetForwardSpeed());
+		const float OurSpeed = FMath::Abs(Vehicle->GetForwardSpeed());
+		const float ClosingSpeed = FMath::Max(OurSpeed - TheirSpeed, 0.0f);
+
+		const float DynamicPullOut = MinPullOutDistance + (ClosingSpeed * PullOutTimeFactor);
+		bPulledOut = DistanceToTarget < DynamicPullOut;
+	}
+
 	// Drive - inherited steering and speed control with our overrides
 	FVector TargetPoint = GetTargetPoint();
 	float SteeringInput = CalculateSteering(TargetPoint, DeltaTime);
@@ -110,12 +124,10 @@ bool UTurboAction_Overtake::IsDone()
 
 FVector UTurboAction_Overtake::GetTargetPoint()
 {
-	// Get the base racing line target point
 	FVector BaseTarget = Super::GetTargetPoint();
 
-	if (!Vehicle.IsValid()) return BaseTarget;
+	if (!bPulledOut || !Vehicle.IsValid()) return BaseTarget;
 
-	// Offset laterally to the chosen side
 	USplineComponent* Spline = GetSpline();
 	if (!Spline || !AIController.IsValid()) return BaseTarget;
 
@@ -129,12 +141,10 @@ FVector UTurboAction_Overtake::GetTargetPoint()
 		if (TargetDistance < 0.0f) TargetDistance += Spline->GetSplineLength();
 	}
 
-	// Get the spline's right vector at the target distance
 	const FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 	const FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 	const FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
 
-	// Apply offset: left = negative right, right = positive right
 	const float SideMultiplier = (ChosenSide == EOvertakeSide::Left) ? -1.0f : 1.0f;
 
 	return BaseTarget + (Right * OvertakeLateralOffset * SideMultiplier);
@@ -211,7 +221,6 @@ bool UTurboAction_Overtake::IsPassComplete() const
 
 bool UTurboAction_Overtake::ShouldAbort() const
 {
-	// Timeout
 	if (OvertakeTimer > OvertakeTimeout) return true;
 
 	if (!Vehicle.IsValid()) return true;
@@ -219,10 +228,17 @@ bool UTurboAction_Overtake::ShouldAbort() const
 	UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
 	if (!Detection) return true;
 
-	// Car appeared on our chosen side - no room
-	if (ChosenSide == EOvertakeSide::Left && Detection->IsCarOnLeft()) return true;
+	if (ChosenSide == EOvertakeSide::Left)
+	{
+		ATurboVehicle* CarOnLeft = Detection->GetCarOnLeft();
+		if (CarOnLeft && CarOnLeft != OvertakeTarget.Get()) return true;
+	}
 
-	if (ChosenSide == EOvertakeSide::Right && Detection->IsCarOnRight()) return true;
+	if (ChosenSide == EOvertakeSide::Right)
+	{
+		ATurboVehicle* CarOnRight = Detection->GetCarOnRight();
+		if (CarOnRight && CarOnRight != OvertakeTarget.Get()) return true;
+	}
 
 	return false;
 }

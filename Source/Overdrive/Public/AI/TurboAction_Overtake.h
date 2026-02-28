@@ -36,11 +36,18 @@ public:
 
 	/** Minimum straight distance ahead needed to attempt a pass (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float MinStraightNeeded = 4000.0f;  // 8000 = 80m
+	float MinStraightNeeded = 3000.0f;  // 8000 = 80m
 
 	// =========================================================================
 	// OVERTAKE BEHAVIOR
 	// =========================================================================
+
+	/** Distance at which we pull out to the side (cm) — stay on line until this close */
+	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
+	float MinPullOutDistance = 500.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
+	float PullOutTimeFactor = 1.5f;  // seconds of closing time as buffer
 
 	/** Lateral offset from racing line when passing (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
@@ -48,7 +55,7 @@ public:
 
 	/** Extra speed boost as fraction of max speed during overtake */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeSpeedBoost = 1.1f;
+	float OvertakeSpeedBoost = 1.0f;
 
 	/** How long the overtake can last before aborting (seconds) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
@@ -66,6 +73,9 @@ protected:
 	virtual FVector GetTargetPoint() override;
 
 private:
+	float CurrentLateralOffset = 0.0f;
+	bool bPulledOut = false;
+
 	EOvertakeSide ChosenSide = EOvertakeSide::Left;
 	bool bOvertakeComplete = false;
 	bool bOvertakeAborted = false;

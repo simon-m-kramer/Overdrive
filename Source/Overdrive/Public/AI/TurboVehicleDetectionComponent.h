@@ -56,6 +56,12 @@ public:
     UFUNCTION(BlueprintPure, Category = "Detection")
     bool IsOvertakeSafe(EOvertakeSide Side) const;
 
+    UFUNCTION(BlueprintPure, Category = "Detection")
+    ATurboVehicle* GetCarOnLeft() const { return CarOnLeft; }
+
+    UFUNCTION(BlueprintPure, Category = "Detection")
+    ATurboVehicle* GetCarOnRight() const { return CarOnRight; }
+
     // =========================================================================
     // CONFIGURATION - FORWARD
     // =========================================================================
@@ -121,6 +127,12 @@ private:
 
     UPROPERTY()
     TObjectPtr<ATurboVehicle> OwnerVehicle;
+
+    UPROPERTY()
+    TObjectPtr<ATurboVehicle> CarOnLeft;
+
+    UPROPERTY()
+    TObjectPtr<ATurboVehicle> CarOnRight;
 
     // Detection results
     bool bCarAhead = false;
