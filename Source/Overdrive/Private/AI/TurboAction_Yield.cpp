@@ -15,7 +15,6 @@ UTurboAction_Yield::UTurboAction_Yield()
 	ActionTag = TurboGameplayTags::Action_Yield;
 
 	BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
-	BlockedByTags.AddTag(TurboGameplayTags::Action_Overtake);
 }
 
 // =============================================================================

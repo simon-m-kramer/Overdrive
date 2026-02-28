@@ -16,6 +16,7 @@ UTurboAction_Overtake::UTurboAction_Overtake()
 
 	BlocksTags.AddTag(TurboGameplayTags::Action_Overtake);
 	BlocksTags.AddTag(TurboGameplayTags::Action_FollowSafe);
+	BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
 }
 
 // =============================================================================
@@ -34,8 +35,8 @@ bool UTurboAction_Overtake::CanActivate(const FTurboDecisionContext& Context) co
 	const float PotentialAdvantage = Context.TargetSpeedCms - Context.SpeedOfVehicleAheadCms;
 	if (PotentialAdvantage < MinSpeedAdvantage) return false;
 
-	// No corner found within scan range
-	if (Context.DistanceToNextCorner <= 0.0f || Context.DistanceToNextCorner < MinStraightNeeded) return false;
+	// No corner found within scan range = long straight = safe to pass
+	if (Context.DistanceToNextCorner > 0.0f && Context.DistanceToNextCorner < MinStraightNeeded) return false;
 
 	return true;
 }

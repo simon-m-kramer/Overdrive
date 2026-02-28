@@ -29,7 +29,7 @@ struct OVERDRIVE_API FTurboSpeedProfile
 
 	void Calculate(const ATurboRacingSpline* Spline, const UTurboDrivingProfile* Profile);
 
-	float GetTargetSpeed(float Distance, float SplineLength, bool bClosedLoop) const;
+	float GetTargetSpeed(float Distance) const;
 
 	bool IsReady() const { return bReady; }
 
@@ -38,4 +38,6 @@ struct OVERDRIVE_API FTurboSpeedProfile
 private:
 	TArray<float> Speeds;
 	bool bReady = false;
+	float CachedSplineLength = 0.0f;
+	bool bCachedClosedLoop = false;
 };

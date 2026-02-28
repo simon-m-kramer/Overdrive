@@ -26,13 +26,6 @@ public:
 	virtual bool IsDone() override { return false; }
 
 	// =========================================================================
-	// SPEED PROFILE
-	// =========================================================================
-
-	UPROPERTY(EditAnywhere, Category = "Speed Profile")
-	FTurboSpeedProfile SpeedProfile;
-
-	// =========================================================================
 	// STEERING CONTROL
 	// =========================================================================
 
@@ -77,6 +70,9 @@ protected:
 	UPROPERTY()
 	TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;
 
+	UPROPERTY()
+	FTurboSpeedProfile SpeedProfile;
+
 	// =========================================================================
 	// STEERING AND SPEED
 	// =========================================================================
@@ -86,5 +82,7 @@ protected:
 	virtual FVector GetTargetPoint();
 	float CalculateSteering(const FVector& TargetPoint, float DeltaTime);
 	virtual void ApplySpeedControl(float DeltaTime);
+
+
 
 };

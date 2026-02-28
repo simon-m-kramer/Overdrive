@@ -121,25 +121,25 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 		}
 	}
 
+	CachedSplineLength = SplineLength;
+	bCachedClosedLoop = bClosedLoop;
 	bReady = true;
 }
 
-float FTurboSpeedProfile::GetTargetSpeed(float Distance, float SplineLength, bool bClosedLoop) const
+float FTurboSpeedProfile::GetTargetSpeed(float Distance) const
 {
 	if (!bReady || Speeds.Num() == 0) return 0.0f;
 
-	// wrap around
-	if (bClosedLoop)
+	if (bCachedClosedLoop)
 	{
-		Distance = FMath::Fmod(Distance, SplineLength);
-		if (Distance < 0.0f) Distance += SplineLength;
+		Distance = FMath::Fmod(Distance, CachedSplineLength);
+		if (Distance < 0.0f) Distance += CachedSplineLength;
 	}
 	else
 	{
-		Distance = FMath::Clamp(Distance, 0.0f, SplineLength - KINDA_SMALL_NUMBER);
+		Distance = FMath::Clamp(Distance, 0.0f, CachedSplineLength - KINDA_SMALL_NUMBER);
 	}
 
-	// interpolate
 	const float IndexFloat = Distance / SampleInterval;
 	const int32 Index = FMath::Clamp(FMath::FloorToInt(IndexFloat), 0, Speeds.Num() - 1);
 	const int32 NextIndex = (Index + 1) % Speeds.Num();
@@ -152,4 +152,6 @@ void FTurboSpeedProfile::Reset()
 {
 	Speeds.Empty();
 	bReady = false;
+	CachedSplineLength = 0.0f;
+	bCachedClosedLoop = false;
 }

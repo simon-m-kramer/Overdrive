@@ -32,15 +32,18 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 {
 	Super::Start(bFirstTime);
 
-	AIController = GetTypedOuter<ATurboAIController>();
-	if (AIController.IsValid())
+	if (bFirstTime)
 	{
-		Vehicle = AIController->GetVehicle();
-		RacingSplineActor = AIController->GetRacingSplineActor();
-
-		if (AIController->GetDrivingProfile())
+		AIController = GetTypedOuter<ATurboAIController>();
+		if (AIController.IsValid())
 		{
-			SpeedProfile.Calculate(RacingSplineActor.Get(), AIController->GetDrivingProfile());
+			Vehicle = AIController->GetVehicle();
+			RacingSplineActor = AIController->GetRacingSplineActor();
+
+			if (AIController->GetDrivingProfile())
+			{
+				SpeedProfile.Calculate(RacingSplineActor.Get(), AIController->GetDrivingProfile());
+			}
 		}
 	}
 
@@ -168,6 +171,6 @@ float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const
 		return 0.0f;
 	}
 
-	return SpeedProfile.GetTargetSpeed(Distance, RacingSplineActor->GetSplineLength(), RacingSplineActor->IsClosedLoop());
+	return SpeedProfile.GetTargetSpeed(Distance);
 }
 
