@@ -59,9 +59,6 @@ public:
 
     virtual void Tick(float DeltaTime) override;
 
-    /** This is part of the driver profile swapping process */
-    void SetDrivingProfile(UTurboDrivingProfile* NewProfile);
-
     // =========================================================================
     // ACTION STACK
     // =========================================================================
@@ -130,13 +127,6 @@ public:
     float CornerScanSampleRange = 400.0f;  // cm
 
     // =========================================================================
-    // DEBUG
-    // =========================================================================
-
-    UPROPERTY(EditAnywhere, Category = "Debug")
-    bool bShowDecisionContext = false;
-
-    // =========================================================================
     // CONFIGURATION
     // =========================================================================
 
@@ -151,6 +141,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+
     virtual void OnPossess(APawn* InPawn) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")

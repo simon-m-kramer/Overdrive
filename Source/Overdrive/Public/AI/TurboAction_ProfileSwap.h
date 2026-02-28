@@ -20,7 +20,4 @@ public:
 	virtual bool IsDone() override;
 	virtual bool CanActivate(const FTurboDecisionContext& Context) const override;
 
-	UPROPERTY(EditAnywhere, Category = "Profile")
-	TObjectPtr<UTurboDrivingProfile> TargetProfile;
-
 };

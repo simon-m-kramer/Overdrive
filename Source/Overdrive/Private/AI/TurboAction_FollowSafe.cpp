@@ -98,7 +98,6 @@ float UTurboAction_FollowSafe::GetFollowSpeedLimit() const
 	if (!AIController.IsValid()) return MAX_FLT;
 
 	const FTurboDecisionContext& Context = AIController->GetDecisionContext();
-
 	if (!Context.bVehicleAhead) return MAX_FLT;
 
 	const float Distance = Context.DistanceToVehicleAhead;
@@ -111,12 +110,10 @@ float UTurboAction_FollowSafe::GetFollowSpeedLimit() const
 		return TheirSpeed * 0.5f;
 	}
 
-	const float T = FMath::Clamp(
-		(FollowReactionDistance - Distance) / (FollowReactionDistance - FollowMinDistance),
-		0.0f, 1.0f);
+	const float T = FMath::Clamp((FollowReactionDistance - Distance) / (FollowReactionDistance - FollowMinDistance), 0.0f, 1.0f);
 
 	const float MatchSpeed = TheirSpeed - FollowSpeedMarginCms;
-	const float OurMaxSpeed = (AIController.IsValid() && AIController->GetDrivingProfile()) ? AIController->GetDrivingProfile()->MaxSpeedCms : MAX_FLT;
+	const float OurMaxSpeed = GetTargetSpeedAtDistance(Context.CurrentSplineDistance);
 
 	return FMath::Lerp(OurMaxSpeed, MatchSpeed, T);
 }

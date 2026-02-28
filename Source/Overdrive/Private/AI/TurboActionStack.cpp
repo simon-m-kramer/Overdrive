@@ -6,103 +6,37 @@
 #include "AI/TurboAIController.h"
 #include "BifrostAction.h"
 
-void UTurboActionStack::PushAction(UBifrostAction* NewAction)
+
+void UTurboActionStack::SetActionInstances(const TArray<UTurboActionBase*>& InActions)
 {
-	Super::PushAction(NewAction);
-	RebuildActiveActionTags();
+	ActionInstances = InActions;
 }
 
-void UTurboActionStack::RemoveAction(UBifrostAction* InAction)
-{
-	Super::RemoveAction(InAction);
-	RebuildActiveActionTags();
-}
-
-// CDO is the class default object. Every instance of that class is treated the same.
-// I will change this in future updates. Currently it works, because I only have one instance per AI Controller.
 void UTurboActionStack::EvaluateActions(const FTurboDecisionContext& Context)
 {
-	for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
+	for (UTurboActionBase* Action : ActionInstances)
 	{
-		if (!ActionClass)
+		if (Action && !IsActionBlocked(Action->ActionTag) && Action->CanActivate(Context))
 		{
-			continue;
+			PushAction(Action);
+			return;
 		}
-
-		UTurboActionBase* CDO = ActionClass->GetDefaultObject<UTurboActionBase>();
-		if (!CDO)
-		{
-			continue;
-		}
-
-		if (IsActionBlocked(CDO->ActionTag))
-		{
-			continue;
-		}
-
-		if (!CDO->CanActivate(Context))
-		{
-			continue;
-		}
-
-		UTurboActionBase* NewAction = NewObject<UTurboActionBase>(this, ActionClass);
-		PushAction(NewAction);
-
-		if (bShowEvaluationDebug)
-		{
-			GEngine->AddOnScreenDebugMessage(40, 2.0f, FColor::Green,
-				FString::Printf(TEXT("ACTION PUSHED: %s"), *CDO->ActionName));
-		}
-
-		return;
 	}
 }
 
 bool UTurboActionStack::IsActionBlocked(FGameplayTag ActionTag) const
 {
-	if (!ActionTag.IsValid())
-	{
-		return false;
-	}
+    if (!ActionTag.IsValid()) return false;
 
-	// Check if any active action blocks this tag
-	UBifrostAction* Current = GetCurrentAction();
-	UTurboActionBase* CurrentTurbo = Cast<UTurboActionBase>(Current);
-	if (CurrentTurbo && CurrentTurbo->BlocksTags.HasTag(ActionTag))
-	{
-		return true;
-	}
+    for (UBifrostAction* Action : GetActions())
+    {
+        UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
+        if (TurboAction && TurboAction->BlocksTags.HasTag(ActionTag))
+        {
+            return true;
+        }
+    }
 
-	const TArray<UBifrostAction*>& Actions = GetActions();
-	for (UBifrostAction* Action : Actions)
-	{
-		UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
-		if (TurboAction && TurboAction->BlocksTags.HasTag(ActionTag))
-		{
-			return true;
-		}
-	}
-
-	return false;
+    return false;
 }
 
-void UTurboActionStack::RebuildActiveActionTags()
-{
-	ActiveActionTags.Reset();
-
-	UTurboActionBase* Current = Cast<UTurboActionBase>(GetCurrentAction());
-	if (Current && Current->ActionTag.IsValid())
-	{
-		ActiveActionTags.AddTag(Current->ActionTag);
-	}
-
-	const TArray<UBifrostAction*>& Actions = GetActions();
-	for (UBifrostAction* Action : Actions)
-	{
-		UTurboActionBase* TurboAction = Cast<UTurboActionBase>(Action);
-		if (TurboAction && TurboAction->ActionTag.IsValid())
-		{
-			ActiveActionTags.AddTag(TurboAction->ActionTag);
-		}
-	}
-}

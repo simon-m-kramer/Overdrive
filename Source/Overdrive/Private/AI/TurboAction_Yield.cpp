@@ -14,7 +14,6 @@ UTurboAction_Yield::UTurboAction_Yield()
 	ActionName = TEXT("Yield");
 	ActionTag = TurboGameplayTags::Action_Yield;
 
-	// Block itself and cannot run during overtake
 	BlocksTags.AddTag(TurboGameplayTags::Action_Yield);
 	BlockedByTags.AddTag(TurboGameplayTags::Action_Overtake);
 }
@@ -28,7 +27,7 @@ bool UTurboAction_Yield::CanActivate(const FTurboDecisionContext& Context) const
 	// Need a car alongside
 	if (!Context.bVehicleOnLeft && !Context.bVehicleOnRight) return false;
 
-	// Only yield in curves
+	// Only yield in curves (I turned off, because MinCurvatureToYield is set 0.0f)
 	if (Context.CurrentCurvature < MinCurvatureToYield) return false;
 
 	return true;
@@ -42,7 +41,6 @@ void UTurboAction_Yield::Start(bool bFirstTime)
 {
 	Super::Start(bFirstTime);
 
-	// Snapshot which side the car is on at the moment we start yielding
 	if (Vehicle.IsValid())
 	{
 		UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
@@ -59,7 +57,6 @@ void UTurboAction_Yield::Update(float DeltaTime)
 	if (!Vehicle.IsValid() || !RacingSplineActor.IsValid() || !AIController.IsValid())
 		return;
 
-	// Update which side the car is on — it might switch sides
 	if (Vehicle.IsValid())
 	{
 		UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
@@ -113,7 +110,6 @@ FVector UTurboAction_Yield::GetTargetPoint()
 	const FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
 	const FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
 
-	// Move away from the adjacent car
 	float OffsetDirection = 0.0f;
 
 	if (bCarOnLeft && !bCarOnRight)

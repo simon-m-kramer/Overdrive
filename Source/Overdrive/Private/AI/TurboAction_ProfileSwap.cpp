@@ -8,12 +8,6 @@
 void UTurboAction_ProfileSwap::Start(bool bFirstTime)
 {
     Super::Start(bFirstTime);
-
-    ATurboAIController* AI = GetTypedOuter<ATurboAIController>();
-    if (AI && TargetProfile)
-    {
-        AI->SetDrivingProfile(TargetProfile);
-    }
 }
 
 bool UTurboAction_ProfileSwap::IsDone()

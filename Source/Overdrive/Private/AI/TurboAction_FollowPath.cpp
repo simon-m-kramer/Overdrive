@@ -59,14 +59,6 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 	ApplySpeedControl(DeltaTime);
 }
 
-void UTurboAction_FollowPath::RecalculateSpeedProfile(ATurboRacingSpline* Spline, UTurboDrivingProfile* Profile)
-{
-	if (Spline && Profile)
-	{
-		SpeedProfile.Calculate(Spline, Profile);
-	}
-}
-
 // =============================================================================
 // STEERING CONTROL
 // =============================================================================
@@ -173,7 +165,7 @@ float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const
 {
 	if (!RacingSplineActor.IsValid() || !SpeedProfile.IsReady())
 	{
-		return (AIController.IsValid() && AIController->GetDrivingProfile()) ? AIController->GetDrivingProfile()->MaxSpeedCms : 0.0f;
+		return 0.0f;
 	}
 
 	return SpeedProfile.GetTargetSpeed(Distance, RacingSplineActor->GetSplineLength(), RacingSplineActor->IsClosedLoop());

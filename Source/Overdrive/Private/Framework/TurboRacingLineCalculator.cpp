@@ -74,17 +74,6 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 	//
 	// For each triplet of consecutive nodes (Prev, Center, Next), the hinge
 	// at Center produces forces that try to straighten the bend:
-	//
-	// theta*nHat ~= rHat_CN x rHat_CP     (small-angle approximation)
-	// F_next = (k / |r_CN|) * (rHat_CN x theta*nHat)
-	// F_prev = F_next               (by symmetry)
-	// F_center = -2 * F_next        (Newton's third law)
-	//
-	// CRITICAL SIGN NOTE:
-	// The document's eq. 8 can be misread. The correct derivation gives a
-	// negative sign: F_next = -(k/|r|)(theta*nHat x rHat). Using the identity
-	// -(A x B) = (B x A), we compute CrossProduct(rHat_CN, theta*nHat) which has
-	// the correct sign without an explicit negation.
 
 	TArray<FVector> Forces;
 	Forces.SetNum(NumNodes);
@@ -133,18 +122,16 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 			const FVector R_CP_Hat = R_CP.GetSafeNormal();
 			const FVector R_CN_Hat = R_CN.GetSafeNormal();
 
-			// theta * nHat ~= rHat_CN x rHat_CP  (eq. 7 from the document)
+			// eq. 7 from the document
 			const FVector ThetaN = FVector::CrossProduct(R_CN_Hat, R_CP_Hat);
 
-			// F_next = (k / |r_CN|) * (rHat_CN x theta*nHat)
-			// This sign is correct: the double cross product -(theta*nHat x rHat) = (rHat x theta*nHat)
 			// pushes the middle node toward the straight line between neighbors.
 			const FVector F_Next = (Stiffness / LenCN) * FVector::CrossProduct(R_CN_Hat, ThetaN);
 
 			// Accumulate onto the three nodes of this triplet
-			Forces[Prev] += F_Next;          // F_prev = F_next
-			Forces[Center] -= 2.0f * F_Next;   // F_center = -2 * F_next
-			Forces[Next] += F_Next;           // F_next
+			Forces[Prev] += F_Next;
+			Forces[Center] -= 2.0f * F_Next;
+			Forces[Next] += F_Next;
 		}
 
 		// Apply forces: project onto perpendicular, integrate with Euler method
@@ -153,9 +140,7 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 			// Only allow movement perpendicular to the track (across the road)
 			const float ForcePerp = FVector::DotProduct(Forces[i], Nodes[i].Perpendicular);
 
-			// Damped Euler integration (eq. 11 from the document):
-			//   v_new = v_old + (F/m - damping * v_old) * dt
-			//   x_new = x_old + v_new * dt
+			// eq. 11 from the document
 			Nodes[i].Velocity += (ForcePerp / Mass - Damping * Nodes[i].Velocity) * DeltaTime;
 			Nodes[i].Offset += Nodes[i].Velocity * DeltaTime;
 

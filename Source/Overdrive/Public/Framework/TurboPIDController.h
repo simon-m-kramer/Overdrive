@@ -30,7 +30,6 @@ struct OVERDRIVE_API FTurboPIDController
 	// LIMITS
 	// =========================================================================
 
-	/** Clamp output to this range */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PID")
 	float OutputMin = -1.0f;
 
@@ -45,17 +44,8 @@ struct OVERDRIVE_API FTurboPIDController
 	// METHODS
 	// =========================================================================
 
-	/**
-	 * Compute PID output from current error.
-	 * Call once per tick with the current error value and delta time.
-	 *
-	 * @param Error		The current error (target - actual)
-	 * @param DeltaTime	Time since last update in seconds
-	 * @return			Control output, clamped to [OutputMin, OutputMax]
-	 */
 	float Update(float Error, float DeltaTime);
 
-	/** Reset all accumulated state (call when action starts/resumes) */
 	void Reset();
 
 private:

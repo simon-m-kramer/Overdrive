@@ -142,12 +142,7 @@ FVector UTurboAction_Overtake::GetTargetPoint()
 float UTurboAction_Overtake::GetTargetSpeedAtDistance(float Distance) const
 {
 	const float BaseSpeed = Super::GetTargetSpeedAtDistance(Distance);
-
-	const float MaxSpeed = (AIController.IsValid() && AIController->GetDrivingProfile())
-		? AIController->GetDrivingProfile()->MaxSpeedCms
-		: BaseSpeed;
-
-	return FMath::Min(BaseSpeed * OvertakeSpeedBoost, MaxSpeed);
+	return BaseSpeed * OvertakeSpeedBoost;
 }
 
 // =============================================================================

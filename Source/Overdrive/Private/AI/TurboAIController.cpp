@@ -42,11 +42,17 @@ void ATurboAIController::OnPossess(APawn* InPawn)
         }
     }
 
-    // Create ActionStack and ActionPriorityList pass through
+    // Create Action Stack and set action instances
     ActionStack = NewObject<UTurboActionStack>(this);
     if (ActionStack)
     {
-        ActionStack->ActionPriorityList = ActionPriorityList;
+        TArray<UTurboActionBase*> Instances;
+        for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
+        {
+            if (!ActionClass) continue;
+            Instances.Add(NewObject<UTurboActionBase>(ActionStack, ActionClass));
+        }
+        ActionStack->SetActionInstances(Instances);
     }
 
     // Push the default follow path action
@@ -56,7 +62,7 @@ void ATurboAIController::OnPossess(APawn* InPawn)
         PushAction(DefaultAction);
     }
 
-    // Hold at grid until race starts
+    // Hold at grid start until race starts
     UTurboAction_GridStart* GridStart = NewObject<UTurboAction_GridStart>(ActionStack);
     PushAction(GridStart);
 
@@ -75,27 +81,6 @@ void ATurboAIController::Tick(float DeltaTime)
     {
         ActionStack->EvaluateActions(DecisionContext);
         ActionStack->UpdateActions(DeltaTime);
-    }
-
-}
-
-// TODO: This is not used right now. Fix bug before using it
-void ATurboAIController::SetDrivingProfile(UTurboDrivingProfile* NewProfile)
-{
-    DrivingProfile = NewProfile;
-
-    // Find the FollowPath action and recalculate
-    if (ActionStack)
-    {
-        for (UBifrostAction* Action : ActionStack->GetActions())
-        {
-            UTurboAction_FollowPath* FollowAction = Cast<UTurboAction_FollowPath>(Action);
-            if (FollowAction)
-            {
-                FollowAction->RecalculateSpeedProfile(RacingSplineActor, DrivingProfile);
-                break;
-            }
-        }
     }
 }
 

@@ -17,45 +17,13 @@ class OVERDRIVE_API UTurboActionStack : public UBifrostActionStack
 	GENERATED_BODY()
 
 public:
-	// =========================================================================
-	// ACTION MANAGEMENT
-	// =========================================================================
+	void SetActionInstances(const TArray<UTurboActionBase*>& InActions);
 
-	virtual void PushAction(UBifrostAction* NewAction) override;
-	virtual void RemoveAction(UBifrostAction* InAction) override;
-
-	/** Evaluate the priority list and push the first valid action */
 	void EvaluateActions(const FTurboDecisionContext& Context);
 
-	// =========================================================================
-	// ACTION TAGS
-	// =========================================================================
-
-	/** Check if an action with the given tag would be blocked by the current stack */
-	UFUNCTION(BlueprintPure, Category = "Action Tags")
+private:
 	bool IsActionBlocked(FGameplayTag ActionTag) const;
 
-	/** Get all active action tags on the stack */
-	UFUNCTION(BlueprintPure, Category = "Action Tags")
-	const FGameplayTagContainer& GetActiveActionTags() const { return ActiveActionTags; }
-
-	// =========================================================================
-	// CONFIGURATION
-	// =========================================================================
-
-	/** Actions to evaluate each tick, in priority order (first = highest) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Personality")
-	TArray<TSubclassOf<UTurboActionBase>> ActionPriorityList;
-
-	// =========================================================================
-	// DEBUG
-	// =========================================================================
-
-	UPROPERTY(EditAnywhere, Category = "Debug")
-	bool bShowEvaluationDebug = false;
-
-private:
-	void RebuildActiveActionTags();
-
-	FGameplayTagContainer ActiveActionTags;
+	UPROPERTY()
+	TArray<TObjectPtr<UTurboActionBase>> ActionInstances;
 };

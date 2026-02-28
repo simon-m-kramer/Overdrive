@@ -32,9 +32,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Speed Profile")
 	FTurboSpeedProfile SpeedProfile;
 
-	/** This is part of the driver profile swapping process */
-	void RecalculateSpeedProfile(ATurboRacingSpline* Spline, UTurboDrivingProfile* Profile);
-
 	// =========================================================================
 	// STEERING CONTROL
 	// =========================================================================
@@ -58,11 +55,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	FTurboPIDController SpeedPID;
 
-	/** Deadband in cm/s — within this range, coast instead of correcting */
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	float CoastingThresholdCms = 50.0f;
 
-	/** Throttle applied when coasting within the deadband */
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	float CoastThrottleInput = 0.25f;
 
