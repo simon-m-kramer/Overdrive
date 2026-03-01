@@ -28,7 +28,7 @@ public:
 
 	/** How close to the car ahead before considering an overtake (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float OvertakeConsiderationDistance = 3000.0f;  // 4000 = 40m
+	float OvertakeConsiderationDistance = 2000.0f;  // 4000 = 40m
 
 	/** Minimum speed advantage from profile vs car ahead to trigger (cm/s) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
@@ -59,7 +59,7 @@ public:
 
 	/** How long the overtake can last before aborting (seconds) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeTimeout = 6.0f;
+	float OvertakeTimeout = 5.0f;
 
 	// =========================================================================
 	// COMPLETION
