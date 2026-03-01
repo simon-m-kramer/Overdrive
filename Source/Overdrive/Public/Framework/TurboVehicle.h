@@ -85,6 +85,7 @@ protected:
 	// --- Data asset application ---
 	void ApplyMeshes();
 	void ApplyWheelMeshes();
+	void ApplyWheelSetups();
 	void ApplyEngine();
 	void ApplyTransmission();
 	void ApplySteering();

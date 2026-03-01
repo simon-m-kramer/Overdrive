@@ -1,6 +1,5 @@
 // Copyright Simon Kramer. All Rights Reserved.
 
-
 #include "Framework/TurboVehicle.h"
 #include "Framework/TurboVehicleData.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
@@ -53,7 +52,9 @@ ATurboVehicle::ATurboVehicle()
 	WheelMeshComponents = { WheelFL, WheelFR, WheelRL, WheelRR };
 
 	// Chaos needs a valid wheel topology at construction time.
-	// These defaults get the physics working even without a data asset.
+	// These defaults keep physics working even without a data asset.
+	// They will be overridden via RecreatePhysicsState in PostInitializeComponents
+	// when a data asset is assigned.
 	SetupDefaultWheels();
 	SetupDefaultEngine();
 	SetupDefaultTransmission();
@@ -114,9 +115,9 @@ void ATurboVehicle::PostEditChangeProperty(FPropertyChangedEvent& Event)
 
 // -----------------------------------------------------------------------
 // PostInitializeComponents — called after components are initialized
-// but before BeginPlay. Properties have been deserialized so VehicleData
-// is available. This is where we apply engine, transmission, steering.
-// Wheel topology is already locked from the constructor.
+// and properties have been deserialized. VehicleData is now available.
+// We apply everything from the data asset here, including wheel setups
+// with RecreatePhysicsState to override the constructor defaults.
 // -----------------------------------------------------------------------
 
 void ATurboVehicle::PostInitializeComponents()
@@ -134,6 +135,7 @@ void ATurboVehicle::PostInitializeComponents()
 
 	ApplyMeshes();
 	ApplyWheelMeshes();
+	ApplyWheelSetups();
 	ApplyEngine();
 	ApplyTransmission();
 	ApplySteering();
@@ -333,6 +335,33 @@ void ATurboVehicle::ApplyWheelMeshes()
 		WheelMeshComponents[i]->SetStaticMesh(nullptr);
 		WheelMeshComponents[i]->SetVisibility(false);
 	}
+}
+
+
+// -----------------------------------------------------------------------
+// Data asset application — wheel physics setup
+// This overrides the constructor defaults with the data asset values
+// and forces Chaos to reinitialize with the new wheel configuration.
+// -----------------------------------------------------------------------
+
+void ATurboVehicle::ApplyWheelSetups()
+{
+	if (!VehicleData)
+	{
+		return;
+	}
+
+	const int32 NumWheels = FMath::Min(VehicleData->Wheels.Num(), WheelMeshComponents.Num());
+
+	// Only override bone names — wheel classes stay as the constructor defaults
+	for (int32 i = 0; i < NumWheels; ++i)
+	{
+		const FTurboWheelSetup& Src = VehicleData->Wheels[i];
+		VehicleMovement->WheelSetups[i].BoneName = Src.BoneName;
+	}
+
+	// Force Chaos to rebuild with the new bone names
+	VehicleMovement->RecreatePhysicsState();
 }
 
 
