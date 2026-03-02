@@ -6,7 +6,8 @@
 #include "Framework/TurboVehicle.h"
 #include "TurboAIVehicle.generated.h"
 
-
+class USpringArmComponent;
+class UCameraComponent;
 /**
  * 
  */
@@ -21,5 +22,11 @@ public:
 
 protected:
 	virtual void PossessedBy(AController* NewController) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<USpringArmComponent> SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<UCameraComponent> Camera;
 
 };
