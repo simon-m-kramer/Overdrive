@@ -20,12 +20,22 @@ ATurboAIVehicle::ATurboAIVehicle()
 
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(SpringArm);
-
+    Camera->SetAutoActivate(false);
 }
 
 void ATurboAIVehicle::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+}
+
+void ATurboAIVehicle::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (bEnableSpectatorCamera && Camera)
+    {
+        Camera->Activate();
+    }
 }
 
