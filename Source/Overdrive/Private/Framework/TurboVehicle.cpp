@@ -22,39 +22,6 @@ ATurboVehicle::ATurboVehicle()
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetCollisionProfileName(FName("Vehicle"));
 
-	// Chassis and glass — meshes assigned later from data asset
-	ChassisMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ChassisMesh"));
-	ChassisMesh->SetupAttachment(GetMesh(), FName("Root"));
-	ChassisMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
-	ChassisMesh->SetCanEverAffectNavigation(false);
-
-	GlassMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GlassMesh"));
-	GlassMesh->SetupAttachment(GetMesh(), FName("Root"));
-	GlassMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
-
-	// Pre-create four wheel mesh components — bone attachments set later
-	WheelFL = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelFL"));
-	WheelFL->SetupAttachment(GetMesh());
-	WheelFL->SetCollisionProfileName(TEXT("NoCollision"));
-
-	WheelFR = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelFR"));
-	WheelFR->SetupAttachment(GetMesh());
-	WheelFR->SetCollisionProfileName(TEXT("NoCollision"));
-
-	WheelRL = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelRL"));
-	WheelRL->SetupAttachment(GetMesh());
-	WheelRL->SetCollisionProfileName(TEXT("NoCollision"));
-
-	WheelRR = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WheelRR"));
-	WheelRR->SetupAttachment(GetMesh());
-	WheelRR->SetCollisionProfileName(TEXT("NoCollision"));
-
-	WheelMeshComponents = { WheelFL, WheelFR, WheelRL, WheelRR };
-
-	// Chaos needs a valid wheel topology at construction time.
-	// These defaults keep physics working even without a data asset.
-	// They will be overridden via RecreatePhysicsState in PostInitializeComponents
-	// when a data asset is assigned.
 	SetupDefaultWheels();
 	SetupDefaultEngine();
 	SetupDefaultTransmission();
@@ -74,73 +41,19 @@ ATurboVehicle::ATurboVehicle()
 	DetectionComponent = CreateDefaultSubobject<UTurboVehicleDetectionComponent>(TEXT("DetectionComponent"));
 }
 
-
-// -----------------------------------------------------------------------
-// OnConstruction — runs in-editor when you place or modify the actor.
-// Handles visual-only setup so you get a preview in the viewport.
-// -----------------------------------------------------------------------
-
-void ATurboVehicle::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-
-	if (!VehicleData)
-	{
-		return;
-	}
-
-	VehicleName = VehicleData->VehicleName;
-	ApplyMeshes();
-	ApplyWheelMeshes();
-}
-
-
-// -----------------------------------------------------------------------
-// PostEditChangeProperty — re-run visuals when the data asset is swapped
-// in the details panel.
-// -----------------------------------------------------------------------
-
-#if WITH_EDITOR
-void ATurboVehicle::PostEditChangeProperty(FPropertyChangedEvent& Event)
-{
-	Super::PostEditChangeProperty(Event);
-
-	if (Event.GetPropertyName() == GET_MEMBER_NAME_CHECKED(ATurboVehicle, VehicleData))
-	{
-		OnConstruction(GetActorTransform());
-	}
-}
-#endif
-
-
-// -----------------------------------------------------------------------
-// PostInitializeComponents — called after components are initialized
-// and properties have been deserialized. VehicleData is now available.
-// We apply everything from the data asset here, including wheel setups
-// with RecreatePhysicsState to override the constructor defaults.
-// -----------------------------------------------------------------------
-
 void ATurboVehicle::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	if (!VehicleData)
-	{
-		return;
-	}
+	if (!VehicleData) return;
 
-	VehicleName = VehicleData->VehicleName;
 	VehicleMovement->ChassisHeight = VehicleData->ChassisHeight;
 	VehicleMovement->DragCoefficient = VehicleData->DragCoefficient;
 
-	ApplyMeshes();
-	ApplyWheelMeshes();
-	ApplyWheelSetups();
 	ApplyEngine();
 	ApplyTransmission();
 	ApplySteering();
 }
-
 
 // -----------------------------------------------------------------------
 // Constructor-time defaults
@@ -218,152 +131,6 @@ void ATurboVehicle::SetupDefaultSteering()
 	SteeringCurve->AddKey(100.0f, 0.5f);
 	SteeringCurve->AddKey(200.0f, 0.25f);
 }
-
-
-// -----------------------------------------------------------------------
-// Data asset application — meshes and visuals
-// -----------------------------------------------------------------------
-
-void ATurboVehicle::ApplyMeshes()
-{
-	if (!VehicleData)
-	{
-		return;
-	}
-
-	// Skeletal mesh (the physics body)
-	if (!VehicleData->VehicleMesh.IsNull())
-	{
-		USkeletalMesh* SkelMesh = VehicleData->VehicleMesh.LoadSynchronous();
-		if (SkelMesh)
-		{
-			GetMesh()->SetSkeletalMesh(SkelMesh);
-		}
-	}
-
-	if (VehicleData->AnimBlueprintClass)
-	{
-		GetMesh()->SetAnimInstanceClass(VehicleData->AnimBlueprintClass);
-	}
-
-	// Optional chassis
-	if (VehicleData->UsesSeparateChassisMesh())
-	{
-		UStaticMesh* ChassisAsset = VehicleData->ChassisMesh.LoadSynchronous();
-		if (ChassisAsset)
-		{
-			ChassisMesh->SetStaticMesh(ChassisAsset);
-			ChassisMesh->AttachToComponent(
-				GetMesh(),
-				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-				VehicleData->ChassisBoneName
-			);
-			ChassisMesh->SetVisibility(true);
-		}
-	}
-	else
-	{
-		ChassisMesh->SetStaticMesh(nullptr);
-		ChassisMesh->SetVisibility(false);
-	}
-
-	// Optional glass
-	if (VehicleData->UsesSeparateGlassMesh())
-	{
-		UStaticMesh* GlassAsset = VehicleData->GlassMesh.LoadSynchronous();
-		if (GlassAsset)
-		{
-			GlassMesh->SetStaticMesh(GlassAsset);
-			GlassMesh->AttachToComponent(
-				GetMesh(),
-				FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-				VehicleData->GlassBoneName
-			);
-			GlassMesh->SetVisibility(true);
-		}
-	}
-	else
-	{
-		GlassMesh->SetStaticMesh(nullptr);
-		GlassMesh->SetVisibility(false);
-	}
-}
-
-void ATurboVehicle::ApplyWheelMeshes()
-{
-	if (!VehicleData)
-	{
-		return;
-	}
-
-	const int32 NumWheels = FMath::Min(VehicleData->Wheels.Num(), WheelMeshComponents.Num());
-
-	for (int32 i = 0; i < NumWheels; ++i)
-	{
-		const FTurboWheelSetup& Src = VehicleData->Wheels[i];
-		UStaticMeshComponent* WheelComp = WheelMeshComponents[i];
-
-		// Attach to the correct bone
-		WheelComp->AttachToComponent(
-			GetMesh(),
-			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-			Src.BoneName
-		);
-
-		// If the data asset specifies a wheel mesh, load and assign it
-		if (!Src.WheelMesh.IsNull())
-		{
-			UStaticMesh* WheelAsset = Src.WheelMesh.LoadSynchronous();
-			if (WheelAsset)
-			{
-				WheelComp->SetStaticMesh(WheelAsset);
-			}
-			WheelComp->SetRelativeRotation(Src.WheelMeshRotation);
-			WheelComp->SetVisibility(true);
-		}
-		else
-		{
-			// Wheels are baked into the skeletal mesh — hide the empty component
-			WheelComp->SetStaticMesh(nullptr);
-			WheelComp->SetVisibility(false);
-		}
-	}
-
-	// Hide any extra pre-created components if data asset has fewer than 4 wheels
-	for (int32 i = NumWheels; i < WheelMeshComponents.Num(); ++i)
-	{
-		WheelMeshComponents[i]->SetStaticMesh(nullptr);
-		WheelMeshComponents[i]->SetVisibility(false);
-	}
-}
-
-
-// -----------------------------------------------------------------------
-// Data asset application — wheel physics setup
-// This overrides the constructor defaults with the data asset values
-// and forces Chaos to reinitialize with the new wheel configuration.
-// -----------------------------------------------------------------------
-
-void ATurboVehicle::ApplyWheelSetups()
-{
-	if (!VehicleData)
-	{
-		return;
-	}
-
-	const int32 NumWheels = FMath::Min(VehicleData->Wheels.Num(), WheelMeshComponents.Num());
-
-	// Only override bone names — wheel classes stay as the constructor defaults
-	for (int32 i = 0; i < NumWheels; ++i)
-	{
-		const FTurboWheelSetup& Src = VehicleData->Wheels[i];
-		VehicleMovement->WheelSetups[i].BoneName = Src.BoneName;
-	}
-
-	// Force Chaos to rebuild with the new bone names
-	VehicleMovement->RecreatePhysicsState();
-}
-
 
 // -----------------------------------------------------------------------
 // Data asset application — mechanical (engine, transmission, steering)
@@ -463,7 +230,6 @@ void ATurboVehicle::ApplySteering()
 		SteeringCurve->AddKey(200.0f, 0.25f);
 	}
 }
-
 
 // -----------------------------------------------------------------------
 // Input & query functions
