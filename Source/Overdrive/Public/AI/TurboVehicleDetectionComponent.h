@@ -93,18 +93,18 @@ public:
 
     /** How far sideways the side box extends */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionWidth = 600.0f;
+    float SideDetectionWidth = 300.0f;
 
     /** Length of side box along car's forward axis (roughly car length) */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionLength = 800.0f;  // This is double car length
+    float SideDetectionLength = 400.0f;
 
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
     float SideDetectionHeight = 100.0f;
 
     /** How far sideways from car center to place the box center */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")
-    float SideDetectionOffset = 200.0f;
+    float SideDetectionOffset = 150.0f;
 
     /** Forward offset of side box center relative to car center (negative = shifted back) */
     UPROPERTY(EditAnywhere, Category = "Detection|Side")

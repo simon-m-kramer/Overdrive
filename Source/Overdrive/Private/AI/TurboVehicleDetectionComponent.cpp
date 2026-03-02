@@ -76,19 +76,15 @@ void UTurboVehicleDetectionComponent::UpdateForwardDetection()
     if (bDrawDebug)
     {
         FColor DebugColor = bCarAhead ? FColor::Red : FColor::Green;
-
-        // Draw box at start and end to visualize sweep corridor
-        FVector BoxExtent(10.0f, ForwardBoxHalfWidth, ForwardBoxHalfHeight);
         FQuat Rotation = OwnerVehicle->GetActorQuat();
 
-        DrawDebugBox(GetWorld(), Start, BoxExtent, Rotation, DebugColor, false, 0.0f, 0, 1.0f);
-        DrawDebugBox(GetWorld(), End, BoxExtent, Rotation, DebugColor, false, 0.0f, 0, 1.0f);
-        DrawDebugLine(GetWorld(), Start, End, DebugColor, false, 0.0f, 0, 1.0f);
+        FVector MidPoint = (Start + End) * 0.5f;
+        FVector CorridorExtent(ForwardDetectionRange * 0.5f, ForwardBoxHalfWidth, ForwardBoxHalfHeight);
+        DrawDebugBox(GetWorld(), MidPoint, CorridorExtent, Rotation, DebugColor, false, 0.0f, 0, 1.0f);
 
         if (bCarAhead)
         {
             DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50.0f, 8, FColor::Red, false, 0.0f);
-
             GEngine->AddOnScreenDebugMessage(20, 0.0f, FColor::Red,
                 FString::Printf(TEXT("Car ahead: %.0f cm"), DistanceToCarAhead));
         }
@@ -133,12 +129,14 @@ void UTurboVehicleDetectionComponent::UpdateBehindDetection()
     if (bDrawDebug)
     {
         FColor DebugColor = bCarBehind ? FColor::Orange : FColor::Green;
-        DrawDebugLine(GetWorld(), Start, End, DebugColor, false, 0.0f, 0, 2.0f);
+
+        DrawDebugSphere(GetWorld(), Start, BehindTraceRadius, 8, DebugColor, false, 0.0f, 0, 1.0f);
+        DrawDebugSphere(GetWorld(), End, BehindTraceRadius, 8, DebugColor, false, 0.0f, 0, 1.0f);
+        DrawDebugLine(GetWorld(), Start, End, DebugColor, false, 0.0f, 0, 1.0f);
 
         if (bCarBehind)
         {
             DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 50.0f, 8, FColor::Orange, false, 0.0f);
-
             GEngine->AddOnScreenDebugMessage(21, 0.0f, FColor::Orange,
                 FString::Printf(TEXT("Car behind: %.0f cm"), DistanceToCarBehind));
         }
