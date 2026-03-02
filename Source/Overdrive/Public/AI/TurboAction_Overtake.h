@@ -28,7 +28,7 @@ public:
 
 	/** How close to the car ahead before considering an overtake (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float OvertakeConsiderationDistance = 1500.0f;  // 4000 = 40m
+	float OvertakeConsiderationDistance = 1200.0f;  // 4000 = 40m
 
 	/** Minimum speed advantage from profile vs car ahead to trigger (cm/s) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
@@ -36,7 +36,7 @@ public:
 
 	/** Minimum straight distance ahead needed to attempt a pass (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float MinStraightNeeded = 3000.0f;  // 8000 = 80m
+	float MinStraightNeeded = 1500.0f;  // 8000 = 80m
 
 	// =========================================================================
 	// OVERTAKE BEHAVIOR
@@ -47,11 +47,11 @@ public:
 	float MinPullOutDistance = 500.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float PullOutTimeFactor = 1.5f;  // seconds of closing time as buffer
+	float PullOutTimeFactor = 1.6f;  // seconds of closing time as buffer
 
 	/** Lateral offset from racing line when passing (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeLateralOffset = 350.0f;  // 3.5m
+	float OvertakeLateralOffset = 400.0f;  // 350.0f = 3.5m
 
 	/** Extra speed boost as fraction of max speed during overtake */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
