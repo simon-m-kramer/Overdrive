@@ -47,7 +47,7 @@ public:
 	float MinPullOutDistance = 500.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float PullOutTimeFactor = 1.6f;  // seconds of closing time as buffer
+	float PullOutTimeFactor = 1.5f;  // seconds of closing time as buffer
 
 	/** Lateral offset from racing line when passing (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
