@@ -81,7 +81,7 @@ private:
 	bool bOvertakeAborted = false;
 	float OvertakeTimer = 0.0f;
 
-	/** The vehicle we're trying to pass — stored at Start so we can track it */
+	/** The vehicle we're trying to pass - stored at Start so we can track it */
 	UPROPERTY()
 	TWeakObjectPtr<ATurboVehicle> OvertakeTarget;
 

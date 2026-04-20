@@ -35,7 +35,7 @@ protected:
 	virtual FVector GetTargetPoint() override;
 
 private:
-	/** Which side the adjacent car is on — we move away from this */
+	/** Which side the adjacent car is on - we move away from this */
 	bool bCarOnLeft = false;
 	bool bCarOnRight = false;
 

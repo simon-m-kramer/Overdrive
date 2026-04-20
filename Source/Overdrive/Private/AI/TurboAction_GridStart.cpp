@@ -34,12 +34,10 @@ void UTurboAction_GridStart::Start(bool bFirstTime)
 
 void UTurboAction_GridStart::Update(float DeltaTime)
 {
-    // Hold the car still
-    ATurboAIController* AI = GetTypedOuter<ATurboAIController>();
-    if (AI)
+    // Hold the car
+    if (ATurboAIController* AI = GetTypedOuter<ATurboAIController>())
     {
-        ATurboVehicle* Vehicle = AI->GetVehicle();
-        if (Vehicle)
+        if (ATurboVehicle* Vehicle = AI->GetVehicle())
         {
             Vehicle->SetThrottleInput(0.0f);
             Vehicle->SetBrakeInput(1.0f);

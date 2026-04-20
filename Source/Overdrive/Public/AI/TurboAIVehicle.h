@@ -24,14 +24,4 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void BeginPlay() override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	TObjectPtr<USpringArmComponent> SpringArm;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	TObjectPtr<UCameraComponent> Camera;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-	bool bEnableSpectatorCamera = false;
-
 };
