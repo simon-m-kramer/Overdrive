@@ -17,9 +17,7 @@ void ATurboSpectatorController::BeginPlay()
     // Fallback: find any AI vehicle if none was assigned
     if (!Vehicle)
     {
-        Vehicle = Cast<ATurboAIVehicle>(
-            UGameplayStatics::GetActorOfClass(GetWorld(), ATurboAIVehicle::StaticClass())
-        );
+        Vehicle = Cast<ATurboAIVehicle>(UGameplayStatics::GetActorOfClass(GetWorld(), ATurboAIVehicle::StaticClass()));
     }
 
     if (Vehicle)
