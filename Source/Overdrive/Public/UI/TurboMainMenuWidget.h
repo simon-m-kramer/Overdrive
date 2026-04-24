@@ -7,7 +7,6 @@
 #include "TurboMainMenuWidget.generated.h"
 
 class UCommonButtonBase;
-class UTurboLevelSelectWidget;
 class UTurboCreditsWidget;
 class UTurboSettingsWidget;
 
@@ -25,9 +24,6 @@ protected:
 	TObjectPtr<UCommonButtonBase> Btn_Start;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UCommonButtonBase> Btn_LevelSelect;
-
-	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonButtonBase> Btn_Quit;
 
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -35,9 +31,6 @@ protected:
 
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonButtonBase> Btn_Settings;
-
-	UPROPERTY(EditAnywhere, Category = "UI")
-	TSubclassOf<UTurboLevelSelectWidget> LevelSelectClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTurboCreditsWidget> CreditsWidgetClass;
@@ -48,9 +41,6 @@ protected:
 private:
 	UFUNCTION()
 	void OnStartClicked();
-
-	UFUNCTION()
-	void OnLevelSelectClicked();
 
 	UFUNCTION()
 	void OnQuitClicked();
