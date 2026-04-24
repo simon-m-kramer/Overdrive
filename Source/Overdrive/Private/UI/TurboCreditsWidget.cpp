@@ -23,3 +23,8 @@ void UTurboCreditsWidget::OnBackClicked()
 {
     DeactivateWidget();
 }
+
+UWidget* UTurboCreditsWidget::NativeGetDesiredFocusTarget() const
+{
+    return Btn_Back;
+}

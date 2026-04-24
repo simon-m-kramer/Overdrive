@@ -17,6 +17,7 @@ protected:
     virtual void NativeOnInitialized() override;
     virtual void NativeConstruct() override;
 
+    virtual UWidget* NativeGetDesiredFocusTarget() const override;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UCommonButtonBase> Btn_Back;

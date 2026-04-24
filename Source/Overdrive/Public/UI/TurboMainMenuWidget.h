@@ -9,6 +9,7 @@
 class UCommonButtonBase;
 class UTurboCreditsWidget;
 class UTurboSettingsWidget;
+class UTurboLevelSelectWidget;
 
 UCLASS(Abstract)
 class OVERDRIVE_API UTurboMainMenuWidget : public UCommonActivatableWidget
@@ -19,9 +20,13 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
+	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonButtonBase> Btn_Start;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UCommonButtonBase> Btn_LevelSelect;
 
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonButtonBase> Btn_Quit;
@@ -33,22 +38,19 @@ protected:
 	TObjectPtr<UCommonButtonBase> Btn_Settings;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTurboLevelSelectWidget> LevelSelectWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTurboCreditsWidget> CreditsWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTurboSettingsWidget> SettingsWidgetClass;
 
 private:
-	UFUNCTION()
 	void OnStartClicked();
-
-	UFUNCTION()
 	void OnQuitClicked();
-
-	UFUNCTION()
 	void OnCreditsClicked();
-
-	UFUNCTION()
 	void OnSettingsClicked();
+	void OnLevelSelectClicked();
 
 };

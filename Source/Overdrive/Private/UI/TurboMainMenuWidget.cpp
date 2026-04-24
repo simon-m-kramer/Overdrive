@@ -8,6 +8,7 @@
 #include "UI/TurboCreditsWidget.h"
 #include "UI/TurboRootLayout.h"
 #include "UI/TurboSettingsWidget.h"
+#include "UI/TurboLevelSelectWidget.h"
 
 void UTurboMainMenuWidget::NativeOnInitialized()
 {
@@ -16,6 +17,10 @@ void UTurboMainMenuWidget::NativeOnInitialized()
 	if (Btn_Start)
 	{
 		Btn_Start->OnClicked().AddUObject(this, &ThisClass::OnStartClicked);
+	}
+	if (Btn_LevelSelect)
+	{
+		Btn_LevelSelect->OnClicked().AddUObject(this, &ThisClass::OnLevelSelectClicked);
 	}
 	if (Btn_Quit)
 	{
@@ -29,6 +34,19 @@ void UTurboMainMenuWidget::NativeOnInitialized()
 	{
 		Btn_Settings->OnClicked().AddUObject(this, &ThisClass::OnSettingsClicked);
 	}
+}
+
+UWidget* UTurboMainMenuWidget::NativeGetDesiredFocusTarget() const
+{
+	if (Btn_Start)
+	{
+		return Btn_Start;
+	}
+	if (Btn_LevelSelect)
+	{
+		return Btn_LevelSelect;
+	}
+	return Btn_Quit;
 }
 
 void UTurboMainMenuWidget::NativeOnActivated()
@@ -64,5 +82,13 @@ void UTurboMainMenuWidget::OnSettingsClicked()
 	if (UTurboRootLayout* Root = UTurboRootLayout::GetRootLayout(this))
 	{
 		Root->PushWidget(SettingsWidgetClass);
+	}
+}
+
+void UTurboMainMenuWidget::OnLevelSelectClicked()
+{
+	if (UTurboRootLayout* Root = UTurboRootLayout::GetRootLayout(this))
+	{
+		Root->PushWidget(LevelSelectWidgetClass);
 	}
 }

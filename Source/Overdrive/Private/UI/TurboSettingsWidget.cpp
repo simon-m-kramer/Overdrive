@@ -23,3 +23,8 @@ void UTurboSettingsWidget::OnBackClicked()
 {
     DeactivateWidget();
 }
+
+UWidget* UTurboSettingsWidget::NativeGetDesiredFocusTarget() const
+{
+    return Btn_Back;
+}
