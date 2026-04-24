@@ -8,7 +8,10 @@
 #include "UI/TurboCreditsWidget.h"
 #include "UI/TurboRootLayout.h"
 #include "UI/TurboSettingsWidget.h"
-#include "UI/TurboLevelSelectWidget.h"
+#include "Components/TextBlock.h"
+#include "UI/TurboLevelData.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 
 void UTurboMainMenuWidget::NativeOnInitialized()
 {
@@ -17,10 +20,6 @@ void UTurboMainMenuWidget::NativeOnInitialized()
 	if (Btn_Start)
 	{
 		Btn_Start->OnClicked().AddUObject(this, &ThisClass::OnStartClicked);
-	}
-	if (Btn_LevelSelect)
-	{
-		Btn_LevelSelect->OnClicked().AddUObject(this, &ThisClass::OnLevelSelectClicked);
 	}
 	if (Btn_Quit)
 	{
@@ -34,19 +33,20 @@ void UTurboMainMenuWidget::NativeOnInitialized()
 	{
 		Btn_Settings->OnClicked().AddUObject(this, &ThisClass::OnSettingsClicked);
 	}
+	if (Btn_CyclePrev)
+	{
+		Btn_CyclePrev->OnClicked().AddUObject(this, &UTurboMainMenuWidget::OnCyclePrevClicked);
+	}
+	if (Btn_CycleNext)
+	{
+		Btn_CycleNext->OnClicked().AddUObject(this, &UTurboMainMenuWidget::OnCycleNextClicked);
+	}
+	UpdateLevelDisplay();
 }
 
 UWidget* UTurboMainMenuWidget::NativeGetDesiredFocusTarget() const
 {
-	if (Btn_Start)
-	{
-		return Btn_Start;
-	}
-	if (Btn_LevelSelect)
-	{
-		return Btn_LevelSelect;
-	}
-	return Btn_Quit;
+	return Btn_Start;
 }
 
 void UTurboMainMenuWidget::NativeOnActivated()
@@ -61,7 +61,33 @@ void UTurboMainMenuWidget::NativeOnDeactivated()
 
 void UTurboMainMenuWidget::OnStartClicked()
 {
+	/*
 	UGameplayStatics::OpenLevel(this, FName("L_ProvingGrounds"));
+	*/
+
+	if (!Levels.IsValidIndex(CurrentLevelIndex)) return;
+	UTurboLevelData* Current = Levels[CurrentLevelIndex];
+	if (!Current || Current->Level.IsNull()) return;
+
+	if (Current->Level.IsValid())
+	{
+		const FName LevelName = FName(*FPackageName::ObjectPathToPackageName(Current->Level.ToString()));
+		UGameplayStatics::OpenLevel(this, LevelName);
+		return;
+	}
+
+	FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
+	Streamable.RequestAsyncLoad(
+		Current->Level.ToSoftObjectPath(),
+		FStreamableDelegate::CreateLambda([this]()
+			{
+				if (!Levels.IsValidIndex(CurrentLevelIndex)) return;
+				UTurboLevelData* Loaded = Levels[CurrentLevelIndex];
+				if (!Loaded) return;
+				const FName LevelName = FName(*FPackageName::ObjectPathToPackageName(Loaded->Level.ToString()));
+				UGameplayStatics::OpenLevel(this, LevelName);
+			}));
+
 }
 
 void UTurboMainMenuWidget::OnQuitClicked()
@@ -85,10 +111,36 @@ void UTurboMainMenuWidget::OnSettingsClicked()
 	}
 }
 
-void UTurboMainMenuWidget::OnLevelSelectClicked()
+void UTurboMainMenuWidget::OnCyclePrevClicked()
 {
-	if (UTurboRootLayout* Root = UTurboRootLayout::GetRootLayout(this))
+	if (Levels.Num() == 0) return;
+	CurrentLevelIndex = (CurrentLevelIndex - 1 + Levels.Num()) % Levels.Num();
+	UpdateLevelDisplay();
+}
+
+void UTurboMainMenuWidget::OnCycleNextClicked()
+{
+	if (Levels.Num() == 0) return;
+	CurrentLevelIndex = (CurrentLevelIndex + 1) % Levels.Num();
+	UpdateLevelDisplay();
+}
+
+void UTurboMainMenuWidget::UpdateLevelDisplay()
+{
+	if (!Levels.IsValidIndex(CurrentLevelIndex)) return;
+
+	UTurboLevelData* Current = Levels[CurrentLevelIndex];
+	if (!Current) return;
+
+	if (Txt_LevelName)
 	{
-		Root->PushWidget(LevelSelectWidgetClass);
+		Txt_LevelName->SetText(Current->DisplayName);
+	}
+
+	if (Txt_LevelDescription)
+	{
+		Txt_LevelDescription->SetText(Current->Description);
 	}
 }
+
+

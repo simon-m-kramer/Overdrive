@@ -2,7 +2,7 @@
 
 
 #include "UI/TurboLevelSelectWidget.h"
-#include "Components/PanelWidget.h"
+#include "Components/WrapBox.h"
 #include "CommonButtonBase.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
@@ -25,6 +25,16 @@ void UTurboLevelSelectWidget::NativeOnInitialized()
 	}
 
 	PopulateLevelGrid();
+}
+
+void UTurboLevelSelectWidget::NativeOnActivated()
+{
+	Super::NativeOnActivated();
+
+	if (!SelectedLevel && Levels.Num() > 0)
+	{
+		OnEntrySelected(Levels[0]);
+	}
 }
 
 void UTurboLevelSelectWidget::PopulateLevelGrid()

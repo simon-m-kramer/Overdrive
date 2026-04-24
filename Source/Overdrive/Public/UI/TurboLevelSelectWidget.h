@@ -7,7 +7,7 @@
 #include "TurboLevelSelectWidget.generated.h"
 
 class UCommonButtonBase;
-class UPanelWidget;
+class UWrapBox;
 class UTurboLevelData;
 class UTurboLevelEntryWidget;
 
@@ -18,10 +18,11 @@ class OVERDRIVE_API UTurboLevelSelectWidget : public UCommonActivatableWidget
 
 protected:
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnActivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UPanelWidget> LevelGrid;
+	TObjectPtr<UWrapBox> LevelGrid;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonButtonBase> Btn_Play;

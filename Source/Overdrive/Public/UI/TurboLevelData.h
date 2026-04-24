@@ -22,4 +22,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Level", meta = (AllowedClasses = "/Script/Engine.World"))
 	TSoftObjectPtr<UWorld> Level;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Level", meta = (MultiLine = true))
+	FText Description;
 };

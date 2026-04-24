@@ -11,6 +11,9 @@ class UTurboCreditsWidget;
 class UTurboSettingsWidget;
 class UTurboLevelSelectWidget;
 
+class UTextBlock;
+class UTurboLevelData;
+
 UCLASS(Abstract)
 class OVERDRIVE_API UTurboMainMenuWidget : public UCommonActivatableWidget
 {
@@ -26,9 +29,6 @@ protected:
 	TObjectPtr<UCommonButtonBase> Btn_Start;
 
 	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UCommonButtonBase> Btn_LevelSelect;
-
-	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonButtonBase> Btn_Quit;
 
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -38,19 +38,35 @@ protected:
 	TObjectPtr<UCommonButtonBase> Btn_Settings;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UTurboLevelSelectWidget> LevelSelectWidgetClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTurboCreditsWidget> CreditsWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UTurboSettingsWidget> SettingsWidgetClass;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UCommonButtonBase> Btn_CyclePrev;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UCommonButtonBase> Btn_CycleNext;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Txt_LevelName;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> Txt_LevelDescription;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Levels")
+	TArray<TObjectPtr<UTurboLevelData>> Levels;
 
 private:
 	void OnStartClicked();
 	void OnQuitClicked();
 	void OnCreditsClicked();
 	void OnSettingsClicked();
-	void OnLevelSelectClicked();
+
+	void OnCyclePrevClicked();
+	void OnCycleNextClicked();
+	void UpdateLevelDisplay();
+	int32 CurrentLevelIndex = 0;
 
 };
