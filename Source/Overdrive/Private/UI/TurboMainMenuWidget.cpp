@@ -87,7 +87,6 @@ void UTurboMainMenuWidget::OnStartClicked()
 				const FName LevelName = FName(*FPackageName::ObjectPathToPackageName(Loaded->Level.ToString()));
 				UGameplayStatics::OpenLevel(this, LevelName);
 			}));
-
 }
 
 void UTurboMainMenuWidget::OnQuitClicked()
@@ -142,5 +141,7 @@ void UTurboMainMenuWidget::UpdateLevelDisplay()
 		Txt_LevelDescription->SetText(Current->Description);
 	}
 }
+
+
 
 
