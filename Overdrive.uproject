@@ -41,6 +41,10 @@
 		{
 			"Name": "HDRIBackdrop",
 			"Enabled": true
+		},
+		{
+			"Name": "GaeaUnrealTools",
+			"Enabled": true
 		}
 	]
 }
