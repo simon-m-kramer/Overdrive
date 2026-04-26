@@ -18,10 +18,10 @@ struct OVERDRIVE_API FTurboSpeedProfile
 	// =========================================================================
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed Profile")
-	float SampleInterval = 100.0f;
+	float SampleInterval = 50.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed Profile")
-	float CurvatureSampleRange = 400.0f;
+	float CurvatureSampleRange = 50.0f;
 
 	// =========================================================================
 	// METHODS

@@ -39,7 +39,7 @@ public:
 	float MaxLookaheadDistance = 2500.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Steering")
-	float LookaheadSpeedFactor = 0.5f;
+	float SteeringLookaheadFactor = 0.5f;  // was LookaheadSpeedFactor
 
 	// =========================================================================
 	// SPEED CONTROL
@@ -53,6 +53,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	float CoastThrottleInput = 0.25f;
+
+	UPROPERTY(EditAnywhere, Category = "Speed")
+	float SpeedLookaheadFactor = 0.9f;
 
 	virtual float GetTargetSpeedAtDistance(float Distance) const;
 
