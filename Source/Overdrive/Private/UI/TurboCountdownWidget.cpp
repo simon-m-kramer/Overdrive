@@ -71,6 +71,7 @@ void UTurboCountdownWidget::OnRaceStarted()
 {
 	// Remove widget, but with a short delay, so that animation can finish
 	// WARNING: If the delay is shorter than the animation, this will cause a crash
+	// WARNING: If I pause and return to main menu during countdown, it will crash
 	FTimerHandle RemoveTimer;
 	GetWorld()->GetTimerManager().SetTimer(RemoveTimer, [this](){RemoveFromParent();}, 1.5f, false);
 }
