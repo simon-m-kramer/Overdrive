@@ -22,7 +22,7 @@ UTurboAction_FollowPath::UTurboAction_FollowPath()
 	SteeringPID.OutputMax = 1.0f;
 
 	SpeedPID.Kp = 0.03f;
-	SpeedPID.Ki = 0.003f;
+	SpeedPID.Ki = 0.0f;  // was 0.003f
 	SpeedPID.Kd = 0.015f;
 	SpeedPID.OutputMin = -1.0f;
 	SpeedPID.OutputMax = 1.0f;

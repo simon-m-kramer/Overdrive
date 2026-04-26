@@ -19,7 +19,7 @@ public:
     float MaxSpeedCms = 5000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Performance")
-    float LateralGripCms2 = 2400.0f;
+    float LateralGripCms2 = 2300.0f;
 
     UPROPERTY(EditAnywhere, Category = "Performance")
     float BrakeDecelerationCms2 = 2000.0f;
