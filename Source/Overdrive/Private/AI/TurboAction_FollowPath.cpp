@@ -15,7 +15,7 @@ UTurboAction_FollowPath::UTurboAction_FollowPath()
 	ActionName = TEXT("FollowPath");
 	ActionTag = TurboGameplayTags::Action_FollowPath;
 
-	SteeringPID.Kp = 2.0f;
+	SteeringPID.Kp = 3.0f;  // was 2.0f
 	SteeringPID.Ki = 0.0f;
 	SteeringPID.Kd = 0.5f;
 	SteeringPID.OutputMin = -1.0f;

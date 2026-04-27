@@ -34,7 +34,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 		const float Dist = i * SampleInterval;
 		const float Curvature = Spline->GetCurvatureAtDistance(Dist, CurvatureSampleRange);
 
-		if (Curvature > KINDA_SMALL_NUMBER)
+		if (Curvature > 1e-6f)  // changed from KINDA_SMALL_NUMBER
 		{
 			const float CorneringSpeed = FMath::Sqrt(Grip / Curvature) * CorneringSpeedSafetyFactor;
 			Speeds[i] = FMath::Min(MaxSpeed, CorneringSpeed);
