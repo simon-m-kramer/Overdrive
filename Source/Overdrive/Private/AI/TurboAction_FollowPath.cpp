@@ -132,12 +132,6 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 {
 	if (!Vehicle.IsValid() || !AIController.IsValid()) return;
 
-	/*
-	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
-	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float TargetSpeedCms = GetTargetSpeedAtDistance(CurrentDistance);
-	*/
-
 	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
 	const float SpeedLookahead = CurrentSpeedCms * SpeedLookaheadFactor;
