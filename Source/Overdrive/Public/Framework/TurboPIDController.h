@@ -14,15 +14,15 @@ struct OVERDRIVE_API FTurboPIDController
 	// GAINS
 	// =========================================================================
 
-	/** Proportional gain — reacts to current error */
+	/** Proportional gain */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PID")
 	float Kp = 1.0f;
 
-	/** Integral gain — reacts to accumulated error over time */
+	/** Integral gain */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PID")
 	float Ki = 0.0f;
 
-	/** Derivative gain — reacts to rate of change of error */
+	/** Derivative gain */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PID")
 	float Kd = 0.0f;
 

@@ -18,7 +18,7 @@ float FTurboPIDController::Update(float Error, float DeltaTime)
 	IntegralError = FMath::Clamp(IntegralError, -IntegralLimit, IntegralLimit);
 	const float I = Ki * IntegralError;
 
-	// Derivative (skip on first update — no previous error to compare against)
+	// Derivative (skip on first update: no previous error to compare against)
 	float D = 0.0f;
 	if (!bFirstUpdate)
 	{
