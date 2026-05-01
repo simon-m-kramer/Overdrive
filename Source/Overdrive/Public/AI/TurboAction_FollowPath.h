@@ -68,7 +68,7 @@ protected:
 	TWeakObjectPtr<ATurboVehicle> Vehicle;
 
 	UPROPERTY()
-	TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;
+	TWeakObjectPtr<ATurboRacingSpline> RacingSpline;
 
 	// =========================================================================
 	// STEERING AND SPEED

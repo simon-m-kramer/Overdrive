@@ -42,8 +42,7 @@ void UTurboAction_Yield::Start(bool bFirstTime)
 
 	if (Vehicle.IsValid())
 	{
-		UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
-		if (Detection)
+		if (UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent())
 		{
 			bCarOnLeft = Detection->IsCarOnLeft();
 			bCarOnRight = Detection->IsCarOnRight();
@@ -53,22 +52,17 @@ void UTurboAction_Yield::Start(bool bFirstTime)
 
 void UTurboAction_Yield::Update(float DeltaTime)
 {
-	if (!Vehicle.IsValid() || !RacingSplineActor.IsValid() || !AIController.IsValid())
-		return;
+	if (!Vehicle.IsValid() || !RacingSpline.IsValid() || !AIController.IsValid()) return;
 
-	if (Vehicle.IsValid())
+	if (UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent())
 	{
-		UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
-		if (Detection)
-		{
-			bCarOnLeft = Detection->IsCarOnLeft();
-			bCarOnRight = Detection->IsCarOnRight();
-		}
+		bCarOnLeft = Detection->IsCarOnLeft();
+		bCarOnRight = Detection->IsCarOnRight();
 	}
 
 	// Standard driving with offset target point
-	FVector TargetPoint = GetTargetPoint();
-	float SteeringInput = CalculateSteering(TargetPoint, DeltaTime);
+	const FVector TargetPoint = GetTargetPoint();
+	const float SteeringInput = CalculateSteering(TargetPoint, DeltaTime);
 	Vehicle->SetSteeringInput(SteeringInput);
 
 	ApplySpeedControl(DeltaTime);

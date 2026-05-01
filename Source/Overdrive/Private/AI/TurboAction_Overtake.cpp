@@ -70,7 +70,7 @@ void UTurboAction_Overtake::Start(bool bFirstTime)
 
 void UTurboAction_Overtake::Update(float DeltaTime)
 {
-	if (!Vehicle.IsValid() || !RacingSplineActor.IsValid() || !AIController.IsValid())
+	if (!Vehicle.IsValid() || !RacingSpline.IsValid() || !AIController.IsValid())
 	{
 		bOvertakeAborted = true;
 		return;
@@ -169,7 +169,7 @@ EOvertakeSide UTurboAction_Overtake::DetermineBestSide() const
 	if (bRightClear && !bLeftClear) return EOvertakeSide::Right;
 
 	// Both clear - prefer the inside of the next corner for a better exit
-	if (AIController.IsValid() && RacingSplineActor.IsValid())
+	if (AIController.IsValid() && RacingSpline.IsValid())
 	{
 		const FTurboDecisionContext& Context = AIController->GetDecisionContext();
 
@@ -177,7 +177,7 @@ EOvertakeSide UTurboAction_Overtake::DetermineBestSide() const
 		{
 			const float CurrentDistance = AIController->GetCurrentSplineDistance();
 			const float CornerDistance = CurrentDistance + Context.DistanceToNextCorner;
-			const float TurnDir = RacingSplineActor->GetTurnSign(CornerDistance);
+			const float TurnDir = RacingSpline->GetTurnSign(CornerDistance);
 
 			// TurnDir > 0 = right turn -> inside is right
 			// TurnDir < 0 = left turn -> inside is left

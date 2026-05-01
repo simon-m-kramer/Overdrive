@@ -38,7 +38,7 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 		if (AIController.IsValid())
 		{
 			Vehicle = AIController->GetVehicle();
-			RacingSplineActor = AIController->GetRacingSplineActor();
+			RacingSpline = AIController->GetRacingSplineActor();
 		}
 	}
 
@@ -48,7 +48,7 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 
 void UTurboAction_FollowPath::Update(float DeltaTime)
 {
-	if (!Vehicle.IsValid() || !RacingSplineActor.IsValid() || !AIController.IsValid())
+	if (!Vehicle.IsValid() || !RacingSpline.IsValid() || !AIController.IsValid())
 	{
 		return;
 	}
@@ -63,7 +63,7 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 
 USplineComponent* UTurboAction_FollowPath::GetSpline() const
 {
-	return RacingSplineActor.IsValid() ? RacingSplineActor->GetSplineComponent() : nullptr;
+	return RacingSpline.IsValid() ? RacingSpline->GetSplineComponent() : nullptr;
 }
 
 float UTurboAction_FollowPath::GetLookaheadDistance() const
@@ -81,17 +81,17 @@ float UTurboAction_FollowPath::GetLookaheadDistance() const
 
 FVector UTurboAction_FollowPath::GetTargetPoint()
 {
-	if (!RacingSplineActor.IsValid() || !AIController.IsValid())
+	if (!RacingSpline.IsValid() || !AIController.IsValid())
 	{
 		return Vehicle.IsValid() ? Vehicle->GetActorLocation() : FVector::ZeroVector;
 	}
 
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float SplineLength = RacingSplineActor->GetSplineLength();
+	const float SplineLength = RacingSpline->GetSplineLength();
 	const float LookaheadDist = GetLookaheadDistance();
 	float TargetDistance = CurrentDistance + LookaheadDist;
 
-	if (RacingSplineActor->IsClosedLoop() && TargetDistance >= SplineLength)
+	if (RacingSpline->IsClosedLoop() && TargetDistance >= SplineLength)
 	{
 		TargetDistance = FMath::Fmod(TargetDistance, SplineLength);
 	}
@@ -100,7 +100,7 @@ FVector UTurboAction_FollowPath::GetTargetPoint()
 		TargetDistance = FMath::Min(TargetDistance, SplineLength);
 	}
 
-	return RacingSplineActor->GetLocationAtDistance(TargetDistance);
+	return RacingSpline->GetLocationAtDistance(TargetDistance);
 }
 
 float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint, float DeltaTime)
