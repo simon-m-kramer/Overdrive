@@ -157,5 +157,38 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 	Vehicle->SetHandbrakeInput(false);
 }
 
+FVector UTurboAction_FollowPath::GetTargetPointWithLateralOffset(float LateralOffset)
+{
+	// namespace to make sure we call this classes version, not the child's version
+	const FVector BaseTarget = UTurboAction_FollowPath::GetTargetPoint();
+
+	if (FMath::IsNearlyZero(LateralOffset) || !AIController.IsValid())
+	{
+		return BaseTarget;
+	}
+
+	USplineComponent* Spline = GetSpline();
+	if (!Spline)
+	{
+		return BaseTarget;
+	}
+
+	const float CurrentDistance = AIController->GetCurrentSplineDistance();
+	const float LookaheadDist = GetLookaheadDistance();
+	float TargetDistance = CurrentDistance + LookaheadDist;
+
+	if (Spline->IsClosedLoop())
+	{
+		const float SplineLength = Spline->GetSplineLength();
+		TargetDistance = FMath::Fmod(TargetDistance, SplineLength);
+		if (TargetDistance < 0.0f) TargetDistance += SplineLength;
+	}
+
+	const FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+	const FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
+	const FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
+
+	return BaseTarget + (Right * LateralOffset);
+}
 
 

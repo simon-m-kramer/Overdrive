@@ -124,30 +124,10 @@ bool UTurboAction_Overtake::IsDone()
 
 FVector UTurboAction_Overtake::GetTargetPoint()
 {
-	FVector BaseTarget = Super::GetTargetPoint();
+	if (!bPulledOut) return Super::GetTargetPoint();
 
-	if (!bPulledOut || !Vehicle.IsValid()) return BaseTarget;
-
-	USplineComponent* Spline = GetSpline();
-	if (!Spline || !AIController.IsValid()) return BaseTarget;
-
-	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float LookaheadDist = GetLookaheadDistance();
-	float TargetDistance = CurrentDistance + LookaheadDist;
-
-	if (Spline->IsClosedLoop())
-	{
-		TargetDistance = FMath::Fmod(TargetDistance, Spline->GetSplineLength());
-		if (TargetDistance < 0.0f) TargetDistance += Spline->GetSplineLength();
-	}
-
-	const FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
-	const FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
-	const FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
-
-	const float SideMultiplier = (ChosenSide == EOvertakeSide::Left) ? -1.0f : 1.0f;
-
-	return BaseTarget + (Right * OvertakeLateralOffset * SideMultiplier);
+	const float Sign = (ChosenSide == EOvertakeSide::Left) ? -1.0f : 1.0f;
+	return GetTargetPointWithLateralOffset(OvertakeLateralOffset * Sign);
 }
 
 // =============================================================================

@@ -80,6 +80,7 @@ protected:
 	float CalculateSteering(const FVector& TargetPoint, float DeltaTime);
 	virtual void ApplySpeedControl(float DeltaTime);
 
-
+	/* Used in overtake and yield */
+	FVector GetTargetPointWithLateralOffset(float LateralOffset);
 
 };

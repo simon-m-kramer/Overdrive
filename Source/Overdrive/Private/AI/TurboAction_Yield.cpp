@@ -79,43 +79,15 @@ bool UTurboAction_Yield::IsDone()
 
 FVector UTurboAction_Yield::GetTargetPoint()
 {
-	FVector BaseTarget = Super::GetTargetPoint();
+	// No adjacent car: hold the line.
+	if (!bCarOnLeft && !bCarOnRight) return Super::GetTargetPoint();
 
-	if (!Vehicle.IsValid() || !AIController.IsValid()) return BaseTarget;
+	float Sign = 0.0f;
+	if (bCarOnLeft && !bCarOnRight)      Sign = 1.0f;   // car on left -> move right
+	else if (bCarOnRight && !bCarOnLeft) Sign = -1.0f;  // car on right -> move left
+	// Both sides occupied -> sign stays 0 -> helper returns base target
 
-	USplineComponent* Spline = GetSpline();
-	if (!Spline) return BaseTarget;
-
-	// If no car alongside anymore, just return base
-	if (!bCarOnLeft && !bCarOnRight) return BaseTarget;
-
-	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float LookaheadDist = GetLookaheadDistance();
-	float TargetDistance = CurrentDistance + LookaheadDist;
-
-	if (Spline->IsClosedLoop())
-	{
-		TargetDistance = FMath::Fmod(TargetDistance, Spline->GetSplineLength());
-		if (TargetDistance < 0.0f) TargetDistance += Spline->GetSplineLength();
-	}
-
-	const FVector Tangent = Spline->GetDirectionAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
-	const FVector Up = Spline->GetUpVectorAtDistanceAlongSpline(TargetDistance, ESplineCoordinateSpace::World);
-	const FVector Right = FVector::CrossProduct(Up, Tangent).GetSafeNormal();
-
-	float OffsetDirection = 0.0f;
-
-	if (bCarOnLeft && !bCarOnRight)
-	{
-		OffsetDirection = 1.0f;   // move right
-	}
-	else if (bCarOnRight && !bCarOnLeft)
-	{
-		OffsetDirection = -1.0f;  // move left
-	}
-	// If cars on both sides, don't offset — safest to hold the line
-
-	return BaseTarget + (Right * YieldLateralOffset * OffsetDirection);
+	return GetTargetPointWithLateralOffset(YieldLateralOffset * Sign);
 }
 
 // =============================================================================
