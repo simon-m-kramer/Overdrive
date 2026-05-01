@@ -70,22 +70,15 @@ void UTurboAction_FollowSafe::ApplySpeedControl(float DeltaTime)
 	float FinalThrottle = 0.0f;
 	float FinalBrake = 0.0f;
 
-	if (FMath::Abs(SpeedError) < CoastingThresholdCms)
+	const float PIDOutput = SpeedPID.Update(SpeedError, DeltaTime);
+
+	if (PIDOutput > 0.0f)
 	{
-		FinalThrottle = CoastThrottleInput;
+		FinalThrottle = PIDOutput;
 	}
 	else
 	{
-		const float PIDOutput = SpeedPID.Update(SpeedError, DeltaTime);
-
-		if (PIDOutput > 0.0f)
-		{
-			FinalThrottle = PIDOutput;
-		}
-		else
-		{
-			FinalBrake = -PIDOutput;
-		}
+		FinalBrake = -PIDOutput;
 	}
 
 	Vehicle->SetThrottleInput(FinalThrottle);

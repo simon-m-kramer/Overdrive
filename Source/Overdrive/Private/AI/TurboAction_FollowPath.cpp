@@ -103,60 +103,6 @@ FVector UTurboAction_FollowPath::GetTargetPoint()
 	return RacingSpline->GetLocationAtDistance(TargetDistance);
 }
 
-float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint, float DeltaTime)
-{
-	if (!Vehicle.IsValid())
-	{
-		return 0.0f;
-	}
-
-	const FTransform VehicleTransform = Vehicle->GetActorTransform();
-	const FVector LocalTarget = VehicleTransform.InverseTransformPosition(TargetPoint);
-	const float HeadingError = FMath::Atan2(LocalTarget.Y, LocalTarget.X);
-
-	return SteeringPID.Update(HeadingError, DeltaTime);
-}
-
-// =============================================================================
-// SPEED CONTROL
-// =============================================================================
-
-void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
-{
-	if (!Vehicle.IsValid() || !AIController.IsValid()) return;
-
-	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
-	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float SpeedLookahead = CurrentSpeedCms * SpeedLookaheadFactor;
-	const float TargetSpeedCms = AIController->GetTargetSpeedAtDistance(CurrentDistance + SpeedLookahead);
-	const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
-
-	float FinalThrottle = 0.0f;
-	float FinalBrake = 0.0f;
-
-	if (FMath::Abs(SpeedError) < CoastingThresholdCms)
-	{
-		FinalThrottle = CoastThrottleInput;
-	}
-	else
-	{
-		const float PIDOutput = SpeedPID.Update(SpeedError, DeltaTime);
-
-		if (PIDOutput > 0.0f)
-		{
-			FinalThrottle = PIDOutput;
-		}
-		else
-		{
-			FinalBrake = -PIDOutput;
-		}
-	}
-
-	Vehicle->SetThrottleInput(FinalThrottle);
-	Vehicle->SetBrakeInput(FinalBrake);
-	Vehicle->SetHandbrakeInput(false);
-}
-
 FVector UTurboAction_FollowPath::GetTargetPointWithLateralOffset(float LateralOffset)
 {
 	// namespace to make sure we call this classes version, not the child's version
@@ -190,5 +136,53 @@ FVector UTurboAction_FollowPath::GetTargetPointWithLateralOffset(float LateralOf
 
 	return BaseTarget + (Right * LateralOffset);
 }
+
+float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint, float DeltaTime)
+{
+	if (!Vehicle.IsValid())
+	{
+		return 0.0f;
+	}
+
+	const FTransform VehicleTransform = Vehicle->GetActorTransform();
+	const FVector LocalTarget = VehicleTransform.InverseTransformPosition(TargetPoint);
+	const float HeadingError = FMath::Atan2(LocalTarget.Y, LocalTarget.X);
+
+	return SteeringPID.Update(HeadingError, DeltaTime);
+}
+
+// =============================================================================
+// SPEED CONTROL
+// =============================================================================
+
+void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
+{
+	if (!Vehicle.IsValid() || !AIController.IsValid()) return;
+
+	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
+	const float CurrentDistance = AIController->GetCurrentSplineDistance();
+	const float SpeedLookahead = CurrentSpeedCms * SpeedLookaheadFactor;
+	const float TargetSpeedCms = AIController->GetTargetSpeedAtDistance(CurrentDistance + SpeedLookahead);
+	const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
+
+	const float PIDOutput = SpeedPID.Update(SpeedError, DeltaTime);
+
+	float FinalThrottle = 0.0f;
+	float FinalBrake = 0.0f;
+
+	if (PIDOutput > 0.0f)
+	{
+		FinalThrottle = PIDOutput;
+	}
+	else
+	{
+		FinalBrake = -PIDOutput;
+	}
+
+	Vehicle->SetThrottleInput(FinalThrottle);
+	Vehicle->SetBrakeInput(FinalBrake);
+	Vehicle->SetHandbrakeInput(false);
+}
+
 
 

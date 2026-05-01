@@ -48,12 +48,6 @@ public:
 	FTurboPIDController SpeedPID;
 
 	UPROPERTY(EditAnywhere, Category = "Speed")
-	float CoastingThresholdCms = 50.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Speed")
-	float CoastThrottleInput = 0.25f;
-
-	UPROPERTY(EditAnywhere, Category = "Speed")
 	float SpeedLookaheadFactor = 0.7f;
 
 protected:
