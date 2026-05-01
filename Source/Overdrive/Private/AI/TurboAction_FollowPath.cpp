@@ -66,19 +66,6 @@ USplineComponent* UTurboAction_FollowPath::GetSpline() const
 	return RacingSpline.IsValid() ? RacingSpline->GetSplineComponent() : nullptr;
 }
 
-float UTurboAction_FollowPath::GetLookaheadDistance() const
-{
-	if (!Vehicle.IsValid())
-	{
-		return MinLookaheadDistance;
-	}
-
-	const float SpeedCmPerSec = FMath::Abs(Vehicle->GetForwardSpeed());
-	const float Lookahead = SpeedCmPerSec * SteeringLookaheadFactor;
-
-	return FMath::Clamp(Lookahead, MinLookaheadDistance, MaxLookaheadDistance);
-}
-
 FVector UTurboAction_FollowPath::GetTargetPoint()
 {
 	if (!RacingSpline.IsValid() || !AIController.IsValid())
@@ -88,7 +75,7 @@ FVector UTurboAction_FollowPath::GetTargetPoint()
 
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
 	const float SplineLength = RacingSpline->GetSplineLength();
-	const float LookaheadDist = GetLookaheadDistance();
+	const float LookaheadDist = GetSteeringLookahead();
 	float TargetDistance = CurrentDistance + LookaheadDist;
 
 	if (RacingSpline->IsClosedLoop() && TargetDistance >= SplineLength)
@@ -120,7 +107,7 @@ FVector UTurboAction_FollowPath::GetTargetPointWithLateralOffset(float LateralOf
 	}
 
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float LookaheadDist = GetLookaheadDistance();
+	const float LookaheadDist = GetSteeringLookahead();
 	float TargetDistance = CurrentDistance + LookaheadDist;
 
 	if (Spline->IsClosedLoop())
@@ -161,7 +148,7 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 
 	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
-	const float SpeedLookahead = CurrentSpeedCms * SpeedLookaheadFactor;
+	const float SpeedLookahead = GetSpeedLookahead();
 	const float TargetSpeedCms = AIController->GetTargetSpeedAtDistance(CurrentDistance + SpeedLookahead);
 	const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
 
@@ -184,5 +171,29 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 	Vehicle->SetHandbrakeInput(false);
 }
 
+// =============================================================================
+// LOOK AHEAD
+// =============================================================================
+
+float UTurboAction_FollowPath::GetSteeringLookahead() const
+{
+	return ComputeLookahead(SteeringLookaheadFactor, MinSteeringLookahead, MaxSteeringLookahead);
+}
+
+float UTurboAction_FollowPath::GetSpeedLookahead() const
+{
+	return ComputeLookahead(SpeedLookaheadFactor, MinSpeedLookahead, MaxSpeedLookahead);
+}
+
+float UTurboAction_FollowPath::ComputeLookahead(float Factor, float MinDistance, float MaxDistance) const
+{
+	if (!Vehicle.IsValid())
+	{
+		return MinDistance;
+	}
+
+	const float Speed = FMath::Abs(Vehicle->GetForwardSpeed());
+	return FMath::Clamp(Speed * Factor, MinDistance, MaxDistance);
+}
 
 

@@ -32,10 +32,10 @@ public:
 	FTurboPIDController SteeringPID;
 
 	UPROPERTY(EditAnywhere, Category = "Steering")
-	float MinLookaheadDistance = 800.0f;
+	float MinSteeringLookahead = 800.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Steering")
-	float MaxLookaheadDistance = 2500.0f;
+	float MaxSteeringLookahead = 2500.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Steering")
 	float SteeringLookaheadFactor = 0.7f;
@@ -48,7 +48,13 @@ public:
 	FTurboPIDController SpeedPID;
 
 	UPROPERTY(EditAnywhere, Category = "Speed")
-	float SpeedLookaheadFactor = 0.7f;
+	float MinSpeedLookahead = 1500.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Speed")
+	float MaxSpeedLookahead = 8000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Speed")
+	float SpeedLookaheadFactor = 1.2f;
 
 protected:
 	// =========================================================================
@@ -69,12 +75,14 @@ protected:
 	// =========================================================================
 
 	USplineComponent* GetSpline() const;
-	float GetLookaheadDistance() const;
+	float GetSteeringLookahead() const;
+	float GetSpeedLookahead() const;
 	virtual FVector GetTargetPoint();
+	FVector GetTargetPointWithLateralOffset(float LateralOffset);
 	float CalculateSteering(const FVector& TargetPoint, float DeltaTime);
 	virtual void ApplySpeedControl(float DeltaTime);
 
-	/* Used in overtake and yield */
-	FVector GetTargetPointWithLateralOffset(float LateralOffset);
+private:
+	float ComputeLookahead(float Factor, float MinDistance, float MaxDistance) const;
 
 };
