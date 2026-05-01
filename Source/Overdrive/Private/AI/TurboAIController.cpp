@@ -18,54 +18,15 @@ ATurboAIController::ATurboAIController()
     PrimaryActorTick.bCanEverTick = true;
 }
 
-void ATurboAIController::BeginPlay()
-{
-    Super::BeginPlay();
-}
-
 void ATurboAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    // Initialize spline and vehicle
-    FindRacingSpline();
     Vehicle = Cast<ATurboVehicle>(InPawn);
 
-    // Initialize CurrentSplineDistance and PreviousSplineDistance
-    if (Vehicle && RacingSplineActor)
-    {
-        if (USplineComponent* Spline = RacingSplineActor->GetSplineComponent())
-        {
-            FVector VehicleLocation = Vehicle->GetActorLocation();
-            CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
-            PreviousSplineDistance = CurrentSplineDistance;
-        }
-    }
-
-    // Create Action Stack and set action instances
-    ActionStack = NewObject<UTurboActionStack>(this);
-    if (ActionStack)
-    {
-        TArray<UTurboActionBase*> Instances;
-        for (TSubclassOf<UTurboActionBase> ActionClass : ActionPriorityList)
-        {
-            if (!ActionClass) continue;
-            Instances.Add(NewObject<UTurboActionBase>(ActionStack, ActionClass));
-        }
-        ActionStack->SetActionInstances(Instances);
-    }
-
-    // Push the default follow path action
-    if (DefaultActionClass)
-    {
-        UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack, DefaultActionClass);
-        PushAction(DefaultAction);
-    }
-
-    // Hold at grid start until race starts
-    UTurboAction_GridStart* GridStart = NewObject<UTurboAction_GridStart>(ActionStack);
-    PushAction(GridStart);
-
+    FindRacingSpline();
+    InitializeSplineDistance();
+    InitializeActionStack();
 }
 
 void ATurboAIController::Tick(float DeltaTime)
@@ -98,7 +59,7 @@ void ATurboAIController::FindRacingSpline()
         ATurboRacingSpline* SplineActor = Cast<ATurboRacingSpline>(Actor);
         if (SplineActor && SplineActor->GetGameplayTags().HasTag(TurboGameplayTags::Track_MainSpline))
         {
-            RacingSplineActor = SplineActor;
+            RacingSpline = SplineActor;
             break;
         }
     }
@@ -106,18 +67,16 @@ void ATurboAIController::FindRacingSpline()
 
 void ATurboAIController::UpdateSplineDistance()
 {
-    if (!Vehicle || !RacingSplineActor)
+    if (!Vehicle || !RacingSpline)
     {
         return;
     }
 
-    USplineComponent* Spline = RacingSplineActor->GetSplineComponent();
+    USplineComponent* Spline = RacingSpline->GetSplineComponent();
     if (!Spline)
     {
         return;
     }
-
-    PreviousSplineDistance = CurrentSplineDistance;
 
     FVector VehicleLocation = Vehicle->GetActorLocation();
     CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
@@ -129,7 +88,7 @@ void ATurboAIController::UpdateSplineDistance()
 
 void ATurboAIController::UpdateDecisionContext()
 {
-    if (!Vehicle || !RacingSplineActor) return;
+    if (!Vehicle || !RacingSpline) return;
 
     UTurboVehicleDetectionComponent* Detection = Vehicle->GetDetectionComponent();
     if (!Detection) return;
@@ -177,7 +136,7 @@ void ATurboAIController::UpdateDecisionContext()
 
     for (float Look = CornerScanStep; Look < CornerScanMax; Look += CornerScanStep)
     {
-        const float Curvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance + Look, CornerScanSampleRange);
+        const float Curvature = RacingSpline->GetCurvatureAtDistance(CurrentSplineDistance + Look, CornerScanSampleRange);
 
         if (Curvature > CornerCurvatureThreshold)
         {
@@ -187,7 +146,7 @@ void ATurboAIController::UpdateDecisionContext()
     }
 
     // Current curvature at vehicle position
-    DecisionContext.CurrentCurvature = RacingSplineActor->GetCurvatureAtDistance(CurrentSplineDistance, CornerScanSampleRange);
+    DecisionContext.CurrentCurvature = RacingSpline->GetCurvatureAtDistance(CurrentSplineDistance, CornerScanSampleRange);
 
 }
 
@@ -240,3 +199,59 @@ const TArray<UBifrostAction*>& ATurboAIController::GetActions() const
     return EmptyArray;
 }
 
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+
+void ATurboAIController::InitializeSplineDistance()
+{
+    if (!Vehicle || !RacingSpline) return;
+
+    USplineComponent* Spline = RacingSpline->GetSplineComponent();
+    if (!Spline) return;
+
+    const FVector VehicleLocation = Vehicle->GetActorLocation();
+    CurrentSplineDistance = Spline->GetDistanceAlongSplineAtLocation(VehicleLocation, ESplineCoordinateSpace::World);
+}
+
+void ATurboAIController::InitializeActionStack()
+{
+    ActionStack = NewObject<UTurboActionStack>(this);
+    if (ActionStack)
+    {
+        PopulateActionRoster();
+        PushDefaultAction();
+        PushGridStartAction();
+    }
+}
+
+void ATurboAIController::PopulateActionRoster()
+{
+    TArray<UTurboActionBase*> Instances;
+    Instances.Reserve(ActionPriorityList.Num());
+
+    for (const TSubclassOf<UTurboActionBase>& ActionClass : ActionPriorityList)
+    {
+        if (ActionClass)
+        {
+            Instances.Add(NewObject<UTurboActionBase>(ActionStack, ActionClass.Get()));
+        }
+    }
+
+    ActionStack->SetActionInstances(Instances);
+}
+
+void ATurboAIController::PushDefaultAction()
+{
+    if (DefaultActionClass)
+    {
+        UTurboAction_FollowPath* DefaultAction = NewObject<UTurboAction_FollowPath>(ActionStack, DefaultActionClass);
+        PushAction(DefaultAction);
+    }
+}
+
+void ATurboAIController::PushGridStartAction()
+{
+    UTurboAction_GridStart* GridStart = NewObject<UTurboAction_GridStart>(ActionStack);
+    PushAction(GridStart);
+}

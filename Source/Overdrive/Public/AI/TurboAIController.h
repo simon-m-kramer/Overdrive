@@ -92,7 +92,7 @@ public:
     void UpdateSplineDistance();
 
     UFUNCTION(BlueprintPure, Category = "Spline")
-    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSplineActor; }
+    ATurboRacingSpline* GetRacingSplineActor() const { return RacingSpline; }    // TODO: Rename this to GetRacingSpline
 
     UFUNCTION(BlueprintPure, Category = "Spline")
     float GetCurrentSplineDistance() const { return CurrentSplineDistance; }
@@ -140,15 +140,13 @@ public:
     TObjectPtr<UTurboDrivingProfile> DrivingProfile;
 
 protected:
-    virtual void BeginPlay() override;
-
     virtual void OnPossess(APawn* InPawn) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Action")
     TObjectPtr<UTurboActionStack> ActionStack;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline")
-    TObjectPtr<ATurboRacingSpline> RacingSplineActor;  // TODO: Rename this to RacingSpline
+    TObjectPtr<ATurboRacingSpline> RacingSpline;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Vehicle")
     TObjectPtr<ATurboVehicle> Vehicle;
@@ -160,6 +158,12 @@ private:
 
     // Spline
     float CurrentSplineDistance = 0.0f;
-    float PreviousSplineDistance = 0.0f;
+
+    // Initialization helpers (called from OnPossess)
+    void InitializeSplineDistance();
+    void InitializeActionStack();
+    void PopulateActionRoster();
+    void PushDefaultAction();
+    void PushGridStartAction();
 
 };

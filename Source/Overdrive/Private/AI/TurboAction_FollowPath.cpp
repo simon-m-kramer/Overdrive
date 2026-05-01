@@ -15,14 +15,14 @@ UTurboAction_FollowPath::UTurboAction_FollowPath()
 	ActionName = TEXT("FollowPath");
 	ActionTag = TurboGameplayTags::Action_FollowPath;
 
-	SteeringPID.Kp = 3.0f;  // was 2.0f
+	SteeringPID.Kp = 3.0f;
 	SteeringPID.Ki = 0.0f;
 	SteeringPID.Kd = 0.5f;
 	SteeringPID.OutputMin = -1.0f;
 	SteeringPID.OutputMax = 1.0f;
 
 	SpeedPID.Kp = 0.03f;
-	SpeedPID.Ki = 0.0f;  // was 0.003f
+	SpeedPID.Ki = 0.003f;
 	SpeedPID.Kd = 0.015f;
 	SpeedPID.OutputMin = -1.0f;
 	SpeedPID.OutputMax = 1.0f;
@@ -115,13 +115,11 @@ float UTurboAction_FollowPath::CalculateSteering(const FVector& TargetPoint, flo
 		return 0.0f;
 	}
 
-	const FVector VehicleLocation = Vehicle->GetActorLocation();
-	const FVector VehicleRight = Vehicle->GetActorRightVector();
-	const FVector ToTarget = (TargetPoint - VehicleLocation).GetSafeNormal();
+	const FTransform VehicleTransform = Vehicle->GetActorTransform();
+	const FVector LocalTarget = VehicleTransform.InverseTransformPosition(TargetPoint);
+	const float HeadingError = FMath::Atan2(LocalTarget.Y, LocalTarget.X);
 
-	const float LateralError = FVector::DotProduct(ToTarget, VehicleRight);
-
-	return SteeringPID.Update(LateralError, DeltaTime);
+	return SteeringPID.Update(HeadingError, DeltaTime);
 }
 
 // =============================================================================
