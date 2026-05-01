@@ -75,10 +75,13 @@ protected:
 	// =========================================================================
 
 	USplineComponent* GetSpline() const;
+
 	float GetSteeringLookahead() const;
 	float GetSpeedLookahead() const;
+
 	virtual FVector GetTargetPoint();
 	FVector GetTargetPointWithLateralOffset(float LateralOffset);
+
 	float CalculateSteering(const FVector& TargetPoint, float DeltaTime);
 	virtual void ApplySpeedControl(float DeltaTime);
 
