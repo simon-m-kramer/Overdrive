@@ -38,7 +38,7 @@ public:
 	float MaxSteeringLookahead = 2500.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Steering")
-	float SteeringLookaheadFactor = 0.7f;
+	float SteeringLookaheadFactor = 0.6f;
 
 	// =========================================================================
 	// SPEED CONTROL

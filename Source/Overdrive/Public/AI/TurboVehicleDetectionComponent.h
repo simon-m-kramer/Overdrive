@@ -71,7 +71,7 @@ public:
 
     /** Half-width of forward detection box (lateral coverage) */
     UPROPERTY(EditAnywhere, Category = "Detection|Forward")
-    float ForwardBoxHalfWidth = 300.0f;
+    float ForwardBoxHalfWidth = 50.0f;
 
     /** Half-height of forward detection box */
     UPROPERTY(EditAnywhere, Category = "Detection|Forward")

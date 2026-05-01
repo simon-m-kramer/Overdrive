@@ -9,6 +9,7 @@
 #include "Framework/TurboGameplayTags.h"
 #include "Components/SplineComponent.h"
 #include "Framework/TurboDrivingProfile.h"
+#include "DrawDebugHelpers.h"
 
 UTurboAction_FollowPath::UTurboAction_FollowPath()
 {
@@ -53,7 +54,10 @@ void UTurboAction_FollowPath::Update(float DeltaTime)
 		return;
 	}
 
-	Vehicle->SetSteeringInput(CalculateSteering(GetTargetPoint(), DeltaTime));
+	const FVector TargetPoint = GetTargetPoint();
+	const float SteeringInput = CalculateSteering(TargetPoint, DeltaTime);
+	Vehicle->SetSteeringInput(SteeringInput);
+
 	ApplySpeedControl(DeltaTime);
 }
 
@@ -92,7 +96,7 @@ FVector UTurboAction_FollowPath::GetTargetPoint()
 
 FVector UTurboAction_FollowPath::GetTargetPointWithLateralOffset(float LateralOffset)
 {
-	// namespace to make sure we call this classes version, not the child's version
+	// namespace to make sure we call this class' version, not the child's version
 	const FVector BaseTarget = UTurboAction_FollowPath::GetTargetPoint();
 
 	if (FMath::IsNearlyZero(LateralOffset) || !AIController.IsValid())
