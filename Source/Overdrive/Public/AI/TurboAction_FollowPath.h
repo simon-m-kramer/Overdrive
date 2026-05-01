@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "AI/TurboActionBase.h"
 #include "Framework/TurboPIDController.h"
-#include "Framework/TurboSpeedProfile.h"
 #include "TurboAction_FollowPath.generated.h"
 
 class ATurboAIController;
@@ -57,8 +56,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Speed")
 	float SpeedLookaheadFactor = 0.7f;
 
-	virtual float GetTargetSpeedAtDistance(float Distance) const;
-
 protected:
 	// =========================================================================
 	// REFERENCES
@@ -72,9 +69,6 @@ protected:
 
 	UPROPERTY()
 	TWeakObjectPtr<ATurboRacingSpline> RacingSplineActor;
-
-	UPROPERTY()
-	FTurboSpeedProfile SpeedProfile;
 
 	// =========================================================================
 	// STEERING AND SPEED

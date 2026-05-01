@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "AI/TurboVehicleDetectionComponent.h"
 #include "GameplayTagContainer.h"
+#include "Framework/TurboSpeedProfile.h"
 #include "TurboAIController.generated.h"
 
 class ATurboRacingSpline;
@@ -80,6 +81,15 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Action")
     const TArray<UBifrostAction*>& GetActions() const;
+
+    // =========================================================================
+    // SPEED PROFILE
+    // =========================================================================
+
+    UFUNCTION(BlueprintPure, Category = "Speed")
+    float GetTargetSpeedAtDistance(float Distance) const;
+
+    const FTurboSpeedProfile& GetSpeedProfile() const { return SpeedProfile; }
 
     // =========================================================================
     // SPLINE
@@ -165,5 +175,9 @@ private:
     void PopulateActionRoster();
     void PushDefaultAction();
     void PushGridStartAction();
+
+    // Speed Profile
+    FTurboSpeedProfile SpeedProfile;
+    void InitializeSpeedProfile();
 
 };

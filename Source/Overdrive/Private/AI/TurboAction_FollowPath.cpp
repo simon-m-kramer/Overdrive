@@ -39,11 +39,6 @@ void UTurboAction_FollowPath::Start(bool bFirstTime)
 		{
 			Vehicle = AIController->GetVehicle();
 			RacingSplineActor = AIController->GetRacingSplineActor();
-
-			if (AIController->GetDrivingProfile())
-			{
-				SpeedProfile.Calculate(RacingSplineActor.Get(), AIController->GetDrivingProfile());
-			}
 		}
 	}
 
@@ -133,8 +128,7 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
 	const float SpeedLookahead = CurrentSpeedCms * SpeedLookaheadFactor;
-	const float TargetSpeedCms = GetTargetSpeedAtDistance(CurrentDistance + SpeedLookahead);
-
+	const float TargetSpeedCms = AIController->GetTargetSpeedAtDistance(CurrentDistance + SpeedLookahead);
 	const float SpeedError = TargetSpeedCms - CurrentSpeedCms;
 
 	float FinalThrottle = 0.0f;
@@ -163,13 +157,5 @@ void UTurboAction_FollowPath::ApplySpeedControl(float DeltaTime)
 	Vehicle->SetHandbrakeInput(false);
 }
 
-float UTurboAction_FollowPath::GetTargetSpeedAtDistance(float Distance) const
-{
-	if (!RacingSplineActor.IsValid() || !SpeedProfile.IsReady())
-	{
-		return 0.0f;
-	}
 
-	return SpeedProfile.GetTargetSpeed(Distance);
-}
 

@@ -150,12 +150,6 @@ FVector UTurboAction_Overtake::GetTargetPoint()
 	return BaseTarget + (Right * OvertakeLateralOffset * SideMultiplier);
 }
 
-float UTurboAction_Overtake::GetTargetSpeedAtDistance(float Distance) const
-{
-	const float BaseSpeed = Super::GetTargetSpeedAtDistance(Distance);
-	return BaseSpeed * OvertakeSpeedBoost;
-}
-
 // =============================================================================
 // DECISION HELPERS
 // =============================================================================

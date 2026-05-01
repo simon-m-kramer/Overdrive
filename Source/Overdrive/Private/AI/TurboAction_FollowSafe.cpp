@@ -61,7 +61,7 @@ void UTurboAction_FollowSafe::ApplySpeedControl(float DeltaTime)
 	const float CurrentSpeedCms = FMath::Abs(Vehicle->GetForwardSpeed());
 	const float CurrentDistance = AIController->GetCurrentSplineDistance();
 
-	const float ProfileSpeed = GetTargetSpeedAtDistance(CurrentDistance);
+	const float ProfileSpeed = AIController->GetTargetSpeedAtDistance(CurrentDistance);
 	const float FollowLimit = GetFollowSpeedLimit();
 	const float TargetSpeedCms = FMath::Min(ProfileSpeed, FollowLimit);
 
@@ -113,7 +113,7 @@ float UTurboAction_FollowSafe::GetFollowSpeedLimit() const
 	const float T = FMath::Clamp((FollowReactionDistance - Distance) / (FollowReactionDistance - FollowMinDistance), 0.0f, 1.0f);
 
 	const float MatchSpeed = TheirSpeed - FollowSpeedMarginCms;
-	const float OurMaxSpeed = GetTargetSpeedAtDistance(Context.CurrentSplineDistance);
+	const float OurMaxSpeed = AIController->GetTargetSpeedAtDistance(Context.CurrentSplineDistance);
 
 	return FMath::Lerp(OurMaxSpeed, MatchSpeed, T);
 }

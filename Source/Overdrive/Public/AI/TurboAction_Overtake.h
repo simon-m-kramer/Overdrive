@@ -20,8 +20,6 @@ public:
 	virtual bool IsDone() override;
 	virtual bool CanActivate(const FTurboDecisionContext& Context) const override;
 
-	virtual float GetTargetSpeedAtDistance(float Distance) const override;
-
 	// =========================================================================
 	// OVERTAKE TRIGGER
 	// =========================================================================
@@ -52,10 +50,6 @@ public:
 	/** Lateral offset from racing line when passing (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
 	float OvertakeLateralOffset = 400.0f;  // 350.0f = 3.5m
-
-	/** Extra speed boost as fraction of max speed during overtake */
-	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")
-	float OvertakeSpeedBoost = 1.0f;
 
 	/** How long the overtake can last before aborting (seconds) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Behavior")

@@ -23,9 +23,10 @@ void ATurboAIController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
 
     Vehicle = Cast<ATurboVehicle>(InPawn);
-
     FindRacingSpline();
+
     InitializeSplineDistance();
+    InitializeSpeedProfile();
     InitializeActionStack();
 }
 
@@ -43,6 +44,19 @@ void ATurboAIController::Tick(float DeltaTime)
         ActionStack->EvaluateActions(DecisionContext);
         ActionStack->UpdateActions(DeltaTime);
     }
+}
+
+// =============================================================================
+// SPEED PROFILE
+// =============================================================================
+
+float ATurboAIController::GetTargetSpeedAtDistance(float Distance) const
+{
+    if (!SpeedProfile.IsReady())
+    {
+        return 0.0f;
+    }
+    return SpeedProfile.GetTargetSpeed(Distance);
 }
 
 // =============================================================================
@@ -117,21 +131,9 @@ void ATurboAIController::UpdateDecisionContext()
     }
 
     // Target speed from the active action's speed profile
-    DecisionContext.TargetSpeedCms = 0.0f;
-    if (ActionStack)
-    {
-        for (UBifrostAction* Action : ActionStack->GetActions())
-        {
-            UTurboAction_FollowPath* FollowAction = Cast<UTurboAction_FollowPath>(Action);
-            if (FollowAction)
-            {
-                DecisionContext.TargetSpeedCms = FollowAction->GetTargetSpeedAtDistance(CurrentSplineDistance);
-                break;
-            }
-        }
-    }
+    DecisionContext.TargetSpeedCms = GetTargetSpeedAtDistance(CurrentSplineDistance);
 
-    // Track analysis — scan ahead for next corner
+    // Track analysis - scan ahead for next corner
     DecisionContext.DistanceToNextCorner = 0.0f;
 
     for (float Look = CornerScanStep; Look < CornerScanMax; Look += CornerScanStep)
@@ -202,6 +204,14 @@ const TArray<UBifrostAction*>& ATurboAIController::GetActions() const
 // =============================================================================
 // INITIALIZATION
 // =============================================================================
+
+void ATurboAIController::InitializeSpeedProfile()
+{
+    if (RacingSpline && DrivingProfile)
+    {
+        SpeedProfile.Calculate(RacingSpline, DrivingProfile);
+    }
+}
 
 void ATurboAIController::InitializeSplineDistance()
 {
