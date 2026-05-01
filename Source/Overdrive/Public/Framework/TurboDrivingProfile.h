@@ -25,12 +25,9 @@ public:
     float BrakeDecelerationCms2 = 2000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Performance")
-    float AccelerationCms2 = 1200.0f;
+    float AccelerationCms2 = 2000.0f;
 
     UPROPERTY(EditAnywhere, Category = "Performance")
     float CorneringSpeedSafetyFactor = 1.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Performance")
-    float ExitAccelerationBoost = 1.0f;
 
 };

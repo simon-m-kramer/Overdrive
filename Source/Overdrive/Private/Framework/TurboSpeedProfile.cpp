@@ -22,7 +22,6 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 	const float BrakeDecel = Profile->BrakeDecelerationCms2;
 	const float Accel = Profile->AccelerationCms2;
 	const float CorneringSpeedSafetyFactor = Profile->CorneringSpeedSafetyFactor;
-	const float ExitAccelerationBoost = Profile->ExitAccelerationBoost;
 
 	Speeds.SetNum(NumSamples);
 
@@ -82,20 +81,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 			for (int32 i = 0; i < NumSamples; i++)
 			{
 				const int32 PrevIndex = (i - 1 + NumSamples) % NumSamples;
-
-				float EffectiveAccel = Accel;
-				if (ExitAccelerationBoost > 1.0f)
-				{
-					const float CurvHere = Spline->GetCurvatureAtDistance(i * SampleInterval, CurvatureSampleRange);
-					const float CurvPrev = Spline->GetCurvatureAtDistance(PrevIndex * SampleInterval, CurvatureSampleRange);
-
-					if (CurvHere < CurvPrev)
-					{
-						EffectiveAccel *= ExitAccelerationBoost;
-					}
-				}
-
-				const float AccelLimit = FMath::Sqrt(Speeds[PrevIndex] * Speeds[PrevIndex] + 2.0f * EffectiveAccel * Ds);
+				const float AccelLimit = FMath::Sqrt(Speeds[PrevIndex] * Speeds[PrevIndex] + 2.0f * Accel * Ds);
 				Speeds[i] = FMath::Min(Speeds[i], AccelLimit);
 			}
 		}
@@ -104,19 +90,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 	{
 		for (int32 i = 1; i < NumSamples; i++)
 		{
-			float EffectiveAccel = Accel;
-			if (ExitAccelerationBoost > 1.0f)
-			{
-				const float CurvHere = Spline->GetCurvatureAtDistance(i * SampleInterval, CurvatureSampleRange);
-				const float CurvPrev = Spline->GetCurvatureAtDistance((i - 1) * SampleInterval, CurvatureSampleRange);
-
-				if (CurvHere < CurvPrev)
-				{
-					EffectiveAccel *= ExitAccelerationBoost;
-				}
-			}
-
-			const float AccelLimit = FMath::Sqrt(Speeds[i - 1] * Speeds[i - 1] + 2.0f * EffectiveAccel * Ds);
+			const float AccelLimit = FMath::Sqrt(Speeds[i - 1] * Speeds[i - 1] + 2.0f * Accel * Ds);
 			Speeds[i] = FMath::Min(Speeds[i], AccelLimit);
 		}
 	}
