@@ -27,8 +27,9 @@ ATurboPlayerVehicle::ATurboPlayerVehicle()
     // Back camera
     BackSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("BackSpringArm"));
     BackSpringArm->SetupAttachment(GetMesh());
-    BackSpringArm->TargetArmLength = 650.0f;  // was 650.0f
-    BackSpringArm->SocketOffset.Z = 150.0f;  // was 150.0f
+    BackSpringArm->TargetArmLength = 400.0f;  // was 650.0f / 380.0f
+    BackSpringArm->SocketOffset.Z = 75.0f;  // was 150.0f / 72.0f
+    BackSpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 75.0f));
     BackSpringArm->bDoCollisionTest = false;
     BackSpringArm->bInheritPitch = false;
     BackSpringArm->bInheritRoll = false;
@@ -38,6 +39,7 @@ ATurboPlayerVehicle::ATurboPlayerVehicle()
 
     BackCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("BackCamera"));
     BackCamera->SetupAttachment(BackSpringArm);
+    BackCamera->FieldOfView = 110.0f;
 }
 
 void ATurboPlayerVehicle::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
