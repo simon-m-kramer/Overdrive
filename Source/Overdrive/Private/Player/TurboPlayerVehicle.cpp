@@ -27,8 +27,8 @@ ATurboPlayerVehicle::ATurboPlayerVehicle()
     // Back camera
     BackSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("BackSpringArm"));
     BackSpringArm->SetupAttachment(GetMesh());
-    BackSpringArm->TargetArmLength = 650.0f;
-    BackSpringArm->SocketOffset.Z = 150.0f;
+    BackSpringArm->TargetArmLength = 650.0f;  // was 650.0f
+    BackSpringArm->SocketOffset.Z = 150.0f;  // was 150.0f
     BackSpringArm->bDoCollisionTest = false;
     BackSpringArm->bInheritPitch = false;
     BackSpringArm->bInheritRoll = false;
