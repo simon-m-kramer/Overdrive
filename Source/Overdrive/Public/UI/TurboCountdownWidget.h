@@ -33,6 +33,5 @@ private:
 	UFUNCTION()
 	void OnRaceStarted();
 
-	UFUNCTION()
-	void OnRemoveAnimFinished();
+	FTimerHandle RemoveTimerHandle;
 };

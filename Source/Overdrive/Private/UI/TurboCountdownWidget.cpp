@@ -10,6 +10,7 @@ void UTurboCountdownWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	// clear preview text
 	if (Txt_Countdown)
 	{
 		Txt_Countdown->SetText(FText::GetEmpty());
@@ -27,6 +28,11 @@ void UTurboCountdownWidget::NativeConstruct()
 
 void UTurboCountdownWidget::NativeDestruct()
 {
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(RemoveTimerHandle);
+	}
+
 	if (ATurboGameMode* GameMode = Cast<ATurboGameMode>(GetWorld()->GetAuthGameMode()))
 	{
 		if (UTurboRaceManager* RaceManager = GameMode->GetRaceManager())
@@ -68,26 +74,21 @@ void UTurboCountdownWidget::OnCountdownUpdated(int32 Count)
 
 void UTurboCountdownWidget::OnRaceStarted()
 {
-	if (Anim_Pop && Txt_Countdown)
+	// Remove widget, but with a short delay, so that animation can finish
+	// WARNING: If the delay is shorter than the animation, this will cause a crash
+	// WARNING: If I pause and return to main menu during countdown, it will crash
+	//FTimerHandle RemoveTimer;
+	//GetWorld()->GetTimerManager().SetTimer(RemoveTimer, [this](){RemoveFromParent();}, 1.5f, false);
+
+	if (UWorld* World = GetWorld())
 	{
-		FWidgetAnimationDynamicEvent FinishedDelegate;
-		FinishedDelegate.BindDynamic(this, &UTurboCountdownWidget::OnRemoveAnimFinished);
-
-		BindToAnimationFinished(Anim_Pop, FinishedDelegate);
-
-		if (!IsAnimationPlaying(Anim_Pop))
-		{
-			RemoveFromParent();
-			return;
-		}
+		World->GetTimerManager().SetTimer(
+			RemoveTimerHandle,
+			FTimerDelegate::CreateWeakLambda(this, [this]() { RemoveFromParent(); }),
+			1.5f,
+			false
+		);
 	}
-	else
-	{
-		RemoveFromParent();
-	}
-}
 
-void UTurboCountdownWidget::OnRemoveAnimFinished()
-{
-	RemoveFromParent();
+
 }
