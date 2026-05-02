@@ -30,7 +30,7 @@ public:
 
 	/** Minimum speed advantage from profile vs car ahead to trigger (cm/s) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
-	float MinSpeedAdvantage = 400.0f;  // 200.0f = ~7 km/h faster
+	float MinSpeedAdvantage = 200.0f;  // 200.0f = ~7 km/h faster
 
 	/** Minimum straight distance ahead needed to attempt a pass (cm) */
 	UPROPERTY(EditAnywhere, Category = "Overtake|Trigger")
