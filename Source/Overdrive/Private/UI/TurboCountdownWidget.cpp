@@ -28,6 +28,11 @@ void UTurboCountdownWidget::NativeConstruct()
 
 void UTurboCountdownWidget::NativeDestruct()
 {
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(RemoveTimerHandle);
+	}
+
 	if (ATurboGameMode* GameMode = Cast<ATurboGameMode>(GetWorld()->GetAuthGameMode()))
 	{
 		if (UTurboRaceManager* RaceManager = GameMode->GetRaceManager())
@@ -72,6 +77,18 @@ void UTurboCountdownWidget::OnRaceStarted()
 	// Remove widget, but with a short delay, so that animation can finish
 	// WARNING: If the delay is shorter than the animation, this will cause a crash
 	// WARNING: If I pause and return to main menu during countdown, it will crash
-	FTimerHandle RemoveTimer;
-	GetWorld()->GetTimerManager().SetTimer(RemoveTimer, [this](){RemoveFromParent();}, 1.5f, false);
+	//FTimerHandle RemoveTimer;
+	//GetWorld()->GetTimerManager().SetTimer(RemoveTimer, [this](){RemoveFromParent();}, 1.5f, false);
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(
+			RemoveTimerHandle,
+			FTimerDelegate::CreateWeakLambda(this, [this]() { RemoveFromParent(); }),
+			1.5f,
+			false
+		);
+	}
+
+
 }

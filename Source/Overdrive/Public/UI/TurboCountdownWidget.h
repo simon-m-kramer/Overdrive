@@ -32,4 +32,6 @@ private:
 
 	UFUNCTION()
 	void OnRaceStarted();
+
+	FTimerHandle RemoveTimerHandle;
 };
