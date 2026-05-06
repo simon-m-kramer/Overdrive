@@ -148,7 +148,7 @@ EOvertakeSide UTurboAction_Overtake::DetermineBestSide() const
 	if (bLeftClear && !bRightClear) return EOvertakeSide::Left;
 	if (bRightClear && !bLeftClear) return EOvertakeSide::Right;
 
-	// Both clear - prefer the inside of the next corner for a better exit
+	// Both clear: prefer the inside of the next corner for a better exit
 	if (AIController.IsValid() && RacingSpline.IsValid())
 	{
 		const FTurboDecisionContext& Context = AIController->GetDecisionContext();
@@ -159,8 +159,6 @@ EOvertakeSide UTurboAction_Overtake::DetermineBestSide() const
 			const float CornerDistance = CurrentDistance + Context.DistanceToNextCorner;
 			const float TurnDir = RacingSpline->GetTurnSign(CornerDistance);
 
-			// TurnDir > 0 = right turn -> inside is right
-			// TurnDir < 0 = left turn -> inside is left
 			if (TurnDir > 0.0f) return EOvertakeSide::Right;
 			if (TurnDir < 0.0f) return EOvertakeSide::Left;
 		}

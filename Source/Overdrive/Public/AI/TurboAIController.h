@@ -125,7 +125,7 @@ public:
     const FTurboDecisionContext& GetDecisionContext() const { return DecisionContext; }
 
     UPROPERTY(EditAnywhere, Category = "Track Analysis")
-    float CornerCurvatureThreshold = 0.0001f;  // radians/cm, this value needs calibrated properly according to the scale of the track
+    float CornerCurvatureThreshold = 0.0001f;  // radians/cm
 
     UPROPERTY(EditAnywhere, Category = "Track Analysis")
     float CornerScanStep = 200.0f;  // cm

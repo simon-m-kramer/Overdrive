@@ -133,7 +133,7 @@ void ATurboAIController::UpdateDecisionContext()
     // Target speed from the active action's speed profile
     DecisionContext.TargetSpeedCms = GetTargetSpeedAtDistance(CurrentSplineDistance);
 
-    // Track analysis - scan ahead for next corner
+    // Track analysis
     DecisionContext.DistanceToNextCorner = 0.0f;
 
     for (float Look = CornerScanStep; Look < CornerScanMax; Look += CornerScanStep)

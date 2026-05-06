@@ -36,10 +36,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Racing Line")
 	float GetTrackWidth() const { return HalfTrackWidth * 2.0f; }
 
-	/** The highest curvature found anywhere on the track. */
-	float GetMaxTrackCurvature() const { return MaxTrackCurvature; }
-
-	/** Computes the angle change (in radians) between two tangents and divides by the distance between them (in cm). The return value is radians per cm. */
+	/** Computes the angle (in radians) between two tangents and divides by the distance between them (in cm). The return value is radians per cm. */
 	UFUNCTION(BlueprintPure, Category = "Curvature")
 	float GetCurvatureAtDistance(float Distance, float SampleRange = 400.0f) const;
 
@@ -56,7 +53,5 @@ protected:
 private:
 	float WrapDistance(float Distance) const;
 
-	void CalculateMaxCurvature(float SampleInterval = 100.0f, float SampleRange = 400.0f);
 
-	float MaxTrackCurvature = 0.0f;
 };

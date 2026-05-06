@@ -25,7 +25,7 @@ void FTurboSpeedProfile::Calculate(const ATurboRacingSpline* Spline, const UTurb
 
 	Speeds.SetNum(NumSamples);
 
-	// ---- Pass 1: Cornering speed limits ----
+	// ---- Pass 1: Lateral Grip Limit ----
 	// v = sqrt(grip / curvature)
 
 	for (int32 i = 0; i < NumSamples; i++)

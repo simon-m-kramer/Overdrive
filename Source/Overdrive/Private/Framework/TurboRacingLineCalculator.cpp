@@ -183,7 +183,3 @@ void ATurboRacingLineCalculator::CalculateRacingLine()
 	MarkPackageDirty();
 }
 
-TArray<FVector> ATurboRacingLineCalculator::GetRacingLinePositions() const
-{
-	return CachedPositions;
-}

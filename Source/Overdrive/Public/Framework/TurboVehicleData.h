@@ -31,8 +31,6 @@ struct FTurboEngineSetup
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float EngineRevDownRate = 600.0f;
 
-	// Torque curve as (RPM, NormalizedTorque) pairs
-	// If empty, a sensible default curve is generated
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector2D> TorqueCurveKeys;
 };
